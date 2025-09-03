@@ -1,0 +1,81 @@
+name: Deploy To Google Play
+
+on:
+  push:
+    branches: ["release"]
+  workflow_dispatch:
+
+jobs:
+  distribute:
+    name: Distribute to Google Play
+    runs-on: ubuntu-latest
+
+    env:
+      BUILD_NUMBER: ${{ github.run_number }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: 17
+          cache: "gradle"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.32.7"
+          channel: "stable"
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub
+
+      - name: Restore Gradle cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Decode keystore (nch-mobile-release-key.jks)
+        run: echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 -d > android/nch-mobile-release-key.jks
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=nch-mobile-release-key.jks
+          EOF
+
+      - name: Build AAB (release)
+        run: |
+          if [ -n "${FLAVOR}" ]; then
+            # jika punya flavor, contoh: prod
+            flutter build appbundle --flavor ${FLAVOR} --release --build-number ${BUILD_NUMBER}
+          else
+            flutter build appbundle --release --build-number ${BUILD_NUMBER}
+          fi
+
+      - name: Upload to Internal Testing
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_CREDENTIALS_JSON }}
+          packageName: com.nurulchotib
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
+
+      - name: Upload artifact (AAB)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aab-release
+          path: build/app/outputs/bundle/**/release/*.aab
