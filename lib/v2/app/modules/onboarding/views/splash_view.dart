@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -22,13 +24,14 @@ class _SplashViewState extends State<SplashView>
   @override
   void initState() {
     super.initState();
+    developer.log('SplashView: initState called');
     _setupAnimations();
-    _navigateAfterDelay();
+    _initializeAppAndCheckAuth();
   }
 
   void _setupAnimations() {
     _animationController = AnimationController(
-      duration: Duration(seconds: 2),
+      duration: const Duration(seconds: 2),
       vsync: this,
     );
 
@@ -41,17 +44,68 @@ class _SplashViewState extends State<SplashView>
     );
 
     _animationController.forward();
+    developer.log('SplashView: Animations setup complete');
   }
 
-  void _navigateAfterDelay() {
-    Future.delayed(Duration(seconds: 3), () {
-      // Check authentication status will be handled by AuthController
-      if (Get.find<AuthController>().isLoggedIn.value) {
-        // Get.find<AuthController>()._redirectBasedOnRole();
+  void _initializeAppAndCheckAuth() async {
+    developer.log('SplashView: Starting initialization');
+    
+    // Wait for animation to start
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    try {
+      // Get auth controller
+      final authController = Get.find<AuthController>();
+      developer.log('SplashView: AuthController found');
+      
+      // Use the new checkAuthStatus method
+      final isAuthenticated = await authController.checkAuthStatus();
+      
+      developer.log('SplashView: Auth check result: $isAuthenticated');
+      
+      // Wait for minimum splash duration
+      await Future.delayed(const Duration(seconds: 2));
+      
+      if (isAuthenticated) {
+        developer.log('SplashView: User is authenticated, redirecting...');
+        _redirectBasedOnRole(authController);
       } else {
+        developer.log('SplashView: User not authenticated, going to login');
         Get.offAllNamed('/login');
       }
-    });
+      
+    } catch (e) {
+      developer.log('SplashView: Error during initialization: $e');
+      // If any error occurs during auth check, go to login
+      await Future.delayed(const Duration(seconds: 1));
+      Get.offAllNamed('/login');
+    }
+  }
+
+  void _redirectBasedOnRole(AuthController authController) {
+    final user = authController.user.value;
+    if (user == null) {
+      developer.log('SplashView: No user data, going to login');
+      Get.offAllNamed('/login');
+      return;
+    }
+
+    developer.log('SplashView: User role display: ${user.roleDisplay}');
+    developer.log('SplashView: Is teacher: ${user.isTeacher}');
+    developer.log('SplashView: Is parent: ${user.isParent}');
+    
+    // Redirect based on user role
+    if (user.isTeacher) {
+      developer.log('SplashView: Redirecting to teacher dashboard');
+      Get.offAllNamed('/teacher/dashboard');
+    } else if (user.isParent) {
+      developer.log('SplashView: Redirecting to parent dashboard');
+      Get.offAllNamed('/parent/dashboard');
+    } else {
+      // Unknown role, go to login
+      developer.log('SplashView: Unknown role, going to login');
+      Get.offAllNamed('/login');
+    }
   }
 
   @override
@@ -86,7 +140,7 @@ class _SplashViewState extends State<SplashView>
                           BoxShadow(
                             color: Colors.black.withOpacity(0.2),
                             blurRadius: 20,
-                            offset: Offset(0, 8),
+                            offset: const Offset(0, 8),
                           ),
                         ],
                       ),
@@ -152,12 +206,44 @@ class _SplashViewState extends State<SplashView>
 
                     SizedBox(height: 20.h),
 
-                    Text(
-                      'جَزَاكَ اللهُ خَيْرًا',
-                      style: AppTextStyles.arabicSubtitle.copyWith(
-                        color: Colors.white.withOpacity(0.8),
-                      ),
-                    ),
+                    // Status message dengan debug info
+                    Obx(() {
+                      try {
+                        final authController = Get.find<AuthController>();
+                        String statusMessage = 'جَزَاكَ اللهُ خَيْرًا';
+                        
+                        if (authController.isLoading.value) {
+                          statusMessage = 'Memeriksa autentikasi...';
+                        }
+                        
+                        return Column(
+                          children: [
+                            Text(
+                              statusMessage,
+                              style: AppTextStyles.arabicSubtitle.copyWith(
+                                color: Colors.white.withOpacity(0.8),
+                              ),
+                            ),
+                            // Debug info (remove in production)
+                            SizedBox(height: 8.h),
+                            Text(
+                              'Debug: isLoggedIn=${authController.isLoggedIn.value}, hasUser=${authController.user.value != null}',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.6),
+                                fontSize: 10.sp,
+                              ),
+                            ),
+                          ],
+                        );
+                      } catch (e) {
+                        return Text(
+                          'جَزَاكَ اللهُ خَيْرًا',
+                          style: AppTextStyles.arabicSubtitle.copyWith(
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        );
+                      }
+                    }),
                   ],
                 ),
               ),

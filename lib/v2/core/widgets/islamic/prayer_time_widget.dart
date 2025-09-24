@@ -17,6 +17,7 @@ class PrayerTimeWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: MediaQuery.of(context).size.width,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -58,6 +59,7 @@ class PrayerTimeWidget extends StatelessWidget {
 
           // Dua
           Container(
+            width: MediaQuery.of(context).size.width,
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
               color: AppColors.lightGreenBg,

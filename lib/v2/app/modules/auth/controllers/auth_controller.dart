@@ -28,41 +28,53 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _checkAuthStatus();
     _loadRememberMe();
+    // Don't auto-check auth here, let SplashView handle it
   }
 
   @override
   void onClose() {
     emailController.dispose();
     passwordController.dispose();
-    super.onClose();
+    super.dispose();
   }
 
-  /// Check if user is already logged in
-  Future<void> _checkAuthStatus() async {
+  /// Check if user is already logged in (called from SplashView)
+  Future<bool> checkAuthStatus() async {
     try {
+      isLoading.value = true;
+      
       if (_storageService.hasValidToken) {
         final savedUser = _storageService.getUser();
         if (savedUser != null) {
           user.value = savedUser;
           isLoggedIn.value = true;
 
-          // Try to get fresh user data
+          // Try to get fresh user data to validate token
           try {
             final freshUser = await _apiService.getCurrentUser();
             user.value = freshUser;
             await _storageService.saveUser(freshUser);
+            
+            developer.log('Auto-login successful for user: ${freshUser.name}');
+            return true;
           } catch (e) {
-            developer.log('Failed to refresh user data: $e');
+            developer.log('Token validation failed: $e');
+            // Token might be expired, clear storage
+            await _clearAuthData();
+            return false;
           }
-
-          _redirectBasedOnRole();
         }
       }
+      
+      developer.log('No valid auth data found');
+      return false;
     } catch (e) {
       developer.log('Auth check failed: $e');
-      await _storageService.clearAll();
+      await _clearAuthData();
+      return false;
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -83,7 +95,6 @@ class AuthController extends GetxController {
         password: passwordController.text.trim(),
       );
 
-      // ✅ Fix: Proper logging without printing object directly
       developer.log('Login response success: ${response.success}');
       developer.log('Login response message: ${response.message}');
       developer.log('Login response has token: ${response.token != null}');
@@ -107,7 +118,7 @@ class AuthController extends GetxController {
         _showIslamicWelcomeMessage();
 
         // Redirect based on role
-        _redirectBasedOnRole();
+        redirectBasedOnRole();
 
         // Clear form
         _clearForm();
@@ -130,11 +141,11 @@ class AuthController extends GetxController {
     try {
       isLoading.value = true;
 
+      // Call logout API
       await _apiService.logout();
 
-      // Clear local data
-      user.value = null;
-      isLoggedIn.value = false;
+      // Clear all local data
+      await _clearAuthData();
 
       _showSuccessSnackbar(
         'وداعاً',
@@ -143,10 +154,20 @@ class AuthController extends GetxController {
 
       Get.offAllNamed(Routes.LOGIN);
     } catch (e) {
-      _showErrorSnackbar('Error', 'Gagal logout: ${e.toString()}');
+      developer.log('Logout error: $e');
+      // Even if API fails, clear local data
+      await _clearAuthData();
+      Get.offAllNamed(Routes.LOGIN);
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Clear all authentication data
+  Future<void> _clearAuthData() async {
+    await _storageService.clearAll();
+    user.value = null;
+    isLoggedIn.value = false;
   }
 
   /// Toggle remember me
@@ -155,8 +176,8 @@ class AuthController extends GetxController {
     _storageService.setRememberMe(rememberMe.value);
   }
 
-  /// Redirect user based on role
-  void _redirectBasedOnRole() {
+  /// Redirect user based on role (made public for SplashView)
+  void redirectBasedOnRole() {
     final currentUser = user.value;
     if (currentUser == null) {
       Get.offAllNamed(Routes.LOGIN);
@@ -164,7 +185,7 @@ class AuthController extends GetxController {
     }
 
     developer.log('Redirecting user: ${currentUser.name}');
-    developer.log('User role: ${currentUser.role}');
+    developer.log('User role: ${currentUser.currentRole}');
     developer.log('Is teacher: ${currentUser.isTeacher}');
     developer.log('Is parent: ${currentUser.isParent}');
 
@@ -209,7 +230,6 @@ class AuthController extends GetxController {
 
   /// Show success snackbar
   void _showSuccessSnackbar(String title, String message) {
-    // ✅ Ensure parameters are not empty
     final validTitle = title.isEmpty ? 'Success' : title;
     final validMessage = message.isEmpty ? 'Operation completed successfully' : message;
 
@@ -228,7 +248,6 @@ class AuthController extends GetxController {
 
   /// Show error snackbar
   void _showErrorSnackbar(String title, String message) {
-    // ✅ Ensure parameters are not empty
     final validTitle = title.isEmpty ? 'Error' : title;
     final validMessage = message.isEmpty ? 'An error occurred' : message;
 
@@ -254,7 +273,33 @@ class AuthController extends GetxController {
       isLoggedIn.value = true;
     } catch (e) {
       developer.log('Failed to get current user: $e');
-      await logout();
+      throw e; // Rethrow to let caller handle it
+    }
+  }
+
+  /// Check if session is still valid
+  Future<bool> isSessionValid() async {
+    try {
+      if (!_storageService.hasValidToken) return false;
+      
+      // Try to get current user to validate token
+      await getCurrentUser();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Auto-login with saved credentials (optional feature)
+  Future<bool> tryAutoLogin() async {
+    try {
+      if (!rememberMe.value) return false;
+      
+      // Check if we have valid token and user data
+      return await checkAuthStatus();
+    } catch (e) {
+      developer.log('Auto-login failed: $e');
+      return false;
     }
   }
 }

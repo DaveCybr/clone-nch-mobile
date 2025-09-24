@@ -1,9 +1,14 @@
+// =====================================
+// 1. UPDATE TeacherDashboardController
+// =====================================
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/services/api_service.dart';
-import '../../../auth/controllers/auth_controller.dart';
+import '../../../../routes/app_routes.dart';
+import '../../../auth/controllers/auth_controller.dart';// Add this import
 
 class TeacherDashboardController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
@@ -14,19 +19,20 @@ class TeacherDashboardController extends GetxController {
   final isRefreshing = false.obs;
   final dashboardData = Rxn<TeacherDashboardModel>();
   final currentTime = DateTime.now().obs;
+  final selectedNavIndex = 0.obs; // ADD THIS
 
   // Prayer times
   final prayerTimes = <PrayerTimeModel>[].obs;
   final currentPrayerIndex = 0.obs;
 
-  // SOLUSI: Tambahkan reactive variables untuk greeting
+  // Reactive greeting variables
   final islamicGreeting = 'السلام عليكم'.obs;
   final indonesianGreeting = 'Selamat datang'.obs;
 
   @override
   void onInit() {
     super.onInit();
-    _updateGreetings(); // Update greeting pertama kali
+    _updateGreetings();
     _initializeDashboard();
     _startTimeUpdater();
   }
@@ -36,7 +42,7 @@ class TeacherDashboardController extends GetxController {
     _loadPrayerTimes();
   }
 
-  /// Load dashboard data from API
+  /// Load dashboard data from API with better error handling
   Future<void> loadDashboardData() async {
     try {
       isLoading.value = true;
@@ -46,16 +52,34 @@ class TeacherDashboardController extends GetxController {
 
       // Update prayer times if available
       if (response['prayer_times'] != null) {
-        prayerTimes.value =
-            (response['prayer_times'] as List)
-                .map((e) => PrayerTimeModel.fromJson(e))
-                .toList();
+        prayerTimes.value = (response['prayer_times'] as List)
+            .map((e) => PrayerTimeModel.fromJson(e))
+            .toList();
       }
     } catch (e) {
-      _showErrorSnackbar('خطأ في تحميل البيانات', e.toString());
+      // Provide fallback data instead of just showing error
+      _loadFallbackData();
+      _showErrorSnackbar('خطأ في تحميل البيانات', 
+        'Menggunakan data offline. Periksa koneksi internet Anda.');
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Provide fallback data when API fails
+  void _loadFallbackData() {
+    dashboardData.value = TeacherDashboardModel(
+      stats: DashboardStats(
+        totalStudents: 0,
+        totalClasses: 0,
+        todayTasks: 0,
+        totalAnnouncements: 0,
+      ),
+      todaySchedules: [],
+      prayerTimes: PrayerTimeModel.getDefaultTimes(),
+      announcements: [],
+      teacher: _authController.user.value!,
+    );
   }
 
   /// Refresh dashboard data
@@ -103,14 +127,14 @@ class TeacherDashboardController extends GetxController {
   /// Start time updater
   void _startTimeUpdater() {
     // Update every minute
-    Stream.periodic(Duration(minutes: 1)).listen((_) {
+    Stream.periodic(const Duration(minutes: 1)).listen((_) {
       currentTime.value = DateTime.now();
       _updateCurrentPrayer();
-      _updateGreetings(); // SOLUSI: Update greeting setiap menit
+      _updateGreetings();
     });
   }
 
-  /// SOLUSI: Method untuk update greeting secara reactive
+  /// Update greeting secara reactive
   void _updateGreetings() {
     final hour = DateTime.now().hour;
 
@@ -144,47 +168,149 @@ class TeacherDashboardController extends GetxController {
   /// Get current user
   UserModel? get currentUser => _authController.user.value;
 
+  // ===== NAVIGATION METHODS - FIXED =====
+
   /// Navigate to attendance for specific schedule
   void navigateToAttendance(TodayScheduleModel schedule) {
-    Get.toNamed('/teacher/attendance', arguments: {'schedule': schedule});
+    Get.toNamed(Routes.TEACHER_ATTENDANCE, arguments: {'schedule': schedule});
   }
 
   /// Navigate to announcements
   void navigateToAnnouncements() {
-    Get.toNamed('/teacher/announcements');
+    Get.toNamed(Routes.TEACHER_ANNOUNCEMENTS);
   }
 
-  /// Navigate to students
+  /// Navigate to students  
   void navigateToStudents() {
-    Get.toNamed('/teacher/students');
+    Get.toNamed(Routes.TEACHER_STUDENTS);
   }
 
   /// Navigate to schedule
   void navigateToSchedule() {
-    Get.toNamed('/teacher/schedule');
+    Get.toNamed(Routes.TEACHER_SCHEDULE);
   }
 
   /// Navigate to profile
   void navigateToProfile() {
-    Get.toNamed('/teacher/profile');
+    Get.toNamed(Routes.TEACHER_PROFILE);
   }
 
-  /// Logout
+  /// Handle bottom navigation
+  void onBottomNavTapped(int index) {
+    selectedNavIndex.value = index;
+    
+    switch (index) {
+      case 0:
+        // Already on dashboard, refresh data
+        refreshDashboard();
+        break;
+      case 1:
+        navigateToSchedule();
+        break;
+      case 2:
+        navigateToAnnouncements();
+        break;
+      case 3:
+        navigateToProfile();
+        break;
+    }
+  }
+
+  /// Show schedule options when tapping schedule card
+  void showScheduleOptions(TodayScheduleModel schedule) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              width: 50,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            
+            Text(
+              schedule.subjectName,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              '${schedule.className} • ${schedule.timeRange}',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Options
+            ListTile(
+              leading: const Icon(Icons.how_to_reg, color: Colors.green),
+              title: const Text('Absensi Siswa'),
+              subtitle: const Text('Input kehadiran siswa'),
+              onTap: () {
+                Get.back();
+                navigateToAttendance(schedule);
+              },
+            ),
+            
+            ListTile(
+              leading: const Icon(Icons.people, color: Colors.blue),
+              title: const Text('Lihat Data Siswa'),
+              subtitle: const Text('Data dan rekap kehadiran'),
+              onTap: () {
+                Get.back();
+                navigateToStudents();
+              },
+            ),
+            
+            if (schedule.isDone)
+              ListTile(
+                leading: const Icon(Icons.edit, color: Colors.orange),
+                title: const Text('Edit Absensi'),
+                subtitle: const Text('Perbaiki data kehadiran'),
+                onTap: () {
+                  Get.back();
+                  navigateToAttendance(schedule);
+                },
+              ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  /// Logout with confirmation
   void logout() {
     Get.dialog(
       AlertDialog(
-        title: Text('تسجيل الخروج'),
-        content: Text(
+        title: const Text('تسجيل الخروج'),
+        content: const Text(
           'هل أنت متأكد من تسجيل الخروج؟\nApakah Anda yakin ingin keluar?',
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: Text('إلغاء')),
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('إلغاء'),
+          ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               Get.back();
               _authController.logout();
             },
-            child: Text('خروج'),
+            child: const Text('خروج', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -197,10 +323,10 @@ class TeacherDashboardController extends GetxController {
         title: title,
         message: message,
         backgroundColor: Colors.red,
-        duration: Duration(seconds: 3),
-        margin: EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+        margin: const EdgeInsets.all(16),
         borderRadius: 8,
-        icon: Icon(Icons.error, color: Colors.white),
+        icon: const Icon(Icons.error, color: Colors.white),
         snackPosition: SnackPosition.TOP,
       ),
     );

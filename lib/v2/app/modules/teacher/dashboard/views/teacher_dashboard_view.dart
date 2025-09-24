@@ -1,3 +1,7 @@
+// =====================================
+// 2. UPDATE TeacherDashboardView
+// =====================================
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -9,6 +13,7 @@ import '../../../../../core/widgets/islamic/prayer_time_widget.dart';
 import '../../../../../core/widgets/teacher/schedule_card.dart';
 import '../../../../../core/widgets/teacher/statistic_card.dart';
 import '../../../../data/models/dashboard_model.dart';
+import '../../../../routes/app_routes.dart'; // Add this import
 import '../controllers/teacher_dashboard_controller.dart';
 
 class TeacherDashboardView extends GetView<TeacherDashboardController> {
@@ -22,8 +27,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       backgroundColor: AppColors.scaffoldBackground,
       appBar: _buildAppBar(),
       body: Obx(() {
-        if (controller.isLoading.value &&
-            controller.dashboardData.value == null) {
+        if (controller.isLoading.value && controller.dashboardData.value == null) {
           return _buildLoadingState();
         }
 
@@ -57,20 +61,10 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
 
                 SizedBox(height: 20.h),
 
-                // Prayer Times & Announcements Row
-                    _buildPrayerTimesSection(),
-                    SizedBox(height: 20.h),
-                    _buildAnnouncementsSection(),
-                // Row(
-                //   crossAxisAlignment: CrossAxisAlignment.start,
-                //   children: [
-                //     // Prayer Times (Left)
-
-                //     SizedBox(width: 12.w),
-
-                //     // Announcements (Right)
-                //   ],
-                // ),
+                // Prayer Times & Announcements
+                _buildPrayerTimesSection(),
+                SizedBox(height: 20.h),
+                _buildAnnouncementsSection(),
 
                 SizedBox(height: 20.h),
               ],
@@ -84,43 +78,58 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text('Dashboard'),
+      title: const Text('Dashboard'),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: Icon(Icons.notifications_outlined),
+          icon: const Icon(Icons.notifications_outlined),
           onPressed: controller.navigateToAnnouncements,
         ),
         PopupMenuButton(
-          icon: Icon(Icons.more_vert),
-          itemBuilder:
-              (context) => [
-                PopupMenuItem(
-                  value: 'profile',
-                  child: Row(
-                    children: [
-                      Icon(Icons.person_outline, color: AppColors.primaryGreen),
-                      SizedBox(width: 12.w),
-                      Text('Profil'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, color: Colors.red),
-                      SizedBox(width: 12.w),
-                      Text('Keluar'),
-                    ],
-                  ),
-                ),
-              ],
+          icon: const Icon(Icons.more_vert),
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'refresh',
+              child: Row(
+                children: [
+                  Icon(Icons.refresh, color: AppColors.primaryGreen),
+                  SizedBox(width: 12.w),
+                  const Text('Refresh'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'profile',
+              child: Row(
+                children: [
+                  Icon(Icons.person_outline, color: AppColors.primaryGreen),
+                  SizedBox(width: 12.w),
+                  const Text('Profil'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  const Icon(Icons.logout, color: Colors.red),
+                  SizedBox(width: 12.w),
+                  const Text('Keluar'),
+                ],
+              ),
+            ),
+          ],
           onSelected: (value) {
-            if (value == 'profile') {
-              controller.navigateToProfile();
-            } else if (value == 'logout') {
-              controller.logout();
+            switch (value) {
+              case 'refresh':
+                controller.refreshDashboard();
+                break;
+              case 'profile':
+                controller.navigateToProfile();
+                break;
+              case 'logout':
+                controller.logout();
+                break;
             }
           },
         ),
@@ -168,7 +177,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
           BoxShadow(
             color: AppColors.primaryGreen.withOpacity(0.3),
             blurRadius: 12,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -178,18 +187,16 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
           CircleAvatar(
             radius: 35.r,
             backgroundColor: AppColors.goldAccent,
-            backgroundImage:
-                controller.currentUser!.avatarUrl.isNotEmpty
-                    ? NetworkImage(controller.currentUser!.avatarUrl)
-                    : null,
-            child:
-                controller.currentUser!.avatarUrl.isEmpty
-                    ? Icon(
-                      Icons.person,
-                      size: 35.sp,
-                      color: AppColors.primaryGreen,
-                    )
-                    : null,
+            backgroundImage: controller.currentUser!.avatarUrl.isNotEmpty
+                ? NetworkImage(controller.currentUser!.avatarUrl)
+                : null,
+            child: controller.currentUser!.avatarUrl.isEmpty
+                ? Icon(
+                    Icons.person,
+                    size: 35.sp,
+                    color: AppColors.primaryGreen,
+                  )
+                : null,
           ),
 
           SizedBox(width: 16.w),
@@ -215,7 +222,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                 // Indonesian Greeting
                 Obx(
                   () => Text(
-                    controller.indonesianGreeting.value, // ← Tambahkan .value
+                    controller.indonesianGreeting.value,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: Colors.white.withOpacity(0.9),
                       fontWeight: FontWeight.w500,
@@ -263,7 +270,10 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
   Widget _buildStatisticsSection() {
     return Obx(() {
       final stats = controller.dashboardData.value?.stats;
-      if (stats == null) return SizedBox.shrink();
+      if (stats == null) {
+        // Show skeleton loading
+        return _buildStatisticsSkeleton();
+      }
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,6 +288,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                   value: '${stats.totalStudents}',
                   icon: Icons.people,
                   color: AppColors.attendancePresent,
+                  onTap: controller.navigateToStudents, // Add tap functionality
                 ),
               ),
               SizedBox(width: 12.w),
@@ -287,6 +298,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                   value: '${stats.totalClasses}',
                   icon: Icons.class_,
                   color: AppColors.primaryGreen,
+                  onTap: controller.navigateToSchedule, // Add tap functionality
                 ),
               ),
             ],
@@ -309,6 +321,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                   value: '${stats.totalAnnouncements}',
                   icon: Icons.campaign,
                   color: AppColors.attendancePermit,
+                  onTap: controller.navigateToAnnouncements, // Add tap functionality
                 ),
               ),
             ],
@@ -318,7 +331,58 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
     });
   }
 
-  Widget _buildTodayScheduleSection(context) {
+  Widget _buildStatisticsSkeleton() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Statistik Hari Ini', style: AppTextStyles.heading3),
+        SizedBox(height: 12.h),
+        Row(
+          children: [
+            Expanded(child: _buildSkeletonCard()),
+            SizedBox(width: 12.w),
+            Expanded(child: _buildSkeletonCard()),
+          ],
+        ),
+        SizedBox(height: 12.h),
+        Row(
+          children: [
+            Expanded(child: _buildSkeletonCard()),
+            SizedBox(width: 12.w),
+            Expanded(child: _buildSkeletonCard()),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSkeletonCard() {
+    return Container(
+      height: 100.h,
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(12.r),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            height: 20.h,
+            color: Colors.grey[400],
+          ),
+          const Spacer(),
+          Container(
+            width: 60.w,
+            height: 15.h,
+            color: Colors.grey[400],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodayScheduleSection(BuildContext context) {
     return Obx(() {
       final schedules = controller.dashboardData.value?.todaySchedules ?? [];
 
@@ -352,7 +416,8 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                 padding: EdgeInsets.only(bottom: 12.h),
                 child: ScheduleCard(
                   schedule: schedule,
-                  onTap: () => controller.navigateToAttendance(schedule),
+                  // Updated to show options bottom sheet
+                  onTap: () => controller.showScheduleOptions(schedule),
                 ),
               ),
             ),
@@ -361,7 +426,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
     });
   }
 
-  Widget _buildEmptySchedule(context) {
+  Widget _buildEmptySchedule(BuildContext context) {
     return Container(
       width: MediaQuery.of(context).size.width,
       padding: EdgeInsets.all(24.w),
@@ -388,6 +453,11 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),
+          ),
+          SizedBox(height: 12.h),
+          TextButton(
+            onPressed: controller.navigateToSchedule,
+            child: Text('Lihat Jadwal Minggu Ini'),
           ),
         ],
       ),
@@ -416,7 +486,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -486,6 +556,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       ),
     );
   }
+
   Widget _buildAnnouncementItem(AnnouncementModel announcement) {
     return Container(
       padding: EdgeInsets.all(12.w),
@@ -500,7 +571,6 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // SOLUSI 1: Gunakan Column untuk layout yang lebih fleksibel
           if (announcement.isPriority)
             Container(
               margin: EdgeInsets.only(bottom: 8.h),
@@ -518,37 +588,9 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                 ),
               ),
             ),
-          
-          // Title tanpa Row constraint
-          Text(
-            announcement.title,
-            style: AppTextStyles.bodyMedium.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          
-          SizedBox(height: 4.h),
-          Text(
-            announcement.content,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            announcement.timeAgo,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textHint,
-              fontSize: 11.sp,
-            ),
-          ),
-        ],
-      ),
-    );
+        ]
+        )
+  );
   }
   Widget _buildBottomNavigationBar() {
     return Container(

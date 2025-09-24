@@ -1,14 +1,15 @@
-// app/data/models/user_model.dart
-// app/data/models/user_model.dart
+// UPDATE: lib/v2/app/data/models/user_model.dart
+// Perbaikan untuk parsing response actual
+
 class UserModel {
   final String id;
   final String name;
   final String email;
   final DateTime? emailVerifiedAt;
   final bool isChangePassword;
-  final String status; // 'ACTIVE' or 'INACTIVE'
-  final String? gender; // 'MALE' or 'FEMALE'
-  final String religion; // 'ISLAM', 'KRISTEN', etc.
+  final String status;
+  final String? gender;
+  final String religion;
   final String? birthPlace;
   final DateTime? birthDate;
   final String? phoneNumber;
@@ -18,16 +19,13 @@ class UserModel {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  // Role dari relationship (untuk sementara simple string)
-  final String? role; // 'teacher', 'admin', 'parent'
-  final EmployeeModel? employee;
-  final StudentModel? student;
-  
-  // Fields dari response server
+  // Role info
   final String? currentRole;
   final List<String> permissions;
   final bool? isAdmin;
-  final bool? isTeacherFromServer; // Dari field is_teacher server
+  final bool? isTeacherFromServer;
+  final EmployeeModel? employee;
+  final StudentModel? student;
 
   const UserModel({
     required this.id,
@@ -46,16 +44,14 @@ class UserModel {
     this.imgName,
     this.createdAt,
     this.updatedAt,
-    this.role,
-    this.employee,
-    this.student,
     this.currentRole,
     this.permissions = const [],
     this.isAdmin,
     this.isTeacherFromServer,
+    this.employee,
+    this.student,
   });
 
-  // Manual fromJson constructor
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
       id: json['id'] as String,
@@ -64,14 +60,13 @@ class UserModel {
       emailVerifiedAt: json['email_verified_at'] != null
           ? DateTime.parse(json['email_verified_at'])
           : null,
-      // ✅ Fix: Konversi aman untuk boolean dari server response
       isChangePassword: _safeBoolConversion(json['is_change_password']),
       status: json['status'] ?? 'ACTIVE',
       gender: json['gender'],
       religion: json['religion'] ?? 'ISLAM',
       birthPlace: json['birth_place'],
       birthDate: json['birth_date'] != null
-          ? DateTime.tryParse(json['birth_date']) 
+          ? DateTime.tryParse(json['birth_date'])
           : null,
       phoneNumber: json['phone_number'],
       nationality: json['nationality'],
@@ -83,24 +78,19 @@ class UserModel {
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'])
           : null,
-      role: _extractRoleFromJson(json),
-      employee: json['employee'] != null
-          ? EmployeeModel.fromJson(json['employee'])
-          : null,
-      student: json['student'] != null
-          ? StudentModel.fromJson(json['student'])
-          : null,
-      // ✅ Fields baru dari server response
       currentRole: json['current_role'],
       permissions: json['permissions'] != null 
           ? List<String>.from(json['permissions'])
           : [],
       isAdmin: _safeBoolConversion(json['is_admin']),
       isTeacherFromServer: _safeBoolConversion(json['is_teacher']),
+      employee: json['employee'] != null
+          ? EmployeeModel.fromJson(json['employee'])
+          : null,
+      student: json['student'],
     );
   }
 
-  // ✅ Helper method untuk konversi boolean yang aman
   static bool _safeBoolConversion(dynamic value) {
     if (value == null) return false;
     if (value is bool) return value;
@@ -109,26 +99,6 @@ class UserModel {
     return false;
   }
 
-  // Helper method to extract role
-  static String? _extractRoleFromJson(Map<String, dynamic> json) {
-    // Cek current_role dulu (yang dikirim server)
-    if (json['current_role'] != null) return json['current_role'];
-    
-    // Jika ada field 'role' langsung
-    if (json['role'] != null) return json['role'];
-
-    // Jika ada array 'roles' dari Laravel Spatie
-    if (json['roles'] != null && json['roles'] is List) {
-      final roles = json['roles'] as List;
-      if (roles.isNotEmpty && roles.first is Map) {
-        return roles.first['name'];
-      }
-    }
-
-    return null;
-  }
-
-  // Manual toJson method
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -140,14 +110,13 @@ class UserModel {
       'gender': gender,
       'religion': religion,
       'birth_place': birthPlace,
-      'birth_date': birthDate?.toIso8601String().split('T')[0], // Date only
+      'birth_date': birthDate?.toIso8601String().split('T')[0],
       'phone_number': phoneNumber,
       'nationality': nationality,
       'img_path': imgPath,
       'img_name': imgName,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
-      'role': role,
       'current_role': currentRole,
       'permissions': permissions,
       'is_admin': isAdmin,
@@ -157,20 +126,11 @@ class UserModel {
     };
   }
 
-  // Helper methods - Updated berdasarkan response server
+  // Helper methods
   bool get isActive => status == 'ACTIVE';
-  
-  // ✅ Gunakan is_teacher dari server response, fallback ke logic lama
-  bool get isTeacher => 
-      isTeacherFromServer ?? 
-      (role == 'teacher' || currentRole == 'teacher' || employee != null);
-      
-  bool get isParent => role == 'parent' || currentRole == 'parent' || student != null;
-  
-  // ✅ Gunakan is_admin dari server response, fallback ke logic lama  
-  bool get isAdminUser => 
-      isAdmin ?? 
-      (role == 'admin' || currentRole == 'admin');
+  bool get isTeacher => isTeacherFromServer ?? (currentRole == 'teacher' || employee != null);
+  bool get isParent => currentRole == 'parent' || student != null;
+  bool get isAdminUser => isAdmin ?? (currentRole == 'admin');
 
   String get displayName => name;
   String get avatarUrl => imgPath ?? '';
@@ -181,16 +141,13 @@ class UserModel {
     return 'User';
   }
 
-  // Employee info for teachers
   String? get nip => employee?.nip;
   String? get position => employee?.position;
 
-  // Permission checking
   bool hasPermission(String permission) {
     return permissions.contains(permission);
   }
 
-  // Copy with method untuk update data
   UserModel copyWith({
     String? id,
     String? name,
@@ -208,7 +165,6 @@ class UserModel {
     String? imgName,
     DateTime? createdAt,
     DateTime? updatedAt,
-    String? role,
     String? currentRole,
     List<String>? permissions,
     bool? isAdmin,
@@ -233,7 +189,6 @@ class UserModel {
       imgName: imgName ?? this.imgName,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      role: role ?? this.role,
       currentRole: currentRole ?? this.currentRole,
       permissions: permissions ?? this.permissions,
       isAdmin: isAdmin ?? this.isAdmin,
@@ -244,18 +199,18 @@ class UserModel {
   }
 }
 
+// EmployeeModel tetap sama seperti sebelumnya...
 class EmployeeModel {
   final String id;
   final String userId;
   final String? nip;
-  final String position; // 'TEACHER', 'ADMINISTRATOR', 'TECHNICIAN'
+  final String position;
   final String? nuptk;
   final String? nik;
   final String? pendidikanTerakhir;
   final String? jurusan;
   final String? universitas;
   final String? tahunLulus;
-  // ✅ Fields tambahan dari response
   final String? jabatan;
   final String? bidangStudiDiampu;
   final String? tugasTambahan;
@@ -400,7 +355,6 @@ class StudentModel {
   }
 }
 
-// Auth Response Model - Updated untuk response aktual
 class AuthResponse {
   final bool success;
   final String message;
@@ -415,7 +369,17 @@ class AuthResponse {
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
-    // Check if this is an error response
+    // Response structure sesuai dengan backend actual
+    if (json.containsKey('access_token') && json.containsKey('user')) {
+      return AuthResponse(
+        success: true,
+        message: 'Login successful',
+        token: json['access_token'], // Menggunakan access_token
+        user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
+      );
+    }
+
+    // Fallback untuk error response
     if (json.containsKey('message') && json.containsKey('errors')) {
       return AuthResponse(
         success: false,
@@ -425,17 +389,7 @@ class AuthResponse {
       );
     }
 
-    // Check if this is a successful response with access_token
-    if (json.containsKey('access_token') && json.containsKey('user')) {
-      return AuthResponse(
-        success: true,
-        message: 'Login successful',
-        token: json['access_token'], // ✅ Fix: Gunakan access_token
-        user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
-      );
-    }
-
-    // Legacy format support
+    // Default fallback
     return AuthResponse(
       success: _safeBoolConversion(json['success']),
       message: json['message'] ?? '',
@@ -444,7 +398,6 @@ class AuthResponse {
     );
   }
 
-  // ✅ Helper method untuk konversi boolean yang aman
   static bool _safeBoolConversion(dynamic value) {
     if (value is bool) return value;
     if (value is int) return value == 1;
@@ -456,7 +409,7 @@ class AuthResponse {
     return {
       'success': success,
       'message': message,
-      'token': token,
+      'access_token': token,
       'user': user?.toJson(),
     };
   }

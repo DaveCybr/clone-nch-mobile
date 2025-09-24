@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import '../models/attendance_model.dart';
 import '../models/dashboard_model.dart';
 import '../models/user_model.dart';
 import 'storage_service.dart';
@@ -224,21 +225,6 @@ class ApiService extends GetxService {
     }
   }
 
-  // Submit attendance
-  Future<void> submitAttendance({
-    required String scheduleId,
-    required List<Map<String, dynamic>> attendanceData,
-  }) async {
-    try {
-      await _dio.post(
-        '/teacher/attendance',
-        data: {'schedule_id': scheduleId, 'attendance': attendanceData},
-      );
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    }
-  }
-
   // Get announcements
   Future<List<dynamic>> getAnnouncements({int page = 1}) async {
     try {
@@ -247,6 +233,112 @@ class ApiService extends GetxService {
         queryParameters: {'page': page},
       );
       return response.data['berita'] as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  // Tambahkan methods ini ke ApiService existing (lib/v2/app/data/services/api_service.dart)
+
+  /// Get students by schedule for attendance
+  Future<ScheduleDetailModel> getScheduleAttendance({
+    required String scheduleId,
+    DateTime? date,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/teacher/schedule/$scheduleId/attendance',
+        queryParameters: {
+          if (date != null) 'date': date.toIso8601String().split('T')[0],
+        },
+      );
+
+      return ScheduleDetailModel.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Submit attendance for students
+  Future<void> submitAttendance(AttendanceSubmissionModel submission) async {
+    try {
+      await _dio.post(
+        '/teacher/attendance',
+        data: submission.toJson(),
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get teacher's classes and students
+  Future<List<TeacherClassModel>> getTeacherClasses() async {
+    try {
+      final response = await _dio.get('/teacher/classes');
+      return (response.data['data'] as List)
+          .map((e) => TeacherClassModel.fromJson(e))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get student attendance history
+  Future<StudentHistoryModel> getStudentAttendanceHistory({
+    required String studentId,
+    required String subjectId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/teacher/student/$studentId/attendance-history',
+        queryParameters: {
+          'subject_id': subjectId,
+          if (startDate != null) 'start_date': startDate.toIso8601String().split('T')[0],
+          if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
+        },
+      );
+
+      return StudentHistoryModel.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get teacher's schedule (weekly/daily view)
+  Future<List<dynamic>> getTeacherScheduleList({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/teacher/schedule',
+        queryParameters: {
+          if (startDate != null) 'start_date': startDate.toIso8601String().split('T')[0],
+          if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
+        },
+      );
+      return response.data['data'] as List;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Update attendance record
+  Future<void> updateAttendance({
+    required String attendanceId,
+    required AttendanceStatus status,
+    String? notes,
+  }) async {
+    try {
+      await _dio.put(
+        '/teacher/attendance/$attendanceId',
+        data: {
+          'status': status.value,
+          'notes': notes,
+        },
+      );
     } on DioException catch (e) {
       throw _handleDioError(e);
     }

@@ -12,9 +12,10 @@ class PrayerTimeWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: MediaQuery.of(context).size.width,
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(12.r),
         boxShadow: [
           BoxShadow(
@@ -46,16 +47,17 @@ class PrayerTimeWidget extends StatelessWidget {
           SizedBox(height: 12.h),
 
           // Prayer Times List
-          ...prayerTimes.map((prayer) => _buildPrayerTimeItem(prayer)),
+          ...prayerTimes.map((prayer) => _buildPrayerTimeItem(prayer, context)),
         ],
       ),
     );
   }
 
-  Widget _buildPrayerTimeItem(PrayerTime prayer) {
+  Widget _buildPrayerTimeItem(PrayerTime prayer, context) {
     final isCurrentPrayer = _isCurrentPrayerTime(prayer);
 
     return Container(
+      width: MediaQuery.of(context).size.width,
       padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
       margin: EdgeInsets.only(bottom: 4.h),
       decoration: BoxDecoration(
@@ -71,6 +73,7 @@ class PrayerTimeWidget extends StatelessWidget {
           Row(
             children: [
               Container(
+                width: MediaQuery.of(context).size.width,
                 padding: EdgeInsets.all(6.w),
                 decoration: BoxDecoration(
                   color: prayer.color.withOpacity(0.2),
