@@ -90,9 +90,21 @@ class _SplashViewState extends State<SplashView>
       return;
     }
 
-    developer.log('SplashView: User role display: ${user.roleDisplay}');
-    developer.log('SplashView: Is teacher: ${user.isTeacher}');
-    developer.log('SplashView: Is parent: ${user.isParent}');
+    // ✅ ADD MORE DEBUG INFO
+    developer.log('=== USER DEBUG INFO ===');
+    developer.log('User ID: ${user.id}');
+    developer.log('User Name: ${user.name}');
+    developer.log('Current Role: ${user.currentRole}');
+    developer.log('Role Display: ${user.roleDisplay}');
+    developer.log('Is Teacher (new logic): ${user.isTeacher}');
+    developer.log('Is Parent: ${user.isParent}');
+    developer.log('Is Admin: ${user.isAdminUser}');
+    developer.log('Has Employee Data: ${user.employee != null}');
+    developer.log('Employee Position: ${user.employee?.position}');
+    developer.log('Is Teacher From Server: ${user.isTeacherFromServer}');
+    developer.log('User Roles: ${user.roleNames}');
+    developer.log('User Permissions: ${user.permissions}');
+    developer.log('======================');
     
     // Redirect based on user role
     if (user.isTeacher) {
@@ -104,6 +116,7 @@ class _SplashViewState extends State<SplashView>
     } else {
       // Unknown role, go to login
       developer.log('SplashView: Unknown role, going to login');
+      developer.log('Debug: user.isTeacher=${user.isTeacher}, user.isParent=${user.isParent}');
       Get.offAllNamed('/login');
     }
   }
@@ -224,10 +237,12 @@ class _SplashViewState extends State<SplashView>
                                 color: Colors.white.withOpacity(0.8),
                               ),
                             ),
-                            // Debug info (remove in production)
+                            // Enhanced debug info 
                             SizedBox(height: 8.h),
                             Text(
-                              'Debug: isLoggedIn=${authController.isLoggedIn.value}, hasUser=${authController.user.value != null}',
+                              'Debug: isLoggedIn=${authController.isLoggedIn.value}, '
+                              'hasUser=${authController.user.value != null}, '
+                              'userRole=${authController.user.value?.currentRole}',
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.6),
                                 fontSize: 10.sp,

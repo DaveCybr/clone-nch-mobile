@@ -27,7 +27,8 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       backgroundColor: AppColors.scaffoldBackground,
       appBar: _buildAppBar(),
       body: Obx(() {
-        if (controller.isLoading.value && controller.dashboardData.value == null) {
+        if (controller.isLoading.value &&
+            controller.dashboardData.value == null) {
           return _buildLoadingState();
         }
 
@@ -87,38 +88,39 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
         ),
         PopupMenuButton(
           icon: const Icon(Icons.more_vert),
-          itemBuilder: (context) => [
-            PopupMenuItem(
-              value: 'refresh',
-              child: Row(
-                children: [
-                  Icon(Icons.refresh, color: AppColors.primaryGreen),
-                  SizedBox(width: 12.w),
-                  const Text('Refresh'),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'profile',
-              child: Row(
-                children: [
-                  Icon(Icons.person_outline, color: AppColors.primaryGreen),
-                  SizedBox(width: 12.w),
-                  const Text('Profil'),
-                ],
-              ),
-            ),
-            PopupMenuItem(
-              value: 'logout',
-              child: Row(
-                children: [
-                  const Icon(Icons.logout, color: Colors.red),
-                  SizedBox(width: 12.w),
-                  const Text('Keluar'),
-                ],
-              ),
-            ),
-          ],
+          itemBuilder:
+              (context) => [
+                PopupMenuItem(
+                  value: 'refresh',
+                  child: Row(
+                    children: [
+                      Icon(Icons.refresh, color: AppColors.primaryGreen),
+                      SizedBox(width: 12.w),
+                      const Text('Refresh'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'profile',
+                  child: Row(
+                    children: [
+                      Icon(Icons.person_outline, color: AppColors.primaryGreen),
+                      SizedBox(width: 12.w),
+                      const Text('Profil'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.logout, color: Colors.red),
+                      SizedBox(width: 12.w),
+                      const Text('Keluar'),
+                    ],
+                  ),
+                ),
+              ],
           onSelected: (value) {
             switch (value) {
               case 'refresh':
@@ -187,16 +189,18 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
           CircleAvatar(
             radius: 35.r,
             backgroundColor: AppColors.goldAccent,
-            backgroundImage: controller.currentUser!.avatarUrl.isNotEmpty
-                ? NetworkImage(controller.currentUser!.avatarUrl)
-                : null,
-            child: controller.currentUser!.avatarUrl.isEmpty
-                ? Icon(
-                    Icons.person,
-                    size: 35.sp,
-                    color: AppColors.primaryGreen,
-                  )
-                : null,
+            backgroundImage:
+                controller.currentUser!.avatarUrl.isNotEmpty
+                    ? NetworkImage(controller.currentUser!.avatarUrl)
+                    : null,
+            child:
+                controller.currentUser!.avatarUrl.isEmpty
+                    ? Icon(
+                      Icons.person,
+                      size: 35.sp,
+                      color: AppColors.primaryGreen,
+                    )
+                    : null,
           ),
 
           SizedBox(width: 16.w),
@@ -321,7 +325,9 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                   value: '${stats.totalAnnouncements}',
                   icon: Icons.campaign,
                   color: AppColors.attendancePermit,
-                  onTap: controller.navigateToAnnouncements, // Add tap functionality
+                  onTap:
+                      controller
+                          .navigateToAnnouncements, // Add tap functionality
                 ),
               ),
             ],
@@ -372,11 +378,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
             color: Colors.grey[400],
           ),
           const Spacer(),
-          Container(
-            width: 60.w,
-            height: 15.h,
-            color: Colors.grey[400],
-          ),
+          Container(width: 60.w, height: 15.h, color: Colors.grey[400]),
         ],
       ),
     );
@@ -564,9 +566,10 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       decoration: BoxDecoration(
         color: AppColors.lightGreenBg,
         borderRadius: BorderRadius.circular(8.r),
-        border: announcement.isPriority
-            ? Border.all(color: Colors.orange, width: 1)
-            : null,
+        border:
+            announcement.isPriority
+                ? Border.all(color: Colors.orange, width: 1)
+                : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -588,10 +591,11 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                 ),
               ),
             ),
-        ]
-        )
-  );
+        ],
+      ),
+    );
   }
+
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
@@ -625,7 +629,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
               break;
           }
         },
-        items: [
+        items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Dashboard'),
           BottomNavigationBarItem(icon: Icon(Icons.schedule), label: 'Jadwal'),
           BottomNavigationBarItem(

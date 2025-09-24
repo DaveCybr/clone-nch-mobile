@@ -13,7 +13,7 @@ class ApiService extends GetxService {
   final StorageService _storageService = Get.find<StorageService>();
 
   // Base URL - sesuaikan dengan server Laravel Anda
-  static const String baseUrl = 'https://be.nurulchotib.com/api';
+  static const String baseUrl = 'http://192.168.1.5:8000/api';
 
   @override
   void onInit() {
@@ -262,10 +262,7 @@ class ApiService extends GetxService {
   /// Submit attendance for students
   Future<void> submitAttendance(AttendanceSubmissionModel submission) async {
     try {
-      await _dio.post(
-        '/teacher/attendance',
-        data: submission.toJson(),
-      );
+      await _dio.post('/teacher/attendance', data: submission.toJson());
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -295,8 +292,10 @@ class ApiService extends GetxService {
         '/teacher/student/$studentId/attendance-history',
         queryParameters: {
           'subject_id': subjectId,
-          if (startDate != null) 'start_date': startDate.toIso8601String().split('T')[0],
-          if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
+          if (startDate != null)
+            'start_date': startDate.toIso8601String().split('T')[0],
+          if (endDate != null)
+            'end_date': endDate.toIso8601String().split('T')[0],
         },
       );
 
@@ -315,8 +314,10 @@ class ApiService extends GetxService {
       final response = await _dio.get(
         '/teacher/schedule',
         queryParameters: {
-          if (startDate != null) 'start_date': startDate.toIso8601String().split('T')[0],
-          if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
+          if (startDate != null)
+            'start_date': startDate.toIso8601String().split('T')[0],
+          if (endDate != null)
+            'end_date': endDate.toIso8601String().split('T')[0],
         },
       );
       return response.data['data'] as List;
@@ -334,10 +335,7 @@ class ApiService extends GetxService {
     try {
       await _dio.put(
         '/teacher/attendance/$attendanceId',
-        data: {
-          'status': status.value,
-          'notes': notes,
-        },
+        data: {'status': status.value, 'notes': notes},
       );
     } on DioException catch (e) {
       throw _handleDioError(e);

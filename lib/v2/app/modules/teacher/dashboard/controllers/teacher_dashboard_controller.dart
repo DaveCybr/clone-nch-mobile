@@ -8,7 +8,7 @@ import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/services/api_service.dart';
 import '../../../../routes/app_routes.dart';
-import '../../../auth/controllers/auth_controller.dart';// Add this import
+import '../../../auth/controllers/auth_controller.dart'; // Add this import
 
 class TeacherDashboardController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
@@ -52,15 +52,18 @@ class TeacherDashboardController extends GetxController {
 
       // Update prayer times if available
       if (response['prayer_times'] != null) {
-        prayerTimes.value = (response['prayer_times'] as List)
-            .map((e) => PrayerTimeModel.fromJson(e))
-            .toList();
+        prayerTimes.value =
+            (response['prayer_times'] as List)
+                .map((e) => PrayerTimeModel.fromJson(e))
+                .toList();
       }
     } catch (e) {
       // Provide fallback data instead of just showing error
       _loadFallbackData();
-      _showErrorSnackbar('خطأ في تحميل البيانات', 
-        'Menggunakan data offline. Periksa koneksi internet Anda.');
+      _showErrorSnackbar(
+        'خطأ في تحميل البيانات',
+        'Menggunakan data offline. Periksa koneksi internet Anda.',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -69,7 +72,7 @@ class TeacherDashboardController extends GetxController {
   /// Provide fallback data when API fails
   void _loadFallbackData() {
     dashboardData.value = TeacherDashboardModel(
-      stats: DashboardStats(
+      stats: const DashboardStats(
         totalStudents: 0,
         totalClasses: 0,
         todayTasks: 0,
@@ -180,7 +183,7 @@ class TeacherDashboardController extends GetxController {
     Get.toNamed(Routes.TEACHER_ANNOUNCEMENTS);
   }
 
-  /// Navigate to students  
+  /// Navigate to students
   void navigateToStudents() {
     Get.toNamed(Routes.TEACHER_STUDENTS);
   }
@@ -198,7 +201,7 @@ class TeacherDashboardController extends GetxController {
   /// Handle bottom navigation
   void onBottomNavTapped(int index) {
     selectedNavIndex.value = index;
-    
+
     switch (index) {
       case 0:
         // Already on dashboard, refresh data
@@ -241,7 +244,7 @@ class TeacherDashboardController extends GetxController {
               ),
             ),
             const SizedBox(height: 20),
-            
+
             Text(
               schedule.subjectName,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -250,9 +253,9 @@ class TeacherDashboardController extends GetxController {
               '${schedule.className} • ${schedule.timeRange}',
               style: TextStyle(color: Colors.grey[600]),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Options
             ListTile(
               leading: const Icon(Icons.how_to_reg, color: Colors.green),
@@ -263,7 +266,7 @@ class TeacherDashboardController extends GetxController {
                 navigateToAttendance(schedule);
               },
             ),
-            
+
             ListTile(
               leading: const Icon(Icons.people, color: Colors.blue),
               title: const Text('Lihat Data Siswa'),
@@ -273,7 +276,7 @@ class TeacherDashboardController extends GetxController {
                 navigateToStudents();
               },
             ),
-            
+
             if (schedule.isDone)
               ListTile(
                 leading: const Icon(Icons.edit, color: Colors.orange),
@@ -300,10 +303,7 @@ class TeacherDashboardController extends GetxController {
           'هل أنت متأكد من تسجيل الخروج؟\nApakah Anda yakin ingin keluar?',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('إلغاء'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
