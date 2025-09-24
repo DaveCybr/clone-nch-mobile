@@ -1,6 +1,4 @@
-// =====================================
-// 2. UPDATE TeacherDashboardView
-// =====================================
+// Fixed TeacherDashboardView.dart - Complete solution for GetX errors
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,7 +11,7 @@ import '../../../../../core/widgets/islamic/prayer_time_widget.dart';
 import '../../../../../core/widgets/teacher/schedule_card.dart';
 import '../../../../../core/widgets/teacher/statistic_card.dart';
 import '../../../../data/models/dashboard_model.dart';
-import '../../../../routes/app_routes.dart'; // Add this import
+import '../../../../routes/app_routes.dart';
 import '../controllers/teacher_dashboard_controller.dart';
 
 class TeacherDashboardView extends GetView<TeacherDashboardController> {
@@ -26,53 +24,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: _buildAppBar(),
-      body: Obx(() {
-        if (controller.isLoading.value &&
-            controller.dashboardData.value == null) {
-          return _buildLoadingState();
-        }
-
-        return SmartRefresher(
-          controller: refreshController,
-          enablePullDown: true,
-          header: WaterDropMaterialHeader(
-            backgroundColor: AppColors.primaryGreen,
-          ),
-          onRefresh: () async {
-            await controller.refreshDashboard();
-            refreshController.refreshCompleted();
-          },
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Islamic Greeting Section
-                if (controller.currentUser != null) _buildGreetingSection(),
-
-                SizedBox(height: 16.h),
-
-                // Statistics Cards
-                _buildStatisticsSection(),
-
-                SizedBox(height: 20.h),
-
-                // Today's Schedule
-                _buildTodayScheduleSection(context),
-
-                SizedBox(height: 20.h),
-
-                // Prayer Times & Announcements
-                _buildPrayerTimesSection(),
-                SizedBox(height: 20.h),
-                _buildAnnouncementsSection(),
-
-                SizedBox(height: 20.h),
-              ],
-            ),
-          ),
-        );
-      }),
+      body: _buildBody(refreshController, context),
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
@@ -137,6 +89,60 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
         ),
       ],
     );
+  }
+
+  Widget _buildBody(RefreshController refreshController, context) {
+    // ✅ FIX: Single Obx wrapping the entire body with proper observable access
+    return Obx(() {
+      // ✅ IMPORTANT: Always access observables directly inside Obx
+      final isLoading = controller.isLoading.value;
+      final dashboardData = controller.dashboardData.value;
+
+      if (isLoading && dashboardData == null) {
+        return _buildLoadingState();
+      }
+
+      return SmartRefresher(
+        controller: refreshController,
+        enablePullDown: true,
+        header: WaterDropMaterialHeader(
+          backgroundColor: AppColors.primaryGreen,
+        ),
+        onRefresh: () async {
+          await controller.refreshDashboard();
+          refreshController.refreshCompleted();
+        },
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Islamic Greeting Section
+              if (controller.currentUser != null) _buildGreetingSection(),
+
+              SizedBox(height: 16.h),
+
+              // Statistics Cards
+              _buildStatisticsSection(),
+
+              SizedBox(height: 20.h),
+
+              // Today's Schedule
+              _buildTodayScheduleSection(context),
+
+              SizedBox(height: 20.h),
+
+              // Prayer Times & Announcements
+              _buildPrayerTimesSection(),
+              SizedBox(height: 20.h),
+              _buildAnnouncementsSection(),
+
+              SizedBox(height: 20.h),
+            ],
+          ),
+        ),
+      );
+    });
   }
 
   Widget _buildLoadingState() {
@@ -205,12 +211,12 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
 
           SizedBox(width: 16.w),
 
-          // Greeting Content
+          // Greeting Content with separate Obx for reactive greetings
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Arabic Greeting
+                // ✅ FIX: Separate Obx for reactive greeting
                 Obx(
                   () => Text(
                     controller.islamicGreeting.value,
@@ -223,7 +229,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
 
                 SizedBox(height: 4.h),
 
-                // Indonesian Greeting
+                // ✅ FIX: Separate Obx for Indonesian greeting
                 Obx(
                   () => Text(
                     controller.indonesianGreeting.value,
@@ -236,7 +242,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
 
                 SizedBox(height: 8.h),
 
-                // User name
+                // User name and role (static)
                 Text(
                   controller.currentUser!.displayName,
                   style: AppTextStyles.heading3.copyWith(
@@ -254,7 +260,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
 
                 SizedBox(height: 8.h),
 
-                // Current time and date
+                // ✅ FIX: Separate Obx for current time
                 Obx(
                   () => Text(
                     _formatCurrentDateTime(controller.currentTime.value),
@@ -272,69 +278,65 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
   }
 
   Widget _buildStatisticsSection() {
-    return Obx(() {
-      final stats = controller.dashboardData.value?.stats;
-      if (stats == null) {
-        // Show skeleton loading
-        return _buildStatisticsSkeleton();
-      }
+    // ✅ FIX: No Obx needed here if we're accessing data from parent Obx
+    final stats = controller.dashboardData.value?.stats;
+    if (stats == null) {
+      return _buildStatisticsSkeleton();
+    }
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Statistik Hari Ini', style: AppTextStyles.heading3),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Expanded(
-                child: StatisticsCard(
-                  title: 'Santri Aktif',
-                  value: '${stats.totalStudents}',
-                  icon: Icons.people,
-                  color: AppColors.attendancePresent,
-                  onTap: controller.navigateToStudents, // Add tap functionality
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Statistik Hari Ini', style: AppTextStyles.heading3),
+        SizedBox(height: 12.h),
+        Row(
+          children: [
+            Expanded(
+              child: StatisticsCard(
+                title: 'Santri Aktif',
+                value: '${stats.totalStudents}',
+                icon: Icons.people,
+                color: AppColors.attendancePresent,
+                onTap: controller.navigateToStudents,
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: StatisticsCard(
-                  title: 'Kelas Terjadwal',
-                  value: '${stats.totalClasses}',
-                  icon: Icons.class_,
-                  color: AppColors.primaryGreen,
-                  onTap: controller.navigateToSchedule, // Add tap functionality
-                ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: StatisticsCard(
+                title: 'Kelas Terjadwal',
+                value: '${stats.totalClasses}',
+                icon: Icons.class_,
+                color: AppColors.primaryGreen,
+                onTap: controller.navigateToSchedule,
               ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Expanded(
-                child: StatisticsCard(
-                  title: 'Tugas Dinilai',
-                  value: '${stats.todayTasks}',
-                  icon: Icons.assignment,
-                  color: AppColors.goldAccent,
-                ),
+            ),
+          ],
+        ),
+        SizedBox(height: 12.h),
+        Row(
+          children: [
+            Expanded(
+              child: StatisticsCard(
+                title: 'Tugas Dinilai',
+                value: '${stats.todayTasks}',
+                icon: Icons.assignment,
+                color: AppColors.goldAccent,
               ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: StatisticsCard(
-                  title: 'Pengumuman',
-                  value: '${stats.totalAnnouncements}',
-                  icon: Icons.campaign,
-                  color: AppColors.attendancePermit,
-                  onTap:
-                      controller
-                          .navigateToAnnouncements, // Add tap functionality
-                ),
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: StatisticsCard(
+                title: 'Pengumuman',
+                value: '${stats.totalAnnouncements}',
+                icon: Icons.campaign,
+                color: AppColors.attendancePermit,
+                onTap: controller.navigateToAnnouncements,
               ),
-            ],
-          ),
-        ],
-      );
-    });
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _buildStatisticsSkeleton() {
@@ -385,47 +387,45 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
   }
 
   Widget _buildTodayScheduleSection(BuildContext context) {
-    return Obx(() {
-      final schedules = controller.dashboardData.value?.todaySchedules ?? [];
+    // ✅ FIX: Access data from parent Obx, no nested Obx needed
+    final schedules = controller.dashboardData.value?.todaySchedules ?? [];
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Jadwal Hari Ini', style: AppTextStyles.heading3),
-              TextButton(
-                onPressed: controller.navigateToSchedule,
-                child: Text(
-                  'Lihat Semua',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.primaryGreen,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 12.h),
-
-          if (schedules.isEmpty)
-            _buildEmptySchedule(context)
-          else
-            ...schedules.map(
-              (schedule) => Padding(
-                padding: EdgeInsets.only(bottom: 12.h),
-                child: ScheduleCard(
-                  schedule: schedule,
-                  // Updated to show options bottom sheet
-                  onTap: () => controller.showScheduleOptions(schedule),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Jadwal Hari Ini', style: AppTextStyles.heading3),
+            TextButton(
+              onPressed: controller.navigateToSchedule,
+              child: Text(
+                'Lihat Semua',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.primaryGreen,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-        ],
-      );
-    });
+          ],
+        ),
+
+        SizedBox(height: 12.h),
+
+        if (schedules.isEmpty)
+          _buildEmptySchedule(context)
+        else
+          ...schedules.map(
+            (schedule) => Padding(
+              padding: EdgeInsets.only(bottom: 12.h),
+              child: ScheduleCard(
+                schedule: schedule,
+                onTap: () => controller.showScheduleOptions(schedule),
+              ),
+            ),
+          ),
+      ],
+    );
   }
 
   Widget _buildEmptySchedule(BuildContext context) {
@@ -467,6 +467,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
   }
 
   Widget _buildPrayerTimesSection() {
+    // ✅ FIX: Separate Obx for prayer times
     return Obx(
       () => PrayerTimeWidget(
         prayerTimes: controller.prayerTimes,
@@ -476,63 +477,62 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
   }
 
   Widget _buildAnnouncementsSection() {
-    return Obx(() {
-      final announcements = controller.dashboardData.value?.announcements ?? [];
+    // ✅ FIX: Access data from parent Obx
+    final announcements = controller.dashboardData.value?.announcements ?? [];
 
-      return Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12.r),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.campaign,
-                      color: AppColors.primaryGreen,
-                      size: 20.sp,
-                    ),
-                    SizedBox(width: 8.w),
-                    Text('Pengumuman', style: AppTextStyles.cardTitle),
-                  ],
-                ),
-                TextButton(
-                  onPressed: controller.navigateToAnnouncements,
-                  child: Text(
-                    'Semua',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.primaryGreen,
-                    ),
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.campaign,
+                    color: AppColors.primaryGreen,
+                    size: 20.sp,
+                  ),
+                  SizedBox(width: 8.w),
+                  Text('Pengumuman', style: AppTextStyles.cardTitle),
+                ],
+              ),
+              TextButton(
+                onPressed: controller.navigateToAnnouncements,
+                child: Text(
+                  'Semua',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.primaryGreen,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
 
-            SizedBox(height: 12.h),
+          SizedBox(height: 12.h),
 
-            if (announcements.isEmpty)
-              _buildEmptyAnnouncements()
-            else
-              ...announcements
-                  .take(3)
-                  .map((announcement) => _buildAnnouncementItem(announcement)),
-          ],
-        ),
-      );
-    });
+          if (announcements.isEmpty)
+            _buildEmptyAnnouncements()
+          else
+            ...announcements
+                .take(3)
+                .map((announcement) => _buildAnnouncementItem(announcement)),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyAnnouncements() {
@@ -590,6 +590,23 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+            ),
+          Text(
+            announcement.title,
+            style: AppTextStyles.bodyMedium.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (announcement.content.isNotEmpty)
+            Text(
+              announcement.content,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
         ],
       ),

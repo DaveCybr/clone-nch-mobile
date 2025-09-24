@@ -1,6 +1,4 @@
-// =====================================
-// 1. UPDATE TeacherDashboardController
-// =====================================
+// Fixed TeacherDashboardController.dart
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,7 +6,7 @@ import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/services/api_service.dart';
 import '../../../../routes/app_routes.dart';
-import '../../../auth/controllers/auth_controller.dart'; // Add this import
+import '../../../auth/controllers/auth_controller.dart';
 
 class TeacherDashboardController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
@@ -19,7 +17,7 @@ class TeacherDashboardController extends GetxController {
   final isRefreshing = false.obs;
   final dashboardData = Rxn<TeacherDashboardModel>();
   final currentTime = DateTime.now().obs;
-  final selectedNavIndex = 0.obs; // ADD THIS
+  final selectedNavIndex = 0.obs;
 
   // Prayer times
   final prayerTimes = <PrayerTimeModel>[].obs;
@@ -173,29 +171,62 @@ class TeacherDashboardController extends GetxController {
 
   // ===== NAVIGATION METHODS - FIXED =====
 
-  /// Navigate to attendance for specific schedule
+  /// Navigate to attendance for specific schedule - FIXED
   void navigateToAttendance(TodayScheduleModel schedule) {
-    Get.toNamed(Routes.TEACHER_ATTENDANCE, arguments: {'schedule': schedule});
+    print('🔄 Navigating to attendance for schedule: ${schedule.id}');
+
+    // Check if the route and controller exist
+    // if (!Get.isRouteActive(Routes.TEACHER_ATTENDANCE)) {
+    //   print('⚠️ Route ${Routes.TEACHER_ATTENDANCE} is not active');
+    // }
+
+    // Navigate with proper error handling
+    try {
+      Get.toNamed(
+        Routes.TEACHER_ATTENDANCE,
+        arguments: {'schedule': schedule, 'schedule_id': schedule.id},
+      );
+      print('✅ Navigation successful');
+    } catch (e) {
+      print('❌ Navigation error: $e');
+      _showErrorSnackbar('Error', 'Tidak dapat membuka halaman absensi: $e');
+    }
   }
 
   /// Navigate to announcements
   void navigateToAnnouncements() {
-    Get.toNamed(Routes.TEACHER_ANNOUNCEMENTS);
+    try {
+      Get.toNamed(Routes.TEACHER_ANNOUNCEMENTS);
+    } catch (e) {
+      _showErrorSnackbar('Info', 'Halaman pengumuman belum tersedia');
+    }
   }
 
   /// Navigate to students
   void navigateToStudents() {
-    Get.toNamed(Routes.TEACHER_STUDENTS);
+    try {
+      Get.toNamed(Routes.TEACHER_STUDENTS);
+    } catch (e) {
+      _showErrorSnackbar('Error', 'Tidak dapat membuka halaman siswa: $e');
+    }
   }
 
   /// Navigate to schedule
   void navigateToSchedule() {
-    Get.toNamed(Routes.TEACHER_SCHEDULE);
+    try {
+      Get.toNamed(Routes.TEACHER_SCHEDULE);
+    } catch (e) {
+      _showErrorSnackbar('Info', 'Halaman jadwal belum tersedia');
+    }
   }
 
   /// Navigate to profile
   void navigateToProfile() {
-    Get.toNamed(Routes.TEACHER_PROFILE);
+    try {
+      Get.toNamed(Routes.TEACHER_PROFILE);
+    } catch (e) {
+      _showErrorSnackbar('Info', 'Halaman profil belum tersedia');
+    }
   }
 
   /// Handle bottom navigation
@@ -219,7 +250,7 @@ class TeacherDashboardController extends GetxController {
     }
   }
 
-  /// Show schedule options when tapping schedule card
+  /// Show schedule options when tapping schedule card - IMPROVED
   void showScheduleOptions(TodayScheduleModel schedule) {
     Get.bottomSheet(
       Container(
@@ -256,14 +287,17 @@ class TeacherDashboardController extends GetxController {
 
             const SizedBox(height: 20),
 
-            // Options
+            // Options - IMPROVED with error handling
             ListTile(
               leading: const Icon(Icons.how_to_reg, color: Colors.green),
               title: const Text('Absensi Siswa'),
               subtitle: const Text('Input kehadiran siswa'),
               onTap: () {
                 Get.back();
-                navigateToAttendance(schedule);
+                // Add delay to ensure bottom sheet is closed
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  navigateToAttendance(schedule);
+                });
               },
             ),
 
@@ -273,7 +307,9 @@ class TeacherDashboardController extends GetxController {
               subtitle: const Text('Data dan rekap kehadiran'),
               onTap: () {
                 Get.back();
-                navigateToStudents();
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  navigateToStudents();
+                });
               },
             ),
 
@@ -284,7 +320,9 @@ class TeacherDashboardController extends GetxController {
                 subtitle: const Text('Perbaiki data kehadiran'),
                 onTap: () {
                   Get.back();
-                  navigateToAttendance(schedule);
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    navigateToAttendance(schedule);
+                  });
                 },
               ),
           ],
