@@ -19,9 +19,14 @@ class TeacherDashboardController extends GetxController {
   final prayerTimes = <PrayerTimeModel>[].obs;
   final currentPrayerIndex = 0.obs;
 
+  // SOLUSI: Tambahkan reactive variables untuk greeting
+  final islamicGreeting = 'السلام عليكم'.obs;
+  final indonesianGreeting = 'Selamat datang'.obs;
+
   @override
   void onInit() {
     super.onInit();
+    _updateGreetings(); // Update greeting pertama kali
     _initializeDashboard();
     _startTimeUpdater();
   }
@@ -101,39 +106,38 @@ class TeacherDashboardController extends GetxController {
     Stream.periodic(Duration(minutes: 1)).listen((_) {
       currentTime.value = DateTime.now();
       _updateCurrentPrayer();
+      _updateGreetings(); // SOLUSI: Update greeting setiap menit
     });
   }
 
-  /// Get Islamic greeting based on time
-  String get islamicGreeting {
+  /// SOLUSI: Method untuk update greeting secara reactive
+  void _updateGreetings() {
     final hour = DateTime.now().hour;
 
+    // Update Islamic greeting
     if (hour >= 4 && hour < 11) {
-      return 'صَبَاح الْخَيْر';
+      islamicGreeting.value = 'صَبَاح الْخَيْر';
     } else if (hour >= 11 && hour < 15) {
-      return 'ظُهْر مُبَارَك';
+      islamicGreeting.value = 'ظُهْر مُبَارَك';
     } else if (hour >= 15 && hour < 18) {
-      return 'عَصْر سَعِيد';
+      islamicGreeting.value = 'عَصْر سَعِيد';
     } else if (hour >= 18 && hour < 20) {
-      return 'مَسَاء الْخَيْر';
+      islamicGreeting.value = 'مَسَاء الْخَيْر';
     } else {
-      return 'لَيْلَة مُبَارَكَة';
+      islamicGreeting.value = 'لَيْلَة مُبَارَكَة';
     }
-  }
 
-  String get indonesianGreeting {
-    final hour = DateTime.now().hour;
-
+    // Update Indonesian greeting
     if (hour >= 4 && hour < 11) {
-      return 'Selamat Pagi';
+      indonesianGreeting.value = 'Selamat Pagi';
     } else if (hour >= 11 && hour < 15) {
-      return 'Selamat Siang';
+      indonesianGreeting.value = 'Selamat Siang';
     } else if (hour >= 15 && hour < 18) {
-      return 'Selamat Sore';
+      indonesianGreeting.value = 'Selamat Sore';
     } else if (hour >= 18 && hour < 20) {
-      return 'Selamat Petang';
+      indonesianGreeting.value = 'Selamat Petang';
     } else {
-      return 'Selamat Malam';
+      indonesianGreeting.value = 'Selamat Malam';
     }
   }
 
@@ -193,7 +197,6 @@ class TeacherDashboardController extends GetxController {
         title: title,
         message: message,
         backgroundColor: Colors.red,
-        // colorText: Colors.white,
         duration: Duration(seconds: 3),
         margin: EdgeInsets.all(16),
         borderRadius: 8,

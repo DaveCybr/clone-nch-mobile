@@ -9,6 +9,8 @@ import 'package:get/get.dart';
 import '../modules/auth/bindings/auth_binding.dart';
 import '../modules/auth/views/login_view.dart';
 import '../modules/onboarding/views/splash_view.dart';
+import '../modules/teacher/dashboard/bindings/teacher_dashboard_binding.dart';
+import '../modules/teacher/dashboard/views/teacher_dashboard_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -34,35 +36,35 @@ class AppPages {
       page: () => const TeacherDashboardView(),
       binding: TeacherDashboardBinding(),
     ),
-    GetPage(
-      name: Routes.TEACHER_SCHEDULE,
-      page: () => const ScheduleView(),
-      binding: ScheduleBinding(),
-    ),
-    GetPage(
-      name: Routes.TEACHER_ATTENDANCE,
-      page: () => const AttendanceView(),
-      binding: AttendanceBinding(),
-    ),
-    GetPage(
-      name: Routes.TEACHER_STUDENTS,
-      page: () => const StudentDataView(),
-      binding: StudentBinding(),
-    ),
-    GetPage(
-      name: Routes.TEACHER_ANNOUNCEMENTS,
-      page: () => const AnnouncementView(),
-      binding: AnnouncementBinding(),
-    ),
-    GetPage(
-      name: Routes.TEACHER_PROFILE,
-      page: () => const TeacherProfileView(),
-      binding: TeacherProfileBinding(),
-    ),
-    GetPage(
-      name: Routes.STUDENT_ATTENDANCE_HISTORY,
-      page: () => const StudentAttendanceHistoryView(),
-      binding: AttendanceBinding(),
-    ),
+    // GetPage(
+    //   name: Routes.TEACHER_SCHEDULE,
+    //   page: () => const ScheduleView(),
+    //   binding: ScheduleBinding(),
+    // ),
+    // GetPage(
+    //   name: Routes.TEACHER_ATTENDANCE,
+    //   page: () => const AttendanceView(),
+    //   binding: AttendanceBinding(),
+    // ),
+    // GetPage(
+    //   name: Routes.TEACHER_STUDENTS,
+    //   page: () => const StudentDataView(),
+    //   binding: StudentBinding(),
+    // ),
+    // GetPage(
+    //   name: Routes.TEACHER_ANNOUNCEMENTS,
+    //   page: () => const AnnouncementView(),
+    //   binding: AnnouncementBinding(),
+    // ),
+    // GetPage(
+    //   name: Routes.TEACHER_PROFILE,
+    //   page: () => const TeacherProfileView(),
+    //   binding: TeacherProfileBinding(),
+    // ),
+    // GetPage(
+    //   name: Routes.STUDENT_ATTENDANCE_HISTORY,
+    //   page: () => const StudentAttendanceHistoryView(),
+    //   binding: AttendanceBinding(),
+    // ),
   ];
 }

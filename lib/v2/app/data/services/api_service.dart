@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
@@ -171,13 +173,14 @@ class ApiService extends GetxService {
 
   Future<UserModel> getCurrentUser() async {
     try {
-      final response = await _dio.get('/auth/me');
+      final response = await _dio.get('/me');
 
       // Expected response:
       // {
       //   "success": true,
       //   "user": {...}
       // }
+      developer.log(response.toString());
 
       return UserModel.fromJson(response.data['user']);
     } on DioException catch (e) {

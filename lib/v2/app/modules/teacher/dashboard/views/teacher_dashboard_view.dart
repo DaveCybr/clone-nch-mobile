@@ -53,23 +53,24 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                 SizedBox(height: 20.h),
 
                 // Today's Schedule
-                _buildTodayScheduleSection(),
+                _buildTodayScheduleSection(context),
 
                 SizedBox(height: 20.h),
 
                 // Prayer Times & Announcements Row
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Prayer Times (Left)
-                    Expanded(flex: 1, child: _buildPrayerTimesSection()),
+                    _buildPrayerTimesSection(),
+                    SizedBox(height: 20.h),
+                    _buildAnnouncementsSection(),
+                // Row(
+                //   crossAxisAlignment: CrossAxisAlignment.start,
+                //   children: [
+                //     // Prayer Times (Left)
 
-                    SizedBox(width: 12.w),
+                //     SizedBox(width: 12.w),
 
-                    // Announcements (Right)
-                    Expanded(flex: 1, child: _buildAnnouncementsSection()),
-                  ],
-                ),
+                //     // Announcements (Right)
+                //   ],
+                // ),
 
                 SizedBox(height: 20.h),
               ],
@@ -201,7 +202,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                 // Arabic Greeting
                 Obx(
                   () => Text(
-                    controller.islamicGreeting,
+                    controller.islamicGreeting.value,
                     style: AppTextStyles.arabicText.copyWith(
                       color: Colors.white,
                       fontSize: 18.sp,
@@ -214,7 +215,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                 // Indonesian Greeting
                 Obx(
                   () => Text(
-                    controller.indonesianGreeting,
+                    controller.indonesianGreeting.value, // ← Tambahkan .value
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: Colors.white.withOpacity(0.9),
                       fontWeight: FontWeight.w500,
@@ -317,7 +318,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
     });
   }
 
-  Widget _buildTodayScheduleSection() {
+  Widget _buildTodayScheduleSection(context) {
     return Obx(() {
       final schedules = controller.dashboardData.value?.todaySchedules ?? [];
 
@@ -344,7 +345,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
           SizedBox(height: 12.h),
 
           if (schedules.isEmpty)
-            _buildEmptySchedule()
+            _buildEmptySchedule(context)
           else
             ...schedules.map(
               (schedule) => Padding(
@@ -360,8 +361,9 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
     });
   }
 
-  Widget _buildEmptySchedule() {
+  Widget _buildEmptySchedule(context) {
     return Container(
+      width: MediaQuery.of(context).size.width,
       padding: EdgeInsets.all(24.w),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -484,7 +486,6 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       ),
     );
   }
-
   Widget _buildAnnouncementItem(AnnouncementModel announcement) {
     return Container(
       padding: EdgeInsets.all(12.w),
@@ -492,45 +493,42 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       decoration: BoxDecoration(
         color: AppColors.lightGreenBg,
         borderRadius: BorderRadius.circular(8.r),
-        border:
-            announcement.isPriority
-                ? Border.all(color: Colors.orange, width: 1)
-                : null,
+        border: announcement.isPriority
+            ? Border.all(color: Colors.orange, width: 1)
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              if (announcement.isPriority)
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                  decoration: BoxDecoration(
-                    color: Colors.orange,
-                    borderRadius: BorderRadius.circular(4.r),
-                  ),
-                  child: Text(
-                    'PENTING',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: Colors.white,
-                      fontSize: 10.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              if (announcement.isPriority) SizedBox(width: 8.w),
-              Expanded(
-                child: Text(
-                  announcement.title,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+          // SOLUSI 1: Gunakan Column untuk layout yang lebih fleksibel
+          if (announcement.isPriority)
+            Container(
+              margin: EdgeInsets.only(bottom: 8.h),
+              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+              decoration: BoxDecoration(
+                color: Colors.orange,
+                borderRadius: BorderRadius.circular(4.r),
+              ),
+              child: Text(
+                'PENTING',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: Colors.white,
+                  fontSize: 10.sp,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ],
+            ),
+          
+          // Title tanpa Row constraint
+          Text(
+            announcement.title,
+            style: AppTextStyles.bodyMedium.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
+          
           SizedBox(height: 4.h),
           Text(
             announcement.content,
@@ -552,7 +550,6 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       ),
     );
   }
-
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
