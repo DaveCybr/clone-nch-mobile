@@ -1,0 +1,260 @@
+import 'dart:developer' as developer show log;
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../data/models/user_model.dart';
+import '../../../data/services/api_service.dart';
+import '../../../data/services/storage_service.dart';
+import '../../../routes/app_routes.dart';
+
+class AuthController extends GetxController {
+  final ApiService _apiService = Get.find<ApiService>();
+  final StorageService _storageService = Get.find<StorageService>();
+
+  // Observables
+  final isLoading = false.obs;
+  final user = Rxn<UserModel>();
+  final isLoggedIn = false.obs;
+  final rememberMe = false.obs;
+
+  // Form controllers
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  // Form key
+  final formKey = GlobalKey<FormState>();
+
+  @override
+  void onInit() {
+    super.onInit();
+    _checkAuthStatus();
+    _loadRememberMe();
+  }
+
+  @override
+  void onClose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.onClose();
+  }
+
+  /// Check if user is already logged in
+  Future<void> _checkAuthStatus() async {
+    try {
+      if (_storageService.hasValidToken) {
+        final savedUser = _storageService.getUser();
+        if (savedUser != null) {
+          user.value = savedUser;
+          isLoggedIn.value = true;
+
+          // Try to get fresh user data
+          try {
+            final freshUser = await _apiService.getCurrentUser();
+            user.value = freshUser;
+            await _storageService.saveUser(freshUser);
+          } catch (e) {
+            developer.log('Failed to refresh user data: $e');
+          }
+
+          _redirectBasedOnRole();
+        }
+      }
+    } catch (e) {
+      developer.log('Auth check failed: $e');
+      await _storageService.clearAll();
+    }
+  }
+
+  /// Load remember me preference
+  void _loadRememberMe() {
+    rememberMe.value = _storageService.getRememberMe();
+  }
+
+  /// Login function
+  Future<void> login() async {
+    if (!formKey.currentState!.validate()) return;
+
+    try {
+      isLoading.value = true;
+
+      final response = await _apiService.login(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      // ✅ Fix: Proper logging without printing object directly
+      developer.log('Login response success: ${response.success}');
+      developer.log('Login response message: ${response.message}');
+      developer.log('Login response has token: ${response.token != null}');
+      developer.log('Login response has user: ${response.user != null}');
+
+      if (response.success && response.token != null && response.user != null) {
+        // Save authentication data
+        await _storageService.saveToken(response.token!);
+        await _storageService.saveUser(response.user!);
+        await _storageService.saveLastLogin();
+
+        if (rememberMe.value) {
+          await _storageService.setRememberMe(true);
+        }
+
+        // Update observables
+        user.value = response.user;
+        isLoggedIn.value = true;
+
+        // Show success message with Islamic greeting
+        _showIslamicWelcomeMessage();
+
+        // Redirect based on role
+        _redirectBasedOnRole();
+
+        // Clear form
+        _clearForm();
+      } else {
+        final errorMessage = response.message.isNotEmpty ? response.message : 'Login gagal';
+        developer.log('Login failed: $errorMessage');
+        _showErrorSnackbar('Login Gagal', errorMessage);
+      }
+    } catch (e) {
+      developer.log('Login error: $e');
+      final errorMessage = e.toString().isNotEmpty ? e.toString() : 'Terjadi kesalahan tidak terduga';
+      _showErrorSnackbar('خطأ في تسجيل الدخول', errorMessage);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Logout function
+  Future<void> logout() async {
+    try {
+      isLoading.value = true;
+
+      await _apiService.logout();
+
+      // Clear local data
+      user.value = null;
+      isLoggedIn.value = false;
+
+      _showSuccessSnackbar(
+        'وداعاً',
+        'جزاك الله خيراً - Semoga Allah membalas kebaikan Anda',
+      );
+
+      Get.offAllNamed(Routes.LOGIN);
+    } catch (e) {
+      _showErrorSnackbar('Error', 'Gagal logout: ${e.toString()}');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Toggle remember me
+  void toggleRememberMe(bool? value) {
+    rememberMe.value = value ?? false;
+    _storageService.setRememberMe(rememberMe.value);
+  }
+
+  /// Redirect user based on role
+  void _redirectBasedOnRole() {
+    final currentUser = user.value;
+    if (currentUser == null) {
+      Get.offAllNamed(Routes.LOGIN);
+      return;
+    }
+
+    developer.log('Redirecting user: ${currentUser.name}');
+    developer.log('User role: ${currentUser.role}');
+    developer.log('Is teacher: ${currentUser.isTeacher}');
+    developer.log('Is parent: ${currentUser.isParent}');
+
+    if (currentUser.isTeacher) {
+      Get.offAllNamed(Routes.TEACHER_DASHBOARD);
+    } else if (currentUser.isParent) {
+      Get.offAllNamed(Routes.PARENT_DASHBOARD);
+    } else {
+      Get.offAllNamed(Routes.LOGIN);
+    }
+  }
+
+  /// Show Islamic welcome message
+  void _showIslamicWelcomeMessage() {
+    final hour = DateTime.now().hour;
+    String greeting = '';
+
+    if (hour < 5) {
+      greeting = 'لَيْلَة سَعِيدَة'; // Good night
+    } else if (hour < 11) {
+      greeting = 'صَبَاح الْخَيْر'; // Good morning
+    } else if (hour < 15) {
+      greeting = 'ظُهْر سَعِيد'; // Good afternoon
+    } else if (hour < 19) {
+      greeting = 'عَصْر سَعِيد'; // Good evening
+    } else {
+      greeting = 'مَسَاء الْخَيْر'; // Good evening
+    }
+
+    final userName = user.value?.name ?? 'User';
+    _showSuccessSnackbar(
+      'أَهْلاً وَسَهْلاً',
+      '$greeting، $userName\nبَارَكَ اللهُ فِيكَ - Semoga Allah memberkahi Anda',
+    );
+  }
+
+  /// Clear form
+  void _clearForm() {
+    emailController.clear();
+    passwordController.clear();
+  }
+
+  /// Show success snackbar
+  void _showSuccessSnackbar(String title, String message) {
+    // ✅ Ensure parameters are not empty
+    final validTitle = title.isEmpty ? 'Success' : title;
+    final validMessage = message.isEmpty ? 'Operation completed successfully' : message;
+
+    Get.snackbar(
+      validTitle,
+      validMessage,
+      backgroundColor: AppColors.primaryGreen,
+      colorText: Colors.white,
+      icon: const Icon(Icons.check_circle, color: Colors.white),
+      snackPosition: SnackPosition.TOP,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 8,
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  /// Show error snackbar
+  void _showErrorSnackbar(String title, String message) {
+    // ✅ Ensure parameters are not empty
+    final validTitle = title.isEmpty ? 'Error' : title;
+    final validMessage = message.isEmpty ? 'An error occurred' : message;
+
+    Get.snackbar(
+      validTitle,
+      validMessage,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+      icon: const Icon(Icons.error, color: Colors.white),
+      snackPosition: SnackPosition.TOP,
+      margin: const EdgeInsets.all(16),
+      borderRadius: 8,
+      duration: const Duration(seconds: 3),
+    );
+  }
+
+  /// Get current user from server
+  Future<void> getCurrentUser() async {
+    try {
+      final freshUser = await _apiService.getCurrentUser();
+      user.value = freshUser;
+      await _storageService.saveUser(freshUser);
+      isLoggedIn.value = true;
+    } catch (e) {
+      developer.log('Failed to get current user: $e');
+      await logout();
+    }
+  }
+}
