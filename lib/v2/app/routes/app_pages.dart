@@ -13,6 +13,9 @@ import '../modules/teacher/student/bindings/student_data_binding.dart';
 import '../modules/teacher/student/views/student_data_view.dart';
 import '../modules/teacher/student_history/bindings/student_history_binding.dart';
 import '../modules/teacher/student_history/views/student_history_view.dart';
+// ✅ ADD MISSING IMPORTS
+import '../modules/teacher/schedule/bindings/schedule_binding.dart';
+import '../modules/teacher/schedule/views/schedule_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -38,12 +41,20 @@ class AppPages {
       binding: TeacherDashboardBinding(),
     ),
 
-    // Attendance route - FIXED
+    // ✅ FIX: Add Schedule route with proper binding
+    GetPage(
+      name: Routes.TEACHER_SCHEDULE,
+      page: () => const ScheduleView(),
+      binding: ScheduleBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
+
+    // Attendance route
     GetPage(
       name: Routes.TEACHER_ATTENDANCE,
       page: () => const AttendanceView(),
       binding: AttendanceBinding(),
-      // Add transition for better UX
       transition: Transition.rightToLeft,
       transitionDuration: const Duration(milliseconds: 300),
     ),
@@ -67,16 +78,6 @@ class AppPages {
     ),
 
     // Placeholder routes for missing pages
-    GetPage(
-      name: Routes.TEACHER_SCHEDULE,
-      page:
-          () => _buildPlaceholderPage(
-            'Jadwal',
-            'Halaman jadwal sedang dalam pengembangan',
-          ),
-      binding: TeacherDashboardBinding(),
-    ),
-
     GetPage(
       name: Routes.TEACHER_ANNOUNCEMENTS,
       page:

@@ -371,4 +371,6 @@ class ApiService extends GetxService {
 
   // Getter for dio instance
   Dio get dio => _dio;
+
+  Future getSchedulesByDate(DateTime date) async {}
 }
