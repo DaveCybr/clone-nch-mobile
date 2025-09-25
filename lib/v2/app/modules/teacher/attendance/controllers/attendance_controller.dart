@@ -5,10 +5,11 @@ import 'package:get/get.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../../data/services/export_service.dart';
 
 class AttendanceController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
-
+  final ExportService _exportService = Get.find<ExportService>();
   // Observables
   final isLoading = false.obs;
   final isSaving = false.obs;
@@ -21,8 +22,10 @@ class AttendanceController extends GetxController {
   final searchQuery = ''.obs;
 
   // Schedule info from arguments
-  TodayScheduleModel? get schedule => Get.arguments?['schedule'] as TodayScheduleModel?;
-  String? get scheduleId => schedule?.id ?? Get.arguments?['schedule_id'] as String?;
+  TodayScheduleModel? get schedule =>
+      Get.arguments?['schedule'] as TodayScheduleModel?;
+  String? get scheduleId =>
+      schedule?.id ?? Get.arguments?['schedule_id'] as String?;
 
   @override
   void onInit() {
@@ -54,7 +57,7 @@ class AttendanceController extends GetxController {
 
       scheduleDetail.value = detail;
       studentsAttendance.value = detail.students;
-      
+
       developer.log('Loaded ${detail.students.length} students');
     } catch (e) {
       developer.log('Error loading attendance: $e');
@@ -73,13 +76,16 @@ class AttendanceController extends GetxController {
       final submission = AttendanceSubmissionModel(
         scheduleId: scheduleId!,
         attendanceDate: selectedDate.value,
-        attendances: studentsAttendance
-            .map((student) => AttendanceRecordModel(
-                  studentId: student.studentId,
-                  status: student.currentStatus,
-                  notes: student.notes,
-                ))
-            .toList(),
+        attendances:
+            studentsAttendance
+                .map(
+                  (student) => AttendanceRecordModel(
+                    studentId: student.studentId,
+                    status: student.currentStatus,
+                    notes: student.notes,
+                  ),
+                )
+                .toList(),
       );
 
       await _apiService.submitAttendance(submission);
@@ -100,8 +106,14 @@ class AttendanceController extends GetxController {
   }
 
   /// Update student attendance status
-  void updateStudentAttendance(String studentId, AttendanceStatus status, {String? notes}) {
-    final index = studentsAttendance.indexWhere((s) => s.studentId == studentId);
+  void updateStudentAttendance(
+    String studentId,
+    AttendanceStatus status, {
+    String? notes,
+  }) {
+    final index = studentsAttendance.indexWhere(
+      (s) => s.studentId == studentId,
+    );
     if (index != -1) {
       studentsAttendance[index] = studentsAttendance[index].copyWith(
         currentStatus: status,
@@ -115,10 +127,12 @@ class AttendanceController extends GetxController {
     if (searchQuery.value.isEmpty) {
       return studentsAttendance;
     }
-    
+
     return studentsAttendance.where((student) {
-      return student.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-             student.nisn.contains(searchQuery.value);
+      return student.name.toLowerCase().contains(
+            searchQuery.value.toLowerCase(),
+          ) ||
+          student.nisn.contains(searchQuery.value);
     }).toList();
   }
 
@@ -158,7 +172,7 @@ class AttendanceController extends GetxController {
               ),
             ),
             SizedBox(height: 20),
-            
+
             Text(
               student.name,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -167,20 +181,21 @@ class AttendanceController extends GetxController {
               'NIS: ${student.nisn}',
               style: TextStyle(color: Colors.grey[600]),
             ),
-            
+
             SizedBox(height: 20),
-            
+
             // Attendance options
-            ...AttendanceStatus.values.map((status) => 
-              ListTile(
+            ...AttendanceStatus.values.map(
+              (status) => ListTile(
                 leading: Icon(
                   _getStatusIcon(status),
                   color: _getStatusColor(status),
                 ),
                 title: Text(status.displayName),
-                trailing: student.currentStatus == status 
-                    ? Icon(Icons.check, color: Colors.green) 
-                    : null,
+                trailing:
+                    student.currentStatus == status
+                        ? Icon(Icons.check, color: Colors.green)
+                        : null,
                 onTap: () {
                   updateStudentAttendance(student.studentId, status);
                   Get.back();
@@ -198,9 +213,8 @@ class AttendanceController extends GetxController {
   Map<AttendanceStatus, int> get attendanceSummary {
     final summary = <AttendanceStatus, int>{};
     for (final status in AttendanceStatus.values) {
-      summary[status] = studentsAttendance
-          .where((s) => s.currentStatus == status)
-          .length;
+      summary[status] =
+          studentsAttendance.where((s) => s.currentStatus == status).length;
     }
     return summary;
   }
@@ -254,6 +268,117 @@ class AttendanceController extends GetxController {
       backgroundColor: Colors.red,
       colorText: Colors.white,
       icon: Icon(Icons.error, color: Colors.white),
+      snackPosition: SnackPosition.TOP,
+      margin: EdgeInsets.all(16),
+      borderRadius: 8,
+      duration: Duration(seconds: 3),
+    );
+  }
+
+  Future<void> exportToExcel() async {
+    try {
+      final scheduleDetail = this.scheduleDetail.value;
+      if (scheduleDetail == null) {
+        _showErrorSnackbar('Error', 'Tidak ada data untuk diekspor');
+        return;
+      }
+
+      _showSnackbar('Info', 'Sedang memproses ekspor...');
+
+      await _exportService.exportAttendanceToExcel(
+        className: scheduleDetail.className,
+        subjectName: scheduleDetail.subjectName,
+        students: studentsAttendance,
+        date: selectedDate.value,
+      );
+
+      _showSuccessSnackbar('تبارك الله', 'Laporan absensi berhasil diekspor');
+    } catch (e) {
+      developer.log('Error exporting attendance: $e');
+      _showErrorSnackbar('Error', 'Gagal mengekspor laporan: $e');
+    }
+  }
+
+  /// Show export options - NEW METHOD
+  void showExportOptions() {
+    Get.bottomSheet(
+      Container(
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              width: 50,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            SizedBox(height: 20),
+
+            Text(
+              'Ekspor Laporan Absensi',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+
+            SizedBox(height: 20),
+
+            // Export to Excel option
+            ListTile(
+              leading: Icon(Icons.file_download, color: Colors.green),
+              title: Text('Ekspor ke Excel'),
+              subtitle: Text('Download file Excel (.xlsx)'),
+              onTap: () {
+                Get.back();
+                exportToExcel();
+              },
+            ),
+
+            // Print option
+            ListTile(
+              leading: Icon(Icons.print, color: Colors.blue),
+              title: Text('Cetak Laporan'),
+              subtitle: Text('Cetak atau simpan sebagai PDF'),
+              onTap: () {
+                Get.back();
+                _showSnackbar('Info', 'Fitur cetak akan segera tersedia');
+              },
+            ),
+
+            // Share option
+            ListTile(
+              leading: Icon(Icons.share, color: Colors.orange),
+              title: Text('Bagikan'),
+              subtitle: Text('Bagikan laporan melalui WhatsApp, Email, dll'),
+              onTap: () {
+                Get.back();
+                exportToExcel();
+              },
+            ),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+
+  // Helper method
+  void _showSnackbar(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      backgroundColor: Colors.blue,
+      colorText: Colors.white,
+      icon: Icon(Icons.info, color: Colors.white),
       snackPosition: SnackPosition.TOP,
       margin: EdgeInsets.all(16),
       borderRadius: 8,

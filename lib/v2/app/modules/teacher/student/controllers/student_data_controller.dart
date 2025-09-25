@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../../data/services/export_service.dart';
 
 class StudentDataController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
+  final ExportService _exportService = Get.find<ExportService>();
 
   // Observables
   final isLoading = false.obs;
@@ -37,7 +39,7 @@ class StudentDataController extends GetxController {
 
       final classes = await _apiService.getTeacherClasses();
       teacherClasses.value = classes;
-      
+
       developer.log('Loaded ${classes.length} classes');
     } catch (e) {
       developer.log('Error loading classes: $e');
@@ -49,7 +51,8 @@ class StudentDataController extends GetxController {
 
   /// Get current selected class
   TeacherClassModel? get selectedClass {
-    if (teacherClasses.isEmpty || selectedClassIndex.value >= teacherClasses.length) {
+    if (teacherClasses.isEmpty ||
+        selectedClassIndex.value >= teacherClasses.length) {
       return null;
     }
     return teacherClasses[selectedClassIndex.value];
@@ -63,10 +66,12 @@ class StudentDataController extends GetxController {
     if (searchQuery.value.isEmpty) {
       return currentClass.students;
     }
-    
+
     return currentClass.students.where((student) {
-      return student.name.toLowerCase().contains(searchQuery.value.toLowerCase()) ||
-             student.nisn.contains(searchQuery.value);
+      return student.name.toLowerCase().contains(
+            searchQuery.value.toLowerCase(),
+          ) ||
+          student.nisn.contains(searchQuery.value);
     }).toList();
   }
 
@@ -140,7 +145,7 @@ class StudentDataController extends GetxController {
               ),
             ),
             SizedBox(height: 20),
-            
+
             CircleAvatar(
               radius: 30,
               backgroundColor: Colors.blue[100],
@@ -153,9 +158,9 @@ class StudentDataController extends GetxController {
                 ),
               ),
             ),
-            
+
             SizedBox(height: 16),
-            
+
             Text(
               student.name,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -164,13 +169,15 @@ class StudentDataController extends GetxController {
               'NIS: ${student.nisn}',
               style: TextStyle(color: Colors.grey[600]),
             ),
-            
+
             SizedBox(height: 8),
-            
+
             Container(
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: getAttendanceStatusColor(student.attendancePercentage).withOpacity(0.1),
+                color: getAttendanceStatusColor(
+                  student.attendancePercentage,
+                ).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -181,9 +188,9 @@ class StudentDataController extends GetxController {
                 ),
               ),
             ),
-            
+
             SizedBox(height: 20),
-            
+
             // Action buttons
             ListTile(
               leading: Icon(Icons.history, color: Colors.blue),
@@ -193,13 +200,16 @@ class StudentDataController extends GetxController {
                 viewStudentHistory(student);
               },
             ),
-            
+
             ListTile(
               leading: Icon(Icons.person, color: Colors.green),
               title: Text('Detail Profil Siswa'),
               onTap: () {
                 Get.back();
-                _showSnackbar('Info', 'Fitur detail profil akan segera tersedia');
+                _showSnackbar(
+                  'Info',
+                  'Fitur detail profil akan segera tersedia',
+                );
               },
             ),
           ],
@@ -207,11 +217,6 @@ class StudentDataController extends GetxController {
       ),
       isScrollControlled: true,
     );
-  }
-
-  /// Export attendance report
-  void exportAttendanceReport() {
-    _showSnackbar('Info', 'Fitur export laporan akan segera tersedia');
   }
 
   void _showErrorSnackbar(String title, String message) {
@@ -235,6 +240,43 @@ class StudentDataController extends GetxController {
       backgroundColor: Colors.blue,
       colorText: Colors.white,
       icon: Icon(Icons.info, color: Colors.white),
+      snackPosition: SnackPosition.TOP,
+      margin: EdgeInsets.all(16),
+      borderRadius: 8,
+      duration: Duration(seconds: 3),
+    );
+  }
+
+  Future<void> exportAttendanceReport() async {
+    try {
+      final selectedClass = this.selectedClass;
+      if (selectedClass == null) {
+        _showErrorSnackbar('Error', 'Pilih kelas terlebih dahulu');
+        return;
+      }
+
+      _showSnackbar('Info', 'Sedang memproses ekspor...');
+
+      await _exportService.exportClassSummaryToExcel(
+        teacherClass: selectedClass,
+        period:
+            'Semester ${DateTime.now().month > 6 ? 'Ganjil' : 'Genap'} ${DateTime.now().year}',
+      );
+
+      _showSuccessSnackbar('تبارك الله', 'Rekap kelas berhasil diekspor');
+    } catch (e) {
+      developer.log('Error exporting class summary: $e');
+      _showErrorSnackbar('Error', 'Gagal mengekspor rekap kelas: $e');
+    }
+  }
+
+  void _showSuccessSnackbar(String title, String message) {
+    Get.snackbar(
+      title,
+      message,
+      backgroundColor: Colors.green,
+      colorText: Colors.white,
+      icon: Icon(Icons.check_circle, color: Colors.white),
       snackPosition: SnackPosition.TOP,
       margin: EdgeInsets.all(16),
       borderRadius: 8,

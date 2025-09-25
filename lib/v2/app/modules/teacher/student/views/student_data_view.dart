@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../controllers/student_data_controller.dart';
-
 
 class StudentDataView extends GetView<StudentDataController> {
   const StudentDataView({Key? key}) : super(key: key);
@@ -30,13 +28,13 @@ class StudentDataView extends GetView<StudentDataController> {
           children: [
             // Class Tabs
             _buildClassTabs(),
-            
+
             // Search Bar
             _buildSearchBar(),
-            
+
             // Class Info
             _buildClassInfo(),
-            
+
             // Students List
             Expanded(child: _buildStudentsList()),
           ],
@@ -50,11 +48,127 @@ class StudentDataView extends GetView<StudentDataController> {
       title: Text('Data Santri'),
       centerTitle: true,
       actions: [
-        IconButton(
-          icon: Icon(Icons.file_download),
-          onPressed: controller.exportAttendanceReport,
+        PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert),
+          onSelected: (String value) {
+            switch (value) {
+              case 'export':
+                controller.exportAttendanceReport();
+                break;
+              case 'refresh':
+                controller.loadTeacherClasses();
+                break;
+              case 'filter':
+                _showFilterDialog();
+                break;
+            }
+          },
+          itemBuilder:
+              (BuildContext context) => [
+                PopupMenuItem<String>(
+                  value: 'export',
+                  child: Row(
+                    children: [
+                      Icon(Icons.file_download, color: Colors.green),
+                      SizedBox(width: 8),
+                      Text('Ekspor Rekap Kelas'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'filter',
+                  child: Row(
+                    children: [
+                      Icon(Icons.filter_list, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('Filter Data'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'refresh',
+                  child: Row(
+                    children: [
+                      Icon(Icons.refresh, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Text('Muat Ulang'),
+                    ],
+                  ),
+                ),
+              ],
         ),
       ],
+    );
+  }
+
+  void _showFilterDialog() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Filter Data Siswa',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16),
+
+              Text(
+                'Status Kehadiran:',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+
+              Wrap(
+                spacing: 8,
+                children: [
+                  FilterChip(
+                    label: Text('Semua'),
+                    selected: true,
+                    onSelected: (selected) {},
+                  ),
+                  FilterChip(
+                    label: Text('Kehadiran > 90%'),
+                    selected: false,
+                    onSelected: (selected) {},
+                  ),
+                  FilterChip(
+                    label: Text('Kehadiran 75-90%'),
+                    selected: false,
+                    onSelected: (selected) {},
+                  ),
+                  FilterChip(
+                    label: Text('Kehadiran < 75%'),
+                    selected: false,
+                    onSelected: (selected) {},
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 16),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(onPressed: () => Get.back(), child: Text('Batal')),
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      // Apply filter logic here
+                    },
+                    child: Text('Terapkan'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -62,40 +176,46 @@ class StudentDataView extends GetView<StudentDataController> {
     return Container(
       height: 50.h,
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Obx(() => ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: controller.teacherClasses.length,
-        itemBuilder: (context, index) {
-          final classData = controller.teacherClasses[index];
-          final isSelected = controller.selectedClassIndex.value == index;
-          
-          return GestureDetector(
-            onTap: () => controller.selectClass(index),
-            child: Container(
-              margin: EdgeInsets.only(right: 8.w),
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.primaryGreen : Colors.white,
-                borderRadius: BorderRadius.circular(25.r),
-                border: Border.all(
-                  color: isSelected ? AppColors.primaryGreen : AppColors.dividerColor,
+      child: Obx(
+        () => ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: controller.teacherClasses.length,
+          itemBuilder: (context, index) {
+            final classData = controller.teacherClasses[index];
+            final isSelected = controller.selectedClassIndex.value == index;
+
+            return GestureDetector(
+              onTap: () => controller.selectClass(index),
+              child: Container(
+                margin: EdgeInsets.only(right: 8.w),
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primaryGreen : Colors.white,
+                  borderRadius: BorderRadius.circular(25.r),
+                  border: Border.all(
+                    color:
+                        isSelected
+                            ? AppColors.primaryGreen
+                            : AppColors.dividerColor,
+                  ),
                 ),
-              ),
-              child: Center(
-                child: Text(
-                  '${classData.className}\n${classData.subjectName}',
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: isSelected ? Colors.white : AppColors.textPrimary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    height: 1.2,
+                child: Center(
+                  child: Text(
+                    '${classData.className}\n${classData.subjectName}',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                      height: 1.2,
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
-      )),
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -192,7 +312,7 @@ class StudentDataView extends GetView<StudentDataController> {
       margin: EdgeInsets.symmetric(horizontal: 16.w),
       child: Obx(() {
         final students = controller.filteredStudents;
-        
+
         if (students.isEmpty) {
           return _buildEmptyStudentsState();
         }
@@ -209,9 +329,13 @@ class StudentDataView extends GetView<StudentDataController> {
   }
 
   Widget _buildStudentItem(StudentSummaryModel student) {
-    final attendanceColor = controller.getAttendanceStatusColor(student.attendancePercentage);
-    final attendanceText = controller.getAttendanceStatusText(student.attendancePercentage);
-    
+    final attendanceColor = controller.getAttendanceStatusColor(
+      student.attendancePercentage,
+    );
+    final attendanceText = controller.getAttendanceStatusText(
+      student.attendancePercentage,
+    );
+
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
       decoration: BoxDecoration(
@@ -239,9 +363,7 @@ class StudentDataView extends GetView<StudentDataController> {
         ),
         title: Text(
           student.name,
-          style: AppTextStyles.bodyMedium.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,10 +413,7 @@ class StudentDataView extends GetView<StudentDataController> {
             ),
           ],
         ),
-        trailing: Icon(
-          Icons.chevron_right,
-          color: AppColors.textHint,
-        ),
+        trailing: Icon(Icons.chevron_right, color: AppColors.textHint),
         onTap: () => controller.showStudentOptions(student),
       ),
     );
@@ -305,11 +424,7 @@ class StudentDataView extends GetView<StudentDataController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 64.sp,
-            color: AppColors.textHint,
-          ),
+          Icon(Icons.search_off, size: 64.sp, color: AppColors.textHint),
           SizedBox(height: 16.h),
           Text(
             'Tidak ada siswa ditemukan',
@@ -327,11 +442,7 @@ class StudentDataView extends GetView<StudentDataController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.class_,
-            size: 64.sp,
-            color: AppColors.textHint,
-          ),
+          Icon(Icons.class_, size: 64.sp, color: AppColors.textHint),
           SizedBox(height: 16.h),
           Text(
             'Belum ada kelas yang diampu',
@@ -342,9 +453,7 @@ class StudentDataView extends GetView<StudentDataController> {
           SizedBox(height: 8.h),
           Text(
             'Hubungi admin untuk mengatur jadwal mengajar',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textHint,
-            ),
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.textHint),
           ),
         ],
       ),

@@ -12,3 +12,5 @@ class StudentDataBinding extends Bindings {
     );
   }
 }
+
+// lib/v2/app/modules/teacher/student/views/student_data_view.dart - UPDATE AppBar

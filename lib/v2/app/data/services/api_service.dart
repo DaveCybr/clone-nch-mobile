@@ -225,19 +225,6 @@ class ApiService extends GetxService {
     }
   }
 
-  // Get announcements
-  Future<List<dynamic>> getAnnouncements({int page = 1}) async {
-    try {
-      final response = await _dio.get(
-        '/announcements',
-        queryParameters: {'page': page},
-      );
-      return response.data['berita'] as List<dynamic>;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    }
-  }
-
   // Tambahkan methods ini ke ApiService existing (lib/v2/app/data/services/api_service.dart)
 
   /// Get students by schedule for attendance
@@ -372,5 +359,102 @@ class ApiService extends GetxService {
   // Getter for dio instance
   Dio get dio => _dio;
 
-  Future getSchedulesByDate(DateTime date) async {}
+  /// Get schedules by date - IMPLEMENTASI YANG HILANG
+  Future<List<dynamic>> getSchedulesByDate(DateTime date) async {
+    try {
+      final response = await _dio.get(
+        '/teacher/schedules',
+        queryParameters: {'date': date.toIso8601String().split('T')[0]},
+      );
+      return response.data['data'] as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get announcements/berita - IMPLEMENTASI DIPERBAIKI
+  Future<List<dynamic>> getAnnouncements({int page = 1, int limit = 10}) async {
+    try {
+      final response = await _dio.get(
+        '/announcements',
+        queryParameters: {'page': page, 'limit': limit},
+      );
+
+      // Handle different response structures
+      if (response.data['data'] != null) {
+        return response.data['data'] as List<dynamic>;
+      } else if (response.data['berita'] != null) {
+        return response.data['berita'] as List<dynamic>;
+      }
+
+      return response.data as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get teacher profile
+  Future<Map<String, dynamic>> getTeacherProfile() async {
+    try {
+      final response = await _dio.get('/teacher/profile');
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Update teacher profile
+  Future<void> updateTeacherProfile(Map<String, dynamic> profileData) async {
+    try {
+      await _dio.put('/teacher/profile', data: profileData);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get attendance summary for a specific date range
+  Future<Map<String, dynamic>> getAttendanceSummary({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/teacher/attendance-summary',
+        queryParameters: {
+          if (startDate != null)
+            'start_date': startDate.toIso8601String().split('T')[0],
+          if (endDate != null)
+            'end_date': endDate.toIso8601String().split('T')[0],
+        },
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get attendance history with filters
+  Future<List<dynamic>> getAttendanceHistory({
+    String? classId,
+    String? subjectId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/teacher/attendance-history',
+        queryParameters: {
+          if (classId != null) 'class_id': classId,
+          if (subjectId != null) 'subject_id': subjectId,
+          if (startDate != null)
+            'start_date': startDate.toIso8601String().split('T')[0],
+          if (endDate != null)
+            'end_date': endDate.toIso8601String().split('T')[0],
+        },
+      );
+      return response.data['data'] as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
 }

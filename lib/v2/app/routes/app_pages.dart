@@ -1,21 +1,26 @@
+// lib/v2/app/routes/app_pages.dart - UPDATED
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-
 import '../modules/auth/bindings/auth_binding.dart';
 import '../modules/auth/views/login_view.dart';
 import '../modules/onboarding/views/splash_view.dart';
+
+// Teacher modules
+import '../modules/teacher/announcements/bindings/announcement_binding.dart';
+import '../modules/teacher/announcements/views/announcement_view.dart';
 import '../modules/teacher/dashboard/bindings/teacher_dashboard_binding.dart';
 import '../modules/teacher/dashboard/views/teacher_dashboard_view.dart';
 import '../modules/teacher/attendance/bindings/attendance_binding.dart';
 import '../modules/teacher/attendance/views/attendance_view.dart';
+import '../modules/teacher/profile/bindings/profile_binding.dart';
+import '../modules/teacher/profile/views/profile_view.dart';
 import '../modules/teacher/student/bindings/student_data_binding.dart';
 import '../modules/teacher/student/views/student_data_view.dart';
 import '../modules/teacher/student_history/bindings/student_history_binding.dart';
 import '../modules/teacher/student_history/views/student_history_view.dart';
-// ✅ ADD MISSING IMPORTS
 import '../modules/teacher/schedule/bindings/schedule_binding.dart';
 import '../modules/teacher/schedule/views/schedule_view.dart';
+
 import 'app_routes.dart';
 
 class AppPages {
@@ -41,7 +46,6 @@ class AppPages {
       binding: TeacherDashboardBinding(),
     ),
 
-    // ✅ FIX: Add Schedule route with proper binding
     GetPage(
       name: Routes.TEACHER_SCHEDULE,
       page: () => const ScheduleView(),
@@ -50,7 +54,6 @@ class AppPages {
       transitionDuration: const Duration(milliseconds: 300),
     ),
 
-    // Attendance route
     GetPage(
       name: Routes.TEACHER_ATTENDANCE,
       page: () => const AttendanceView(),
@@ -59,7 +62,6 @@ class AppPages {
       transitionDuration: const Duration(milliseconds: 300),
     ),
 
-    // Students route
     GetPage(
       name: Routes.TEACHER_STUDENTS,
       page: () => const StudentDataView(),
@@ -68,7 +70,6 @@ class AppPages {
       transitionDuration: const Duration(milliseconds: 300),
     ),
 
-    // Student history route
     GetPage(
       name: Routes.STUDENT_ATTENDANCE_HISTORY,
       page: () => const StudentHistoryView(),
@@ -77,25 +78,22 @@ class AppPages {
       transitionDuration: const Duration(milliseconds: 300),
     ),
 
-    // Placeholder routes for missing pages
+    // NEW: Announcements route
     GetPage(
       name: Routes.TEACHER_ANNOUNCEMENTS,
-      page:
-          () => _buildPlaceholderPage(
-            'Pengumuman',
-            'Halaman pengumuman sedang dalam pengembangan',
-          ),
-      binding: TeacherDashboardBinding(),
+      page: () => const AnnouncementsView(),
+      binding: AnnouncementsBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
     ),
 
+    // NEW: Profile route
     GetPage(
       name: Routes.TEACHER_PROFILE,
-      page:
-          () => _buildPlaceholderPage(
-            'Profil',
-            'Halaman profil sedang dalam pengembangan',
-          ),
-      binding: TeacherDashboardBinding(),
+      page: () => const ProfileView(),
+      binding: ProfileBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
     ),
 
     // Parent routes placeholder (for future development)

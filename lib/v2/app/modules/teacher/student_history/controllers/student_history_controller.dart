@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../../data/services/export_service.dart';
 
 class StudentHistoryController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
+  final ExportService _exportService = Get.find<ExportService>(); // ADD THIS
 
   // Observables
   final isLoading = false.obs;
@@ -14,7 +16,8 @@ class StudentHistoryController extends GetxController {
   final selectedDateRange = Rxn<DateTimeRange>();
 
   // Data from arguments
-  StudentSummaryModel? get student => Get.arguments?['student'] as StudentSummaryModel?;
+  StudentSummaryModel? get student =>
+      Get.arguments?['student'] as StudentSummaryModel?;
   String? get subjectId => Get.arguments?['subject_id'] as String?;
   String? get subjectName => Get.arguments?['subject_name'] as String?;
   String? get className => Get.arguments?['class_name'] as String?;
@@ -28,7 +31,7 @@ class StudentHistoryController extends GetxController {
       start: DateTime(now.year, now.month, 1),
       end: DateTime(now.year, now.month + 1, 0),
     );
-    
+
     if (student != null && subjectId != null) {
       loadStudentHistory();
     } else {
@@ -95,11 +98,6 @@ class StudentHistoryController extends GetxController {
     }
   }
 
-  /// Export attendance report
-  void exportReport() {
-    _showSnackbar('Info', 'Fitur export laporan akan segera tersedia');
-  }
-
   /// Show date range picker
   // Future<void> showDateRangePicker() async {
   //   final DateTimeRange? picked = await showDateRangePicker(
@@ -153,5 +151,31 @@ class StudentHistoryController extends GetxController {
       borderRadius: 8,
       duration: const Duration(seconds: 3),
     );
+  }
+
+  Future<void> exportReport() async {
+    try {
+      final history = studentHistory.value;
+      if (history == null) {
+        _showErrorSnackbar('Error', 'Tidak ada data untuk diekspor');
+        return;
+      }
+
+      _showSnackbar('Info', 'Sedang memproses ekspor...');
+
+      await _exportService.exportAttendanceHistoryToPDF(
+        studentHistory: history,
+        subjectName: subjectName ?? 'Mata Pelajaran',
+        className: className ?? 'Kelas',
+      );
+
+      _showSnackbar(
+        'تبارك الله',
+        'Laporan riwayat kehadiran berhasil diekspor',
+      );
+    } catch (e) {
+      developer.log('Error exporting history: $e');
+      _showErrorSnackbar('Error', 'Gagal mengekspor laporan: $e');
+    }
   }
 }
