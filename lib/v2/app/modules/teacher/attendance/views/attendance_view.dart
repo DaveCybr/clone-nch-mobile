@@ -24,20 +24,22 @@ class AttendanceView extends GetView<AttendanceController> {
           return _buildErrorState();
         }
 
-        return Column(
-          children: [
-            // Schedule Info
-            _buildScheduleInfo(scheduleDetail),
+        return SafeArea(
+          child: Column(
+            children: [
+              // Schedule Info
+              _buildScheduleInfo(scheduleDetail),
 
-            // Search Bar
-            _buildSearchBar(),
+              // Search Bar
+              _buildSearchBar(),
 
-            // Attendance Summary
-            _buildAttendanceSummary(),
+              // Attendance Summary
+              _buildAttendanceSummary(),
 
-            // Students List
-            Expanded(child: _buildStudentsList()),
-          ],
+              // Students List
+              Expanded(child: _buildStudentsList()),
+            ],
+          ),
         );
       }),
       bottomNavigationBar: _buildSubmitButton(),
@@ -520,43 +522,48 @@ class AttendanceView extends GetView<AttendanceController> {
   }
 
   Widget _buildSubmitButton() {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: Offset(0, -4),
-          ),
-        ],
-      ),
-      child: Obx(
-        () => SizedBox(
-          width: double.infinity,
-          height: 50.h,
-          child: ElevatedButton(
-            onPressed:
-                controller.isSaving.value ? null : controller.submitAttendance,
-            child:
-                controller.isSaving.value
-                    ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 20.w,
-                          height: 20.h,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+    return SafeArea(
+      bottom: true, // Ini akan memberikan padding otomatis dari navigation bar
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: Offset(0, -4),
+            ),
+          ],
+        ),
+        child: Obx(
+          () => SizedBox(
+            width: double.infinity,
+            height: 50.h,
+            child: ElevatedButton(
+              onPressed:
+                  controller.isSaving.value
+                      ? null
+                      : controller.submitAttendance,
+              child:
+                  controller.isSaving.value
+                      ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20.w,
+                            height: 20.h,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
                           ),
-                        ),
-                        SizedBox(width: 12.w),
-                        Text('Menyimpan...', style: AppTextStyles.buttonText),
-                      ],
-                    )
-                    : Text('Simpan Absensi', style: AppTextStyles.buttonText),
+                          SizedBox(width: 12.w),
+                          Text('Menyimpan...', style: AppTextStyles.buttonText),
+                        ],
+                      )
+                      : Text('Simpan Absensi', style: AppTextStyles.buttonText),
+            ),
           ),
         ),
       ),

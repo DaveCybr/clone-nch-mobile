@@ -55,62 +55,79 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    // Parse roles first
-    final rolesData = json['roles'] as List?;
-    final roles = rolesData?.map((role) => RoleModel.fromJson(role)).toList() ?? <RoleModel>[];
-    
-    // Extract permissions from roles
+    // Handle roles: bisa string list atau object list
+    final roles = <RoleModel>[];
+    if (json['roles'] is List) {
+      final rawRoles = json['roles'] as List;
+      if (rawRoles.isNotEmpty && rawRoles.first is String) {
+        // Convert list string ke RoleModel sederhana
+        for (var r in rawRoles) {
+          roles.add(
+            RoleModel(id: '', name: r, guardName: 'web', permissions: []),
+          );
+        }
+      } else {
+        roles.addAll(rawRoles.map((r) => RoleModel.fromJson(r)).toList());
+      }
+    }
+
+    // Handle permission/permissions
     final allPermissions = <String>[];
-    for (final role in roles) {
-      allPermissions.addAll(role.permissions.map((p) => p.name));
+    if (json['permission'] is List) {
+      allPermissions.addAll(List<String>.from(json['permission']));
     }
-    
-    // Also add direct permissions if available
     if (json['permissions'] is List) {
-      final directPermissions = List<String>.from(json['permissions']);
-      allPermissions.addAll(directPermissions);
+      allPermissions.addAll(List<String>.from(json['permissions']));
     }
-    
+
     // Determine if user is teacher from roles or employee data
-    final hasTeacherRole = roles.any((role) => role.name.toLowerCase() == 'teacher');
+    final hasTeacherRole = roles.any(
+      (role) => role.name.toLowerCase() == 'teacher',
+    );
     final hasEmployeeData = json['employee'] != null;
     final currentRole = json['current_role'] as String?;
-    
+
     return UserModel(
       id: json['id'] as String,
       name: json['name'] as String,
       email: json['email'] as String,
-      emailVerifiedAt: json['email_verified_at'] != null
-          ? DateTime.parse(json['email_verified_at'])
-          : null,
+      emailVerifiedAt:
+          json['email_verified_at'] != null
+              ? DateTime.parse(json['email_verified_at'])
+              : null,
       isChangePassword: _safeBoolConversion(json['is_change_password']),
       status: json['status'] ?? 'ACTIVE',
       gender: json['gender'],
       religion: json['religion'] ?? 'ISLAM',
       birthPlace: json['birth_place'],
-      birthDate: json['birth_date'] != null
-          ? DateTime.tryParse(json['birth_date'])
-          : null,
+      birthDate:
+          json['birth_date'] != null
+              ? DateTime.tryParse(json['birth_date'])
+              : null,
       phoneNumber: json['phone_number'],
       nationality: json['nationality'],
       imgPath: json['img_path'],
       imgName: json['img_name'],
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'])
-          : null,
-      updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'])
-          : null,
+      createdAt:
+          json['created_at'] != null
+              ? DateTime.tryParse(json['created_at'])
+              : null,
+      updatedAt:
+          json['updated_at'] != null
+              ? DateTime.tryParse(json['updated_at'])
+              : null,
       currentRole: currentRole,
       permissions: allPermissions.toSet().toList(), // Remove duplicates
       isAdmin: _safeBoolConversion(json['is_admin']),
       isTeacherFromServer: _safeBoolConversion(json['is_teacher']),
-      employee: json['employee'] != null
-          ? EmployeeModel.fromJson(json['employee'])
-          : null,
-      student: json['student'] != null
-          ? StudentModel.fromJson(json['student'])
-          : null,
+      employee:
+          json['employee'] != null
+              ? EmployeeModel.fromJson(json['employee'])
+              : null,
+      student:
+          json['student'] != null
+              ? StudentModel.fromJson(json['student'])
+              : null,
       roles: roles,
     );
   }
@@ -153,7 +170,7 @@ class UserModel {
 
   // ✅ IMPROVED HELPER METHODS
   bool get isActive => status == 'ACTIVE';
-  
+
   // ✅ FIX: Better teacher detection logic
   bool get isTeacher {
     // Check multiple sources to determine if user is a teacher
@@ -163,13 +180,14 @@ class UserModel {
     if (isTeacherFromServer == true) return true;
     return false;
   }
-  
-  bool get isParent => currentRole?.toLowerCase() == 'parent' || student != null;
+
+  bool get isParent =>
+      currentRole?.toLowerCase() == 'parent' || student != null;
   bool get isAdminUser => isAdmin ?? (currentRole?.toLowerCase() == 'admin');
 
   String get displayName => name;
   String get avatarUrl => imgPath ?? '';
-  
+
   // ✅ FIX: Better role display logic
   String get roleDisplay {
     if (isTeacher) return 'Ustadz/Ustadzah';
@@ -260,9 +278,11 @@ class RoleModel {
       id: json['id'] as String,
       name: json['name'] as String,
       guardName: json['guard_name'] as String,
-      permissions: (json['permissions'] as List?)
-          ?.map((p) => PermissionModel.fromJson(p))
-          .toList() ?? [],
+      permissions:
+          (json['permissions'] as List?)
+              ?.map((p) => PermissionModel.fromJson(p))
+              .toList() ??
+          [],
     );
   }
 
@@ -297,11 +317,7 @@ class PermissionModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'guard_name': guardName,
-    };
+    return {'id': id, 'name': name, 'guard_name': guardName};
   }
 }
 

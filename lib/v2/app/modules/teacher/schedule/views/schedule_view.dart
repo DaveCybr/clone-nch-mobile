@@ -1,3 +1,4 @@
+// lib/v2/app/modules/teacher/schedule/views/schedule_view.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -25,7 +26,7 @@ class ScheduleView extends GetView<ScheduleController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: const Text('Jadwal'),
+      title: const Text('Jadwal Mengajar'),
       centerTitle: true,
       backgroundColor: AppColors.primaryGreen,
       foregroundColor: Colors.white,
@@ -33,280 +34,307 @@ class ScheduleView extends GetView<ScheduleController> {
       actions: [
         IconButton(
           icon: const Icon(Icons.refresh),
-          onPressed: controller.loadMonthSchedule,
+          onPressed: controller.loadWeeklySchedule,
+        ),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert),
+          onSelected: (value) {
+            switch (value) {
+              case 'refresh':
+                controller.loadWeeklySchedule();
+                break;
+              case 'today':
+                controller.selectDay(controller.getTodayDayName());
+                break;
+            }
+          },
+          itemBuilder:
+              (context) => [
+                PopupMenuItem<String>(
+                  value: 'today',
+                  child: Row(
+                    children: [
+                      Icon(Icons.today, color: AppColors.primaryGreen),
+                      SizedBox(width: 8),
+                      Text('Hari Ini'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'refresh',
+                  child: Row(
+                    children: [
+                      Icon(Icons.refresh, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('Muat Ulang'),
+                    ],
+                  ),
+                ),
+              ],
         ),
       ],
     );
   }
 
   Widget _buildBody() {
-    return Obx(() {
-      if (controller.isLoading.value) {
-        return _buildLoadingState();
-      }
+    return Column(
+      children: [
+        // Loading state check
+        Obx(() {
+          if (controller.isLoading.value) {
+            return Expanded(child: _buildLoadingState());
+          }
+          return SizedBox.shrink();
+        }),
 
-      return Column(
-        children: [
-          // Calendar Section
-          _buildCalendarSection(),
+        // Main content - only show when not loading
+        Obx(
+          () =>
+              controller.isLoading.value
+                  ? SizedBox.shrink()
+                  : Expanded(
+                    child: Column(
+                      children: [
+                        // Week Navigation Header
+                        _buildWeekHeader(),
 
-          // Selected Date Schedule
-          Expanded(child: _buildSelectedDateSchedule()),
-        ],
-      );
-    });
+                        // Days of Week Tabs
+                        _buildDayTabs(),
+
+                        // Selected Day Schedule
+                        Expanded(child: _buildSelectedDaySchedule()),
+                      ],
+                    ),
+                  ),
+        ),
+      ],
+    );
   }
 
-  Widget _buildCalendarSection() {
+  Widget _buildWeekHeader() {
     return Container(
       color: AppColors.primaryGreen,
-      child: Column(
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Month/Year Header with Islamic Date
-          _buildMonthHeader(),
+          // Previous Week Button
+          IconButton(
+            onPressed: () => controller.changeWeek(-1),
+            icon: const Icon(Icons.chevron_left, color: Colors.white),
+          ),
 
-          // Calendar Grid
-          _buildCalendarGrid(),
+          // Week Range Display
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  'Minggu Ini',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: Colors.white.withOpacity(0.8),
+                  ),
+                ),
+                SizedBox(height: 2.h),
+                Text(
+                  controller.weekRangeText,
+                  style: AppTextStyles.heading3.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Next Week Button
+          IconButton(
+            onPressed: () => controller.changeWeek(1),
+            icon: const Icon(Icons.chevron_right, color: Colors.white),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMonthHeader() {
+  Widget _buildDayTabs() {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      child: Obx(
-        () => Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Previous Month Button
-            IconButton(
-              onPressed: () => controller.changeMonth(-1),
-              icon: const Icon(Icons.chevron_left, color: Colors.white),
-            ),
+      color: AppColors.primaryGreen,
+      child: Container(
+        height: 70.h,
+        margin: EdgeInsets.symmetric(horizontal: 16.w),
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: controller.daysOfWeek.length,
+          itemBuilder: (context, index) {
+            final day = controller.daysOfWeek[index];
+            final dayDisplay = controller.dayDisplayNames[index];
+            final dayDate = controller.getDateForDay(day);
+            final isToday = _isToday(dayDate);
 
-            // Month/Year Display
-            Column(
-              children: [
-                Text(
-                  _getMonthYearText(),
-                  style: AppTextStyles.heading2.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+            return Obx(() {
+              final isSelected = controller.selectedDay.value == day;
+              final hasSchedule = controller.hasSchedule(day);
+
+              return GestureDetector(
+                onTap: () => controller.selectDay(day),
+                child: Container(
+                  width: 80.w,
+                  margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color:
+                        isSelected
+                            ? AppColors.goldAccent
+                            : isToday
+                            ? Colors.white.withOpacity(0.2)
+                            : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12.r),
+                    border:
+                        isToday && !isSelected
+                            ? Border.all(color: Colors.white.withOpacity(0.5))
+                            : null,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        dayDisplay,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color:
+                              isSelected
+                                  ? AppColors.primaryGreen
+                                  : Colors.white,
+                          fontWeight:
+                              isSelected || isToday
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(height: 2.h),
+                      Text(
+                        '${dayDate.day}',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color:
+                              isSelected
+                                  ? AppColors.primaryGreen
+                                  : Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 4.h),
+                      // Schedule indicator
+                      if (hasSchedule)
+                        Container(
+                          width: 6.w,
+                          height: 6.h,
+                          decoration: BoxDecoration(
+                            color:
+                                isSelected
+                                    ? AppColors.primaryGreen
+                                    : AppColors.goldAccent,
+                            shape: BoxShape.circle,
+                          ),
+                        )
+                      else
+                        SizedBox(height: 6.h),
+                    ],
                   ),
                 ),
-                SizedBox(height: 4.h),
-                Text(
-                  '${controller.islamicMonthName} ${controller.islamicYear}',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white.withOpacity(0.8),
-                  ),
-                ),
-              ],
-            ),
-
-            // Next Month Button
-            IconButton(
-              onPressed: () => controller.changeMonth(1),
-              icon: const Icon(Icons.chevron_right, color: Colors.white),
-            ),
-          ],
+              );
+            });
+          },
         ),
       ),
     );
   }
 
-  Widget _buildCalendarGrid() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Column(
-        children: [
-          // Days of week header
-          _buildDaysOfWeekHeader(),
-
-          SizedBox(height: 12.h),
-
-          // Calendar dates grid
-          _buildCalendarDates(),
-
-          SizedBox(height: 16.h),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDaysOfWeekHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children:
-          controller.daysOfWeek
-              .map(
-                (day) => Expanded(
-                  child: Text(
-                    day,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: Colors.white.withOpacity(0.8),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-    );
-  }
-
-  Widget _buildCalendarDates() {
-    return Obx(() {
-      final currentMonth = controller.currentMonth.value;
-      final firstDayOfMonth = DateTime(
-        currentMonth.year,
-        currentMonth.month,
-        1,
-      );
-      final lastDayOfMonth = DateTime(
-        currentMonth.year,
-        currentMonth.month + 1,
-        0,
-      );
-      final firstWeekdayOfMonth = firstDayOfMonth.weekday;
-      final daysInMonth = lastDayOfMonth.day;
-
-      // Calculate grid
-      final totalCells =
-          ((daysInMonth + firstWeekdayOfMonth - 1) / 7).ceil() * 7;
-      final weeks = (totalCells / 7).ceil();
-
-      return Column(
-        children: List.generate(weeks, (weekIndex) {
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(7, (dayIndex) {
-              final cellIndex = weekIndex * 7 + dayIndex;
-              final dayNumber = cellIndex - firstWeekdayOfMonth + 2;
-
-              // Check if this cell should show a date
-              if (dayNumber < 1 || dayNumber > daysInMonth) {
-                return Expanded(child: SizedBox(height: 45.h));
-              }
-
-              final date = DateTime(
-                currentMonth.year,
-                currentMonth.month,
-                dayNumber,
-              );
-              final hasSchedule = controller.hasSchedule(date);
-              final isSelected =
-                  controller.selectedDate.value.day == dayNumber &&
-                  controller.selectedDate.value.month == currentMonth.month &&
-                  controller.selectedDate.value.year == currentMonth.year;
-              final isToday = _isToday(date);
-
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => controller.selectDate(date),
-                  child: Container(
-                    height: 45.h,
-                    margin: EdgeInsets.all(2.w),
-                    decoration: BoxDecoration(
-                      color:
-                          isSelected
-                              ? AppColors.goldAccent
-                              : Colors.transparent,
-                      borderRadius: BorderRadius.circular(22.r),
-                      border:
-                          isToday && !isSelected
-                              ? Border.all(
-                                color: AppColors.goldAccent,
-                                width: 1,
-                              )
-                              : null,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          dayNumber.toString(),
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color:
-                                isSelected
-                                    ? AppColors.primaryGreen
-                                    : Colors.white,
-                            fontWeight:
-                                isSelected || isToday
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                          ),
-                        ),
-                        SizedBox(height: 2.h),
-                        if (hasSchedule)
-                          Container(
-                            width: 6.w,
-                            height: 6.h,
-                            decoration: BoxDecoration(
-                              color:
-                                  isSelected
-                                      ? AppColors.primaryGreen
-                                      : AppColors.goldAccent,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-          );
-        }),
-      );
-    });
-  }
-
-  Widget _buildSelectedDateSchedule() {
+  Widget _buildSelectedDaySchedule() {
     return Container(
       color: AppColors.scaffoldBackground,
-      child: Obx(() {
-        final selectedDate = controller.selectedDate.value;
-        final schedules = controller.selectedDateSchedules;
+      child: Column(
+        children: [
+          // Selected Day Header
+          Obx(() {
+            final selectedDay = controller.selectedDay.value;
+            final selectedDayDisplay = controller.getDayDisplayName(
+              selectedDay,
+            );
+            final schedules = controller.selectedDaySchedules;
+            final selectedDate = controller.getDateForDay(selectedDay);
 
-        return Column(
-          children: [
-            // Selected Date Header
-            Container(
+            return Container(
               width: double.infinity,
               padding: EdgeInsets.all(16.w),
               color: Colors.white,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _getSelectedDateTitle(selectedDate),
-                    style: AppTextStyles.heading3.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (schedules.isNotEmpty)
-                    Text(
-                      '${schedules.length} jadwal',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_today,
+                        color: AppColors.primaryGreen,
+                        size: 20.sp,
                       ),
-                    ),
+                      SizedBox(width: 8.w),
+                      Text(
+                        'Jadwal $selectedDayDisplay',
+                        style: AppTextStyles.heading3.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 4.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _formatDate(selectedDate),
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if (schedules.isNotEmpty)
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGreen.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
+                          child: Text(
+                            '${schedules.length} jadwal',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
-            ),
+            );
+          }),
 
-            // Schedule List
-            Expanded(
-              child:
-                  schedules.isEmpty
-                      ? _buildNoScheduleState()
-                      : _buildScheduleList(schedules),
-            ),
-          ],
-        );
-      }),
+          // Schedule List
+          Expanded(
+            child: Obx(() {
+              final selectedDay = controller.selectedDay.value;
+              final selectedDayDisplay = controller.getDayDisplayName(
+                selectedDay,
+              );
+              final schedules = controller.selectedDaySchedules;
+
+              return schedules.isEmpty
+                  ? _buildNoScheduleState(selectedDayDisplay)
+                  : _buildScheduleList(schedules);
+            }),
+          ),
+        ],
+      ),
     );
   }
 
@@ -322,13 +350,24 @@ class ScheduleView extends GetView<ScheduleController> {
   }
 
   Widget _buildScheduleCard(dynamic schedule) {
+    final isOngoing = _isScheduleOngoing(schedule);
+    final isDone = _isScheduleDone(schedule);
+
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
         border: Border(
-          left: BorderSide(color: AppColors.primaryGreen, width: 4.w),
+          left: BorderSide(
+            color:
+                isOngoing
+                    ? AppColors.goldAccent
+                    : isDone
+                    ? AppColors.attendancePresent
+                    : AppColors.primaryGreen,
+            width: 4.w,
+          ),
         ),
         boxShadow: [
           BoxShadow(
@@ -343,26 +382,36 @@ class ScheduleView extends GetView<ScheduleController> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Time and Status
+            // Time and Status Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                   decoration: BoxDecoration(
-                    color: AppColors.textSecondary.withOpacity(0.1),
+                    color: AppColors.primaryGreen.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12.r),
                   ),
-                  child: Text(
-                    schedule.timeSlot,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        size: 14.sp,
+                        color: AppColors.primaryGreen,
+                      ),
+                      SizedBox(width: 4.w),
+                      Text(
+                        '${schedule.startTime} - ${schedule.endTime}',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.primaryGreen,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                if (schedule.isDone)
-                  Icon(Icons.check_circle, color: Colors.green, size: 20.sp),
+                _buildStatusChip(schedule, isOngoing, isDone),
               ],
             ),
 
@@ -378,13 +427,24 @@ class ScheduleView extends GetView<ScheduleController> {
 
             SizedBox(height: 8.h),
 
-            // Class Info
+            // Class and Student Info
             Row(
               children: [
                 Icon(Icons.class_, size: 16.sp, color: AppColors.textSecondary),
                 SizedBox(width: 4.w),
+                Expanded(
+                  child: Text(
+                    schedule.className,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8.w),
+                Icon(Icons.people, size: 16.sp, color: AppColors.textSecondary),
+                SizedBox(width: 4.w),
                 Text(
-                  schedule.className,
+                  '${schedule.totalStudents} santri',
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textSecondary,
                   ),
@@ -400,9 +460,10 @@ class ScheduleView extends GetView<ScheduleController> {
               child: ElevatedButton.icon(
                 onPressed: () => controller.navigateToAttendance(schedule),
                 icon: Icon(Icons.how_to_reg, size: 18.sp),
-                label: Text('Buka Absensi'),
+                label: Text(isDone ? 'Lihat Absensi' : 'Buka Absensi'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
+                  backgroundColor:
+                      isOngoing ? AppColors.goldAccent : AppColors.primaryGreen,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   shape: RoundedRectangleBorder(
@@ -417,7 +478,51 @@ class ScheduleView extends GetView<ScheduleController> {
     );
   }
 
-  Widget _buildNoScheduleState() {
+  Widget _buildStatusChip(dynamic schedule, bool isOngoing, bool isDone) {
+    Color chipColor;
+    String chipText;
+    IconData chipIcon;
+
+    if (isDone) {
+      chipColor = AppColors.attendancePresent;
+      chipText = 'Selesai';
+      chipIcon = Icons.check_circle;
+    } else if (isOngoing) {
+      chipColor = AppColors.goldAccent;
+      chipText = 'Berlangsung';
+      chipIcon = Icons.play_circle;
+    } else {
+      chipColor = AppColors.textHint;
+      chipText = 'Menunggu';
+      chipIcon = Icons.schedule;
+    }
+
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+      decoration: BoxDecoration(
+        color: chipColor.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: chipColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(chipIcon, size: 12.sp, color: chipColor),
+          SizedBox(width: 4.w),
+          Text(
+            chipText,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: chipColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 11.sp,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNoScheduleState(String dayName) {
     return Center(
       child: Padding(
         padding: EdgeInsets.all(32.w),
@@ -434,11 +539,20 @@ class ScheduleView extends GetView<ScheduleController> {
             ),
             SizedBox(height: 8.h),
             Text(
-              'Tidak ada jadwal pada tanggal ini',
+              'Tidak ada jadwal pada hari $dayName',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 16.h),
+            TextButton.icon(
+              onPressed: controller.loadWeeklySchedule,
+              icon: Icon(Icons.refresh),
+              label: Text('Muat Ulang'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primaryGreen,
+              ),
             ),
           ],
         ),
@@ -456,7 +570,14 @@ class ScheduleView extends GetView<ScheduleController> {
           ),
           SizedBox(height: 16.h),
           Text(
-            'Memuat jadwal...',
+            'جاري تحميل الجدول...',
+            style: AppTextStyles.arabicText.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+          SizedBox(height: 4.h),
+          Text(
+            'Memuat jadwal mengajar...',
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
             ),
@@ -515,29 +636,60 @@ class ScheduleView extends GetView<ScheduleController> {
     );
   }
 
-  String _getMonthYearText() {
-    final currentMonth = controller.currentMonth.value;
-    const months = [
-      '',
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
-      'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
-    ];
-
-    return '${months[currentMonth.month]} ${currentMonth.year}';
+  bool _isToday(DateTime date) {
+    final today = DateTime.now();
+    return date.year == today.year &&
+        date.month == today.month &&
+        date.day == today.day;
   }
 
-  String _getSelectedDateTitle(DateTime date) {
-    const days = [
+  bool _isScheduleOngoing(dynamic schedule) {
+    try {
+      final now = TimeOfDay.now();
+      final start = _parseTime(schedule.startTime);
+      final end = _parseTime(schedule.endTime);
+      return _isTimeBetween(now, start, end);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  bool _isScheduleDone(dynamic schedule) {
+    try {
+      final now = TimeOfDay.now();
+      final end = _parseTime(schedule.endTime);
+      final currentMinutes = now.hour * 60 + now.minute;
+      final endMinutes = end.hour * 60 + end.minute;
+      return currentMinutes > endMinutes;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  TimeOfDay _parseTime(String time) {
+    try {
+      final parts = time.split(':');
+      if (parts.length >= 2) {
+        return TimeOfDay(
+          hour: int.parse(parts[0]),
+          minute: int.parse(parts[1]),
+        );
+      }
+    } catch (e) {
+      // Return current time as fallback
+    }
+    return TimeOfDay.now();
+  }
+
+  bool _isTimeBetween(TimeOfDay current, TimeOfDay start, TimeOfDay end) {
+    final currentMinutes = current.hour * 60 + current.minute;
+    final startMinutes = start.hour * 60 + start.minute;
+    final endMinutes = end.hour * 60 + end.minute;
+    return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
+  }
+
+  String _formatDate(DateTime date) {
+    final days = [
       '',
       'Senin',
       'Selasa',
@@ -547,33 +699,22 @@ class ScheduleView extends GetView<ScheduleController> {
       'Sabtu',
       'Minggu',
     ];
-
-    return 'Jadwal ${days[date.weekday]}, ${date.day} ${_getMonthName(date.month)}';
-  }
-
-  String _getMonthName(int month) {
-    const months = [
+    final months = [
       '',
-      'Januari',
-      'Februari',
-      'Maret',
-      'April',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
       'Mei',
-      'Juni',
-      'Juli',
-      'Agustus',
-      'September',
-      'Oktober',
-      'November',
-      'Desember',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
-    return months[month];
-  }
 
-  bool _isToday(DateTime date) {
-    final today = DateTime.now();
-    return date.year == today.year &&
-        date.month == today.month &&
-        date.day == today.day;
+    return '${days[date.weekday]}, ${date.day} ${months[date.month]} ${date.year}';
   }
 }

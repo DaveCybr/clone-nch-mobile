@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/services/api_service.dart';
-import '../../../../data/services/export_service.dart';
+// import '../../../../data/services/export_servic.dart';
 
 class StudentDataController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
-  final ExportService _exportService = Get.find<ExportService>();
+  // final ExportService _exportService = Get.find<ExportService>();
 
   // Observables
   final isLoading = false.obs;
@@ -257,11 +257,11 @@ class StudentDataController extends GetxController {
 
       _showSnackbar('Info', 'Sedang memproses ekspor...');
 
-      await _exportService.exportClassSummaryToExcel(
-        teacherClass: selectedClass,
-        period:
-            'Semester ${DateTime.now().month > 6 ? 'Ganjil' : 'Genap'} ${DateTime.now().year}',
-      );
+      // await _exportService.exportClassSummaryToExcel(
+      //   teacherClass: selectedClass,
+      //   period:
+      //       'Semester ${DateTime.now().month > 6 ? 'Ganjil' : 'Genap'} ${DateTime.now().year}',
+      // );
 
       _showSuccessSnackbar('تبارك الله', 'Rekap kelas berhasil diekspor');
     } catch (e) {

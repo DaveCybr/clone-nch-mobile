@@ -11,9 +11,8 @@ import 'storage_service.dart';
 class ApiService extends GetxService {
   late Dio _dio;
   final StorageService _storageService = Get.find<StorageService>();
-
   // Base URL - sesuaikan dengan server Laravel Anda
-  static const String baseUrl = 'http://192.168.1.5:8000/api';
+  static const String baseUrl = 'http://192.168.1.40:8000/api';
 
   @override
   void onInit() {
@@ -293,7 +292,7 @@ class ApiService extends GetxService {
   }
 
   /// Get teacher's schedule (weekly/daily view)
-  Future<List<dynamic>> getTeacherScheduleList({
+  Future<Map<String, dynamic>> getTeacherScheduleList({
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -307,7 +306,8 @@ class ApiService extends GetxService {
             'end_date': endDate.toIso8601String().split('T')[0],
         },
       );
-      return response.data['data'] as List;
+
+      return response.data['data'] as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -376,7 +376,7 @@ class ApiService extends GetxService {
   Future<List<dynamic>> getAnnouncements({int page = 1, int limit = 10}) async {
     try {
       final response = await _dio.get(
-        '/announcements',
+        '/mobile/berita',
         queryParameters: {'page': page, 'limit': limit},
       );
 

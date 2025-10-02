@@ -1,3 +1,4 @@
+// lib/v2/app/modules/teacher/schedule/controllers/schedule_controller.dart
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,38 +8,34 @@ import '../../../../data/services/api_service.dart';
 class ScheduleController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
 
-  // Observables
+  // Observables - Weekly based structure
   final isLoading = false.obs;
-  final selectedDate = DateTime.now().obs;
-  final currentMonth = DateTime.now().obs;
-  final schedulesByDate = <String, List<TodayScheduleModel>>{}.obs;
-  final datesWithSchedule = <DateTime>[].obs;
+  final selectedWeek = DateTime.now().obs; // Week selector instead of month
+  final currentWeek = DateTime.now().obs;
+  final schedulesByDay =
+      <String, List<TodayScheduleModel>>{}.obs; // SENIN, SELASA, etc
+  final selectedDay = 'SENIN'.obs; // Current selected day
 
-  // Islamic months in Arabic
-  final List<String> islamicMonths = [
-    'محرم',
-    'صفر',
-    'ربيع الأول',
-    'ربيع الثاني',
-    'جمادى الأولى',
-    'جمادى الثانية',
-    'رجب',
-    'شعبان',
-    'رمضان',
-    'شوال',
-    'ذو القعدة',
-    'ذو الحجة',
+  // Days of week - sesuai dengan database
+  final List<String> daysOfWeek = [
+    'SENIN',
+    'SELASA',
+    'RABU',
+    'KAMIS',
+    'JUMAT',
+    'SABTU',
+    'MINGGU',
   ];
 
-  // Days of week
-  final List<String> daysOfWeek = [
-    'Ahad',
-    'Isn',
-    'Tsa',
-    'Rab',
-    'Kha',
-    'Jum',
-    'Sab',
+  // Indonesian day names for display
+  final List<String> dayDisplayNames = [
+    'Senin',
+    'Selasa',
+    'Rabu',
+    'Kamis',
+    'Jumat',
+    'Sabtu',
+    'Minggu',
   ];
 
   @override
@@ -46,28 +43,23 @@ class ScheduleController extends GetxController {
     super.onInit();
     developer.log('ScheduleController: onInit called');
 
-    // Check for passed arguments
-    final arguments = Get.arguments as Map<String, dynamic>?;
-    if (arguments != null && arguments['selectedDate'] != null) {
-      final passedDate = arguments['selectedDate'] as DateTime;
-      selectedDate.value = passedDate;
-      currentMonth.value = DateTime(passedDate.year, passedDate.month, 1);
-      developer.log(
-        'ScheduleController: Selected date from arguments: $passedDate',
-      );
-    }
+    // Set default selected day to today
+    final today = DateTime.now();
+    selectedDay.value = getTodayDayName();
+    selectedWeek.value = _getWeekStart(today);
+    currentWeek.value = _getWeekStart(today);
 
     try {
       if (Get.isRegistered<ApiService>()) {
         developer.log('ScheduleController: ApiService is registered');
-        loadMonthSchedule();
+        loadWeeklySchedule();
       } else {
         developer.log(
           'ScheduleController: ApiService not registered, retrying...',
         );
         Future.delayed(Duration(milliseconds: 100), () {
           if (Get.isRegistered<ApiService>()) {
-            loadMonthSchedule();
+            loadWeeklySchedule();
           } else {
             developer.log('ScheduleController: ApiService still not available');
             _showErrorSnackbar('Error', 'Layanan API tidak tersedia');
@@ -80,238 +72,176 @@ class ScheduleController extends GetxController {
     }
   }
 
-  @override
-  void onClose() {
-    developer.log('ScheduleController: onClose called');
-    super.onClose();
-  }
-
-  /// Load schedule for entire month - OPTIMIZED
-  Future<void> loadMonthSchedule() async {
+  Future<void> loadWeeklySchedule() async {
     try {
       isLoading.value = true;
-      developer.log('Loading month schedule for: ${currentMonth.value}');
-
-      // Get first and last day of current month
-      final firstDay = DateTime(
-        currentMonth.value.year,
-        currentMonth.value.month,
-        1,
-      );
-      final lastDay = DateTime(
-        currentMonth.value.year,
-        currentMonth.value.month + 1,
-        0,
-      );
+      developer.log('Loading weekly schedule');
 
       try {
-        // Try to get real data from API first
-        final response = await _apiService.getTeacherScheduleList(
-          startDate: firstDay,
-          endDate: lastDay,
-        );
+        final response = await _apiService.getTeacherScheduleList();
 
-        // Clear previous data
-        schedulesByDate.clear();
-        datesWithSchedule.clear();
+        schedulesByDay.clear();
 
-        // Group schedules by date
-        for (var scheduleJson in response) {
-          final schedule = TodayScheduleModel.fromJson(scheduleJson);
+        final data = await _apiService.getTeacherScheduleList();
 
-          // Parse schedule date (assuming it's in the response)
-          DateTime scheduleDate;
-          if (scheduleJson['date'] != null) {
-            try {
-              scheduleDate = DateTime.parse(scheduleJson['date']);
-            } catch (e) {
-              // If date parsing fails, skip this schedule
-              developer.log('Failed to parse date: ${scheduleJson['date']}');
-              continue;
+        for (var entry in data.entries) {
+          final day = entry.key; // "JUMAT", "SELASA", "KAMIS"
+          final schedules = entry.value as List;
+
+          for (var scheduleJson in schedules) {
+            final schedule = TodayScheduleModel.fromJson(scheduleJson);
+
+            if (!schedulesByDay.containsKey(day)) {
+              schedulesByDay[day] = [];
             }
-          } else {
-            // Skip schedules without dates
-            developer.log('Schedule without date found, skipping');
-            continue;
+            schedulesByDay[day]!.add(schedule);
           }
+        }
 
-          final dateKey = _formatDateKey(scheduleDate);
-
-          if (schedulesByDate[dateKey] == null) {
-            schedulesByDate[dateKey] = [];
-            datesWithSchedule.add(scheduleDate);
-          }
-
-          schedulesByDate[dateKey]!.add(schedule);
+        // Sort tiap hari
+        for (String day in schedulesByDay.keys) {
+          schedulesByDay[day]!.sort(
+            (a, b) => a.startTime.compareTo(b.startTime),
+          );
         }
 
         developer.log(
-          'Loaded schedules for ${datesWithSchedule.length} days from API',
+          'Loaded schedules for ${schedulesByDay.keys.length} days from API',
         );
 
-        // If no data from API, use sample data
-        if (datesWithSchedule.isEmpty) {
+        if (schedulesByDay.isEmpty) {
           developer.log('No API data, loading sample data');
-          _loadSampleData();
+          _loadSampleWeeklyData();
         }
       } catch (apiError) {
         developer.log('API request failed: $apiError, using sample data');
-        _loadSampleData();
+        _loadSampleWeeklyData();
       }
     } catch (e) {
       developer.log('Error loading schedule: $e');
       _showErrorSnackbar('Error', 'Gagal memuat jadwal: $e');
-      _loadSampleData(); // Fallback to sample data
+      _loadSampleWeeklyData();
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// Load specific date schedule - NEW METHOD
-  Future<void> loadDateSchedule(DateTime date) async {
-    try {
-      developer.log('Loading schedule for specific date: $date');
+  /// Load sample weekly data - sesuai struktur database
+  void _loadSampleWeeklyData() {
+    developer.log('Loading sample weekly schedule data');
 
-      final dateKey = _formatDateKey(date);
+    schedulesByDay.clear();
 
-      // If already have data for this date, skip API call
-      if (schedulesByDate.containsKey(dateKey)) {
-        developer.log('Schedule data already exists for $dateKey');
-        return;
-      }
-
-      final response = await _apiService.getSchedulesByDate(date);
-
-      final schedules = <TodayScheduleModel>[];
-      for (var scheduleJson in response) {
-        schedules.add(TodayScheduleModel.fromJson(scheduleJson));
-      }
-
-      if (schedules.isNotEmpty) {
-        schedulesByDate[dateKey] = schedules;
-        if (!datesWithSchedule.any((d) => _formatDateKey(d) == dateKey)) {
-          datesWithSchedule.add(date);
-        }
-      }
-
-      developer.log('Loaded ${schedules.length} schedules for $dateKey');
-    } catch (e) {
-      developer.log('Error loading date schedule: $e');
-      // Don't show error for single date requests
-    }
-  }
-
-  /// Load sample data for development/testing
-  void _loadSampleData() {
-    developer.log('Loading sample schedule data');
-
-    schedulesByDate.clear();
-    datesWithSchedule.clear();
-
-    // Sample schedules for different dates
-    final sampleDates = [
-      DateTime(2024, 9, 6), // Friday
-      DateTime(2024, 9, 10), // Tuesday
-      DateTime(2024, 9, 12), // Thursday
-      DateTime(2024, 9, 13), // Friday
-      DateTime(2024, 9, 15), // Sunday
-      DateTime(2024, 9, 17), // Tuesday
-      DateTime(2024, 9, 19), // Thursday
-      DateTime(2024, 9, 22), // Sunday
-      DateTime(2024, 9, 25), // Wednesday
-      DateTime(2024, 9, 27), // Friday
-    ];
-
-    for (final date in sampleDates) {
-      final dateKey = _formatDateKey(date);
-      datesWithSchedule.add(date);
-
-      schedulesByDate[dateKey] = [
+    // Sample data sesuai dengan database structure
+    final sampleSchedules = {
+      'SENIN': [
         TodayScheduleModel(
-          id: '${date.day}-1',
-          subjectName:
-              date.day == 15
-                  ? 'Fiqih (Thaharah)'
-                  : date.day == 15
-                  ? 'Tafsir Al-Qur\'an (Juz \'Amma)'
-                  : date.day == 15
-                  ? 'Hadits (Arba\'in an-Nawawiyah)'
-                  : 'Fiqih (Thaharah)',
-          className: date.day == 15 ? 'Kelas 7A - Ikhwan' : 'Kelas 8B - Akhwat',
-          timeSlot:
-              date.day == 15
-                  ? 'Ba\'da Subuh (05:30-06:30)'
-                  : date.hour < 12
-                  ? 'Ba\'da Subuh (05:30-06:30)'
-                  : 'Ba\'da Dzuhur (12:30-13:30)',
-          startTime: date.day == 15 ? '05:30' : '12:30',
-          endTime: date.day == 15 ? '06:30' : '13:30',
-          day: _getDayName(date.weekday),
+          id: 'senin-1',
+          subjectName: 'Fiqih (Thaharah)',
+          className: 'Kelas 7A',
+          timeSlot: 'Jam 1-2',
+          startTime: '07:30',
+          endTime: '08:40',
+          day: 'SENIN',
           isDone: false,
           totalStudents: 25,
         ),
-        if (date.day == 15) ...[
-          TodayScheduleModel(
-            id: '${date.day}-2',
-            subjectName: 'Tafsir Al-Qur\'an (Juz \'Amma)',
-            className: 'Kelas 8B - Akhwat',
-            timeSlot: 'Ba\'da Dzuhur (12:30-13:30)',
-            startTime: '12:30',
-            endTime: '13:30',
-            day: _getDayName(date.weekday),
-            isDone: false,
-            totalStudents: 22,
-          ),
-          TodayScheduleModel(
-            id: '${date.day}-3',
-            subjectName: 'Hadits (Arba\'in an-Nawawiyah)',
-            className: 'Kelas 9C - Ikhwan',
-            timeSlot: 'Ba\'da Ashar (15:45-16:45)',
-            startTime: '15:45',
-            endTime: '16:45',
-            day: _getDayName(date.weekday),
-            isDone: false,
-            totalStudents: 20,
-          ),
-        ],
-      ];
+        TodayScheduleModel(
+          id: 'senin-2',
+          subjectName: 'Hadits Arba\'in',
+          className: 'Kelas 8B',
+          timeSlot: 'Jam 3-4',
+          startTime: '09:15',
+          endTime: '10:25',
+          day: 'SENIN',
+          isDone: false,
+          totalStudents: 22,
+        ),
+      ],
+      'SELASA': [
+        TodayScheduleModel(
+          id: 'selasa-1',
+          subjectName: 'Bahasa Arab 7A',
+          className: 'Kelas 7A',
+          timeSlot: 'Jam 6',
+          startTime: '10:35',
+          endTime: '11:10',
+          day: 'SELASA',
+          isDone: false,
+          totalStudents: 25,
+        ),
+        TodayScheduleModel(
+          id: 'selasa-2',
+          subjectName: 'Aqidatul Awam MTS 8A',
+          className: 'Kelas 8A MTS',
+          timeSlot: 'Jam 9',
+          startTime: '13:20',
+          endTime: '13:55',
+          day: 'SELASA',
+          isDone: false,
+          totalStudents: 17,
+        ),
+      ],
+      'RABU': [
+        TodayScheduleModel(
+          id: 'rabu-1',
+          subjectName: 'Bahasa Arab 7A',
+          className: 'Kelas 7A',
+          timeSlot: 'Jam 4',
+          startTime: '09:15',
+          endTime: '09:50',
+          day: 'RABU',
+          isDone: false,
+          totalStudents: 25,
+        ),
+      ],
+      'JUMAT': [
+        TodayScheduleModel(
+          id: 'jumat-1',
+          subjectName: 'Aqidatul Awam MTS 8A',
+          className: 'Kelas 8A MTS',
+          timeSlot: 'Jam 6',
+          startTime: '10:35',
+          endTime: '11:10',
+          day: 'JUMAT',
+          isDone: false,
+          totalStudents: 17,
+        ),
+      ],
+    };
+
+    schedulesByDay.value = sampleSchedules;
+    developer.log(
+      'Sample weekly data loaded for ${schedulesByDay.keys.length} days',
+    );
+  }
+
+  /// Get schedules for selected day
+  List<TodayScheduleModel> get selectedDaySchedules {
+    return schedulesByDay[selectedDay.value] ?? [];
+  }
+
+  /// Check if day has schedules
+  bool hasSchedule(String day) {
+    return schedulesByDay.containsKey(day) && schedulesByDay[day]!.isNotEmpty;
+  }
+
+  /// Select day
+  void selectDay(String day) {
+    if (daysOfWeek.contains(day)) {
+      selectedDay.value = day;
+      developer.log('Selected day: $day');
     }
-
-    developer.log('Sample data loaded for ${datesWithSchedule.length} days');
   }
 
-  /// Get schedules for selected date
-  List<TodayScheduleModel> get selectedDateSchedules {
-    final dateKey = _formatDateKey(selectedDate.value);
-    return schedulesByDate[dateKey] ?? [];
-  }
+  /// Change week
+  void changeWeek(int weekOffset) {
+    final newWeek = currentWeek.value.add(Duration(days: weekOffset * 7));
+    currentWeek.value = _getWeekStart(newWeek);
+    developer.log('Changed to week: ${_getWeekStart(newWeek)}');
 
-  /// Check if date has schedules
-  bool hasSchedule(DateTime date) {
-    return datesWithSchedule.any(
-      (d) => d.year == date.year && d.month == date.month && d.day == date.day,
-    );
-  }
-
-  /// Select date
-  void selectDate(DateTime date) {
-    selectedDate.value = date;
-    developer.log('Selected date: ${_formatDateKey(date)}');
-  }
-
-  /// Change month
-  void changeMonth(int monthOffset) {
-    final newMonth = DateTime(
-      currentMonth.value.year,
-      currentMonth.value.month + monthOffset,
-      1,
-    );
-
-    currentMonth.value = newMonth;
-    developer.log('Changed to month: ${newMonth.month}/${newMonth.year}');
-
-    // Load new month data
-    loadMonthSchedule();
+    // For now, we don't need to reload data since it's weekly recurring
+    // But you could implement date-specific logic here if needed
   }
 
   /// Navigate to attendance
@@ -329,40 +259,59 @@ class ScheduleController extends GetxController {
     }
   }
 
-  /// Format date as key for storage
-  String _formatDateKey(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  /// Get current day name in database format
+  String getTodayDayName() {
+    final today = DateTime.now();
+    final dayIndex = today.weekday; // 1=Monday, 7=Sunday
+
+    // Convert to Indonesian day names used in database
+    switch (dayIndex) {
+      case 1:
+        return 'SENIN';
+      case 2:
+        return 'SELASA';
+      case 3:
+        return 'RABU';
+      case 4:
+        return 'KAMIS';
+      case 5:
+        return 'JUMAT';
+      case 6:
+        return 'SABTU';
+      case 7:
+        return 'MINGGU';
+      default:
+        return 'SENIN';
+    }
   }
 
-  /// Get day name from weekday number
-  String _getDayName(int weekday) {
-    const dayNames = [
-      '',
-      'Senin',
-      'Selasa',
-      'Rabu',
-      'Kamis',
-      'Jumat',
-      'Sabtu',
-      'Minggu',
-    ];
-    return dayNames[weekday];
+  /// Get week start date (Monday)
+  DateTime _getWeekStart(DateTime date) {
+    final monday = date.subtract(Duration(days: date.weekday - 1));
+    return DateTime(monday.year, monday.month, monday.day);
   }
 
-  /// Get Islamic month name (approximate)
-  String get islamicMonthName {
-    // This is approximate - you'd need proper Hijri calendar conversion
-    final month = currentMonth.value.month;
-    final islamicMonthIndex = (month + 1) % 12; // Rough approximation
-    return islamicMonths[islamicMonthIndex];
+  /// Get display name for day
+  String getDayDisplayName(String day) {
+    final index = daysOfWeek.indexOf(day);
+    return index != -1 ? dayDisplayNames[index] : day;
   }
 
-  /// Get Islamic year (approximate)
-  String get islamicYear {
-    // Rough approximation: Gregorian year - 579
-    final gregorianYear = currentMonth.value.year;
-    final islamicYear = gregorianYear - 579;
-    return '$islamicYear H';
+  /// Get date for specific day in current week
+  DateTime getDateForDay(String day) {
+    final dayIndex = daysOfWeek.indexOf(day);
+    if (dayIndex == -1) return DateTime.now();
+
+    final weekStart = _getWeekStart(currentWeek.value);
+    return weekStart.add(Duration(days: dayIndex));
+  }
+
+  /// Format week range for display
+  String get weekRangeText {
+    final weekStart = _getWeekStart(currentWeek.value);
+    final weekEnd = weekStart.add(Duration(days: 6));
+
+    return '${weekStart.day}/${weekStart.month} - ${weekEnd.day}/${weekEnd.month}/${weekEnd.year}';
   }
 
   void _showErrorSnackbar(String title, String message) {

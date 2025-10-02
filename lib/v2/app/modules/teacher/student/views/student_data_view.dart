@@ -15,31 +15,33 @@ class StudentDataView extends GetView<StudentDataController> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: _buildAppBar(),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return _buildLoadingState();
-        }
+      body: SafeArea(
+        child: Obx(() {
+          if (controller.isLoading.value) {
+            return _buildLoadingState();
+          }
 
-        if (controller.teacherClasses.isEmpty) {
-          return _buildEmptyState();
-        }
+          if (controller.teacherClasses.isEmpty) {
+            return _buildEmptyState();
+          }
 
-        return Column(
-          children: [
-            // Class Tabs
-            _buildClassTabs(),
+          return Column(
+            children: [
+              // Class Tabs
+              _buildClassTabs(),
 
-            // Search Bar
-            _buildSearchBar(),
+              // Search Bar
+              _buildSearchBar(),
 
-            // Class Info
-            _buildClassInfo(),
+              // Class Info
+              _buildClassInfo(),
 
-            // Students List
-            Expanded(child: _buildStudentsList()),
-          ],
-        );
-      }),
+              // Students List
+              Expanded(child: _buildStudentsList()),
+            ],
+          );
+        }),
+      ),
     );
   }
 

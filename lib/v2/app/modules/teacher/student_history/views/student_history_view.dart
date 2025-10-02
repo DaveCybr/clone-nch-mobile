@@ -16,42 +16,44 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: _buildAppBar(),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return _buildLoadingState();
-        }
+      body: SafeArea(
+        child: Obx(() {
+          if (controller.isLoading.value) {
+            return _buildLoadingState();
+          }
 
-        final history = controller.studentHistory.value;
-        if (history == null) {
-          return _buildErrorState();
-        }
+          final history = controller.studentHistory.value;
+          if (history == null) {
+            return _buildErrorState();
+          }
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Student Info Card
-              _buildStudentInfoCard(history),
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Student Info Card
+                _buildStudentInfoCard(history),
 
-              SizedBox(height: 16.h),
+                SizedBox(height: 16.h),
 
-              // Date Range Selector
-              _buildDateRangeSelector(),
+                // Date Range Selector
+                _buildDateRangeSelector(),
 
-              SizedBox(height: 16.h),
+                SizedBox(height: 16.h),
 
-              // Attendance Summary
-              _buildAttendanceSummaryCard(history.summary),
+                // Attendance Summary
+                _buildAttendanceSummaryCard(history.summary),
 
-              SizedBox(height: 16.h),
+                SizedBox(height: 16.h),
 
-              // History List
-              _buildHistorySection(history.history),
-            ],
-          ),
-        );
-      }),
+                // History List
+                _buildHistorySection(history.history),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 

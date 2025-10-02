@@ -5,11 +5,11 @@ import 'package:get/get.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
-import '../../../../data/services/export_service.dart';
+import '../../../../data/services/export_servic.dart';
 
 class AttendanceController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
-  final ExportService _exportService = Get.find<ExportService>();
+  // final ExportService _exportService = Get.find<ExportService>();
   // Observables
   final isLoading = false.obs;
   final isSaving = false.obs;
@@ -285,12 +285,12 @@ class AttendanceController extends GetxController {
 
       _showSnackbar('Info', 'Sedang memproses ekspor...');
 
-      await _exportService.exportAttendanceToExcel(
-        className: scheduleDetail.className,
-        subjectName: scheduleDetail.subjectName,
-        students: studentsAttendance,
-        date: selectedDate.value,
-      );
+      // await _exportService.exportAttendanceToExcel(
+      //   className: scheduleDetail.className,
+      //   subjectName: scheduleDetail.subjectName,
+      //   students: studentsAttendance,
+      //   date: selectedDate.value,
+      // );
 
       _showSuccessSnackbar('تبارك الله', 'Laporan absensi berhasil diekspor');
     } catch (e) {
