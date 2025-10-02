@@ -2,10 +2,12 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nch_mobile/v2/app/modules/teacher/dashboard/controllers/teacher_dashboard_controller.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
 import '../../../../data/services/export_servic.dart';
+import '../../schedule/controllers/schedule_controller.dart';
 
 class AttendanceController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
@@ -68,11 +70,18 @@ class AttendanceController extends GetxController {
   }
 
   /// Submit attendance data
+  // File: lib/v2/app/modules/teacher/attendance/controllers/attendance_controller.dart
+
+  /// Submit attendance data (INSERT or UPDATE)
   Future<void> submitAttendance() async {
+    if (isSaving.value) {
+      return; // Prevent double submission
+    }
+
     try {
       isSaving.value = true;
 
-      // Create submission model
+      // Build submission with attendance_id
       final submission = AttendanceSubmissionModel(
         scheduleId: scheduleId!,
         attendanceDate: selectedDate.value,
@@ -83,6 +92,7 @@ class AttendanceController extends GetxController {
                     studentId: student.studentId,
                     status: student.currentStatus,
                     notes: student.notes,
+                    attendanceId: student.attendanceId, // Include this!
                   ),
                 )
                 .toList(),
@@ -95,7 +105,14 @@ class AttendanceController extends GetxController {
         'Absensi berhasil disimpan. جزاك الله خيرا',
       );
 
-      // Refresh data
+      // Refresh schedule list
+      if (Get.isRegistered<ScheduleController>()) {
+        final scheduleController = Get.find<ScheduleController>();
+        await scheduleController.loadWeeklySchedule();
+      }
+
+      // Refresh current data
+      await _apiService.getTeacherDashboard();
       await loadScheduleAttendance();
     } catch (e) {
       developer.log('Error submitting attendance: $e');

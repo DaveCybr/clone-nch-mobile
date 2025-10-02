@@ -1,4 +1,5 @@
-// lib/v2/app/modules/teacher/schedule/controllers/schedule_controller.dart
+// File: lib/v2/app/modules/teacher/schedule/controllers/schedule_controller.dart
+
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,15 +9,13 @@ import '../../../../data/services/api_service.dart';
 class ScheduleController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
 
-  // Observables - Weekly based structure
+  // Observables
   final isLoading = false.obs;
-  final selectedWeek = DateTime.now().obs; // Week selector instead of month
+  final selectedWeek = DateTime.now().obs;
   final currentWeek = DateTime.now().obs;
-  final schedulesByDay =
-      <String, List<TodayScheduleModel>>{}.obs; // SENIN, SELASA, etc
-  final selectedDay = 'SENIN'.obs; // Current selected day
+  final schedulesByDay = <String, List<TodayScheduleModel>>{}.obs;
+  final selectedDay = 'SENIN'.obs;
 
-  // Days of week - sesuai dengan database
   final List<String> daysOfWeek = [
     'SENIN',
     'SELASA',
@@ -27,7 +26,6 @@ class ScheduleController extends GetxController {
     'MINGGU',
   ];
 
-  // Indonesian day names for display
   final List<String> dayDisplayNames = [
     'Senin',
     'Selasa',
@@ -43,63 +41,36 @@ class ScheduleController extends GetxController {
     super.onInit();
     developer.log('ScheduleController: onInit called');
 
-    // Set default selected day to today
     final today = DateTime.now();
     selectedDay.value = getTodayDayName();
     selectedWeek.value = _getWeekStart(today);
     currentWeek.value = _getWeekStart(today);
 
-    try {
-      if (Get.isRegistered<ApiService>()) {
-        developer.log('ScheduleController: ApiService is registered');
-        loadWeeklySchedule();
-      } else {
-        developer.log(
-          'ScheduleController: ApiService not registered, retrying...',
-        );
-        Future.delayed(Duration(milliseconds: 100), () {
-          if (Get.isRegistered<ApiService>()) {
-            loadWeeklySchedule();
-          } else {
-            developer.log('ScheduleController: ApiService still not available');
-            _showErrorSnackbar('Error', 'Layanan API tidak tersedia');
-          }
-        });
-      }
-    } catch (e) {
-      developer.log('ScheduleController: Error in onInit: $e');
-      _showErrorSnackbar('Error', 'Gagal menginisialisasi controller: $e');
-    }
+    loadWeeklySchedule();
   }
 
   Future<void> loadWeeklySchedule() async {
     try {
       isLoading.value = true;
-      developer.log('Loading weekly schedule');
+      developer.log('Loading weekly schedule from API');
 
       try {
-        final response = await _apiService.getTeacherScheduleList();
+        // Call API
+        final data = await _apiService.getTeacherScheduleList();
 
         schedulesByDay.clear();
 
-        final data = await _apiService.getTeacherScheduleList();
-
+        // Parse response
         for (var entry in data.entries) {
-          final day = entry.key; // "JUMAT", "SELASA", "KAMIS"
+          final day = entry.key; // "SENIN", "SELASA", etc
           final schedules = entry.value as List;
 
-          for (var scheduleJson in schedules) {
-            final schedule = TodayScheduleModel.fromJson(scheduleJson);
+          schedulesByDay[day] =
+              schedules
+                  .map((json) => TodayScheduleModel.fromJson(json))
+                  .toList();
 
-            if (!schedulesByDay.containsKey(day)) {
-              schedulesByDay[day] = [];
-            }
-            schedulesByDay[day]!.add(schedule);
-          }
-        }
-
-        // Sort tiap hari
-        for (String day in schedulesByDay.keys) {
+          // Sort by time
           schedulesByDay[day]!.sort(
             (a, b) => a.startTime.compareTo(b.startTime),
           );
@@ -110,7 +81,7 @@ class ScheduleController extends GetxController {
         );
 
         if (schedulesByDay.isEmpty) {
-          developer.log('No API data, loading sample data');
+          developer.log('No schedules found, loading sample data');
           _loadSampleWeeklyData();
         }
       } catch (apiError) {
@@ -126,13 +97,12 @@ class ScheduleController extends GetxController {
     }
   }
 
-  /// Load sample weekly data - sesuai struktur database
+  /// Load sample weekly data
   void _loadSampleWeeklyData() {
     developer.log('Loading sample weekly schedule data');
 
     schedulesByDay.clear();
 
-    // Sample data sesuai dengan database structure
     final sampleSchedules = {
       'SENIN': [
         TodayScheduleModel(
@@ -167,45 +137,8 @@ class ScheduleController extends GetxController {
           startTime: '10:35',
           endTime: '11:10',
           day: 'SELASA',
-          isDone: false,
+          isDone: true, // Example: already done
           totalStudents: 25,
-        ),
-        TodayScheduleModel(
-          id: 'selasa-2',
-          subjectName: 'Aqidatul Awam MTS 8A',
-          className: 'Kelas 8A MTS',
-          timeSlot: 'Jam 9',
-          startTime: '13:20',
-          endTime: '13:55',
-          day: 'SELASA',
-          isDone: false,
-          totalStudents: 17,
-        ),
-      ],
-      'RABU': [
-        TodayScheduleModel(
-          id: 'rabu-1',
-          subjectName: 'Bahasa Arab 7A',
-          className: 'Kelas 7A',
-          timeSlot: 'Jam 4',
-          startTime: '09:15',
-          endTime: '09:50',
-          day: 'RABU',
-          isDone: false,
-          totalStudents: 25,
-        ),
-      ],
-      'JUMAT': [
-        TodayScheduleModel(
-          id: 'jumat-1',
-          subjectName: 'Aqidatul Awam MTS 8A',
-          className: 'Kelas 8A MTS',
-          timeSlot: 'Jam 6',
-          startTime: '10:35',
-          endTime: '11:10',
-          day: 'JUMAT',
-          isDone: false,
-          totalStudents: 17,
         ),
       ],
     };
@@ -239,9 +172,6 @@ class ScheduleController extends GetxController {
     final newWeek = currentWeek.value.add(Duration(days: weekOffset * 7));
     currentWeek.value = _getWeekStart(newWeek);
     developer.log('Changed to week: ${_getWeekStart(newWeek)}');
-
-    // For now, we don't need to reload data since it's weekly recurring
-    // But you could implement date-specific logic here if needed
   }
 
   /// Navigate to attendance
@@ -262,9 +192,8 @@ class ScheduleController extends GetxController {
   /// Get current day name in database format
   String getTodayDayName() {
     final today = DateTime.now();
-    final dayIndex = today.weekday; // 1=Monday, 7=Sunday
+    final dayIndex = today.weekday;
 
-    // Convert to Indonesian day names used in database
     switch (dayIndex) {
       case 1:
         return 'SENIN';

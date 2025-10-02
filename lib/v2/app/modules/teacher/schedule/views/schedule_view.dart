@@ -351,7 +351,7 @@ class ScheduleView extends GetView<ScheduleController> {
 
   Widget _buildScheduleCard(dynamic schedule) {
     final isOngoing = _isScheduleOngoing(schedule);
-    final isDone = _isScheduleDone(schedule);
+    final isDone = schedule.isDone;
 
     return Container(
       margin: EdgeInsets.only(bottom: 12.h),
@@ -361,10 +361,11 @@ class ScheduleView extends GetView<ScheduleController> {
         border: Border(
           left: BorderSide(
             color:
-                isOngoing
+                isDone
+                    ? AppColors
+                        .attendancePresent // Green for done
+                    : isOngoing
                     ? AppColors.goldAccent
-                    : isDone
-                    ? AppColors.attendancePresent
                     : AppColors.primaryGreen,
             width: 4.w,
           ),
@@ -454,13 +455,15 @@ class ScheduleView extends GetView<ScheduleController> {
 
             SizedBox(height: 12.h),
 
-            // Action Button
+            // Action Button - Change text based on isDone
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: () => controller.navigateToAttendance(schedule),
-                icon: Icon(Icons.how_to_reg, size: 18.sp),
-                label: Text(isDone ? 'Lihat Absensi' : 'Buka Absensi'),
+                icon: Icon(isDone ? Icons.edit : Icons.how_to_reg, size: 18.sp),
+                label: Text(
+                  isDone ? 'Edit Absensi' : 'Buka Absensi',
+                ), // ✅ Change label
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
                       isOngoing ? AppColors.goldAccent : AppColors.primaryGreen,
@@ -483,7 +486,9 @@ class ScheduleView extends GetView<ScheduleController> {
     String chipText;
     IconData chipIcon;
 
-    if (isDone) {
+    // Priority: Done > Ongoing > Waiting
+    if (isDone || schedule.isDone) {
+      // ✅ Check schedule.isDone from backend
       chipColor = AppColors.attendancePresent;
       chipText = 'Selesai';
       chipIcon = Icons.check_circle;

@@ -11,7 +11,6 @@ import '../../../../../core/widgets/islamic/prayer_time_widget.dart';
 import '../../../../../core/widgets/teacher/schedule_card.dart';
 import '../../../../../core/widgets/teacher/statistic_card.dart';
 import '../../../../data/models/dashboard_model.dart';
-import '../../../../routes/app_routes.dart';
 import '../controllers/teacher_dashboard_controller.dart';
 
 class TeacherDashboardView extends GetView<TeacherDashboardController> {
