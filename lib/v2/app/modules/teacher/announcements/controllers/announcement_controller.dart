@@ -62,8 +62,9 @@ class AnnouncementsController extends GetxController {
         limit: 10,
       );
 
-      final newAnnouncements =
-          response.map((json) => AnnouncementModel.fromJson(json)).toList();
+      final newAnnouncements = response
+          .map((json) => AnnouncementModel.fromJson(json))
+          .toList();
 
       if (newAnnouncements.isEmpty) {
         hasMoreData = false;
@@ -119,25 +120,20 @@ class AnnouncementsController extends GetxController {
     final query = searchQuery.value;
     final allAnnouncements = announcements.value; // ✅ Tambahkan .value
 
-    var filtered =
-        allAnnouncements.where((announcement) {
-          // Category filter
-          if (selectedCat != 'all' && announcement.category != selectedCat) {
-            return false;
-          }
+    var filtered = allAnnouncements.where((announcement) {
+      // Category filter
+      if (selectedCat != 'all' && announcement.category != selectedCat) {
+        return false;
+      }
 
-          // Search filter
-          if (query.isNotEmpty) {
-            return announcement.title.toLowerCase().contains(
-                  query.toLowerCase(),
-                ) ||
-                announcement.content.toLowerCase().contains(
-                  query.toLowerCase(),
-                );
-          }
+      // Search filter
+      if (query.isNotEmpty) {
+        return announcement.title.toLowerCase().contains(query.toLowerCase()) ||
+            announcement.content.toLowerCase().contains(query.toLowerCase());
+      }
 
-          return true;
-        }).toList();
+      return true;
+    }).toList();
 
     // Sort by priority and date
     filtered.sort((a, b) {

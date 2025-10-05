@@ -39,39 +39,38 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
         ),
         PopupMenuButton(
           icon: const Icon(Icons.more_vert),
-          itemBuilder:
-              (context) => [
-                PopupMenuItem(
-                  value: 'refresh',
-                  child: Row(
-                    children: [
-                      Icon(Icons.refresh, color: AppColors.primaryGreen),
-                      SizedBox(width: 12.w),
-                      const Text('Refresh'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'profile',
-                  child: Row(
-                    children: [
-                      Icon(Icons.person_outline, color: AppColors.primaryGreen),
-                      SizedBox(width: 12.w),
-                      const Text('Profil'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.logout, color: Colors.red),
-                      SizedBox(width: 12.w),
-                      const Text('Keluar'),
-                    ],
-                  ),
-                ),
-              ],
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'refresh',
+              child: Row(
+                children: [
+                  Icon(Icons.refresh, color: AppColors.primaryGreen),
+                  SizedBox(width: 12.w),
+                  const Text('Refresh'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'profile',
+              child: Row(
+                children: [
+                  Icon(Icons.person_outline, color: AppColors.primaryGreen),
+                  SizedBox(width: 12.w),
+                  const Text('Profil'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  const Icon(Icons.logout, color: Colors.red),
+                  SizedBox(width: 12.w),
+                  const Text('Keluar'),
+                ],
+              ),
+            ),
+          ],
           onSelected: (value) {
             switch (value) {
               case 'refresh':
@@ -194,18 +193,12 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
           CircleAvatar(
             radius: 35.r,
             backgroundColor: AppColors.goldAccent,
-            backgroundImage:
-                controller.currentUser!.avatarUrl.isNotEmpty
-                    ? NetworkImage(controller.currentUser!.avatarUrl)
-                    : null,
-            child:
-                controller.currentUser!.avatarUrl.isEmpty
-                    ? Icon(
-                      Icons.person,
-                      size: 35.sp,
-                      color: AppColors.primaryGreen,
-                    )
-                    : null,
+            backgroundImage: controller.currentUser!.avatarUrl.isNotEmpty
+                ? NetworkImage(controller.currentUser!.avatarUrl)
+                : null,
+            child: controller.currentUser!.avatarUrl.isEmpty
+                ? Icon(Icons.person, size: 35.sp, color: AppColors.primaryGreen)
+                : null,
           ),
 
           SizedBox(width: 16.w),
@@ -533,10 +526,9 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       decoration: BoxDecoration(
         color: AppColors.lightGreenBg,
         borderRadius: BorderRadius.circular(8.r),
-        border:
-            announcement.isPriority
-                ? Border.all(color: Colors.orange, width: 1)
-                : null,
+        border: announcement.isPriority
+            ? Border.all(color: Colors.orange, width: 1)
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -71,39 +71,38 @@ class AttendanceView extends GetView<AttendanceController> {
                 break;
             }
           },
-          itemBuilder:
-              (BuildContext context) => [
-                PopupMenuItem<String>(
-                  value: 'export',
-                  child: Row(
-                    children: [
-                      Icon(Icons.file_download, color: Colors.green),
-                      SizedBox(width: 8),
-                      Text('Ekspor Laporan'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'print',
-                  child: Row(
-                    children: [
-                      Icon(Icons.print, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text('Cetak'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem<String>(
-                  value: 'summary',
-                  child: Row(
-                    children: [
-                      Icon(Icons.analytics, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text('Ringkasan'),
-                    ],
-                  ),
-                ),
-              ],
+          itemBuilder: (BuildContext context) => [
+            PopupMenuItem<String>(
+              value: 'export',
+              child: Row(
+                children: [
+                  Icon(Icons.file_download, color: Colors.green),
+                  SizedBox(width: 8),
+                  Text('Ekspor Laporan'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'print',
+              child: Row(
+                children: [
+                  Icon(Icons.print, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Text('Cetak'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'summary',
+              child: Row(
+                children: [
+                  Icon(Icons.analytics, color: Colors.orange),
+                  SizedBox(width: 8),
+                  Text('Ringkasan'),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -334,42 +333,41 @@ class AttendanceView extends GetView<AttendanceController> {
       child: Obx(() {
         final summary = controller.attendanceSummary;
         return Row(
-          children:
-              AttendanceStatus.values.map((status) {
-                final count = summary[status] ?? 0;
-                final color = _getStatusColor(status);
+          children: AttendanceStatus.values.map((status) {
+            final count = summary[status] ?? 0;
+            final color = _getStatusColor(status);
 
-                return Expanded(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 2.w),
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: color.withOpacity(0.3)),
+            return Expanded(
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 2.w),
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: color.withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      count.toString(),
+                      style: AppTextStyles.heading2.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: Column(
-                      children: [
-                        Text(
-                          count.toString(),
-                          style: AppTextStyles.heading2.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          status.displayName,
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                    SizedBox(height: 4.h),
+                    Text(
+                      status.displayName,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         );
       }),
     );
@@ -548,28 +546,26 @@ class AttendanceView extends GetView<AttendanceController> {
             width: double.infinity,
             height: 50.h,
             child: ElevatedButton(
-              onPressed:
-                  controller.isSaving.value
-                      ? null
-                      : controller.submitAttendance,
-              child:
-                  controller.isSaving.value
-                      ? Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 20.w,
-                            height: 20.h,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
+              onPressed: controller.isSaving.value
+                  ? null
+                  : controller.submitAttendance,
+              child: controller.isSaving.value
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20.w,
+                          height: 20.h,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
                           ),
-                          SizedBox(width: 12.w),
-                          Text('Menyimpan...', style: AppTextStyles.buttonText),
-                        ],
-                      )
-                      : Text('Simpan Absensi', style: AppTextStyles.buttonText),
+                        ),
+                        SizedBox(width: 12.w),
+                        Text('Menyimpan...', style: AppTextStyles.buttonText),
+                      ],
+                    )
+                  : Text('Simpan Absensi', style: AppTextStyles.buttonText),
             ),
           ),
         ),

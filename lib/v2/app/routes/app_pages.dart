@@ -102,11 +102,10 @@ class AppPages {
     // Parent routes placeholder
     GetPage(
       name: Routes.PARENT_DASHBOARD,
-      page:
-          () => _buildPlaceholderPage(
-            'Parent Dashboard',
-            'Halaman wali santri sedang dalam pengembangan',
-          ),
+      page: () => _buildPlaceholderPage(
+        'Parent Dashboard',
+        'Halaman wali santri sedang dalam pengembangan',
+      ),
     ),
   ];
 

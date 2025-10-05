@@ -108,8 +108,9 @@ class ExportService extends GetxService {
       final summaryStartRow = headerRow + students.length + 3;
       sheet.cell(CellIndex.indexByString('A$summaryStartRow')).value =
           'RINGKASAN ABSENSI:' as CellValue?;
-      sheet.cell(CellIndex.indexByString('A$summaryStartRow')).cellStyle =
-          CellStyle(bold: true);
+      sheet
+          .cell(CellIndex.indexByString('A$summaryStartRow'))
+          .cellStyle = CellStyle(bold: true);
 
       final summary = _calculateAttendanceSummary(students);
       sheet.cell(CellIndex.indexByString('A${summaryStartRow + 1}')).value =
@@ -124,9 +125,10 @@ class ExportService extends GetxService {
           'Alpha: ${summary['alpha']}' as CellValue?;
 
       // Calculate attendance percentage
-      final attendancePercentage = students.isNotEmpty
-          ? (summary['hadir']! / students.length * 100).toStringAsFixed(1)
-          : '0';
+      final attendancePercentage =
+          students.isNotEmpty
+              ? (summary['hadir']! / students.length * 100).toStringAsFixed(1)
+              : '0';
       sheet.cell(CellIndex.indexByString('A${summaryStartRow + 6}')).value =
           'Persentase Kehadiran: $attendancePercentage%' as CellValue?;
 
@@ -188,7 +190,7 @@ class ExportService extends GetxService {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text(
-                          'My NCH',
+                          'JTI NCH Teacher Portal',
                           style: pw.TextStyle(font: titleFont, fontSize: 18),
                         ),
                         pw.Text(
@@ -501,12 +503,13 @@ class ExportService extends GetxService {
       }
 
       // Calculate class average
-      final classAverage = teacherClass.students.isNotEmpty
-          ? teacherClass.students
-                    .map((s) => s.attendancePercentage)
-                    .reduce((a, b) => a + b) /
-                teacherClass.students.length
-          : 0.0;
+      final classAverage =
+          teacherClass.students.isNotEmpty
+              ? teacherClass.students
+                      .map((s) => s.attendancePercentage)
+                      .reduce((a, b) => a + b) /
+                  teacherClass.students.length
+              : 0.0;
 
       final summaryRow = headerRow + teacherClass.students.length + 2;
       sheet.cell(CellIndex.indexByString('A$summaryRow')).value =

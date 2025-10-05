@@ -87,17 +87,16 @@ class AttendanceController extends GetxController {
       final submission = AttendanceSubmissionModel(
         scheduleId: scheduleId!,
         attendanceDate: selectedDate.value,
-        attendances:
-            studentsAttendance
-                .map(
-                  (student) => AttendanceRecordModel(
-                    studentId: student.studentId,
-                    status: student.currentStatus,
-                    notes: student.notes,
-                    attendanceId: student.attendanceId, // Include this!
-                  ),
-                )
-                .toList(),
+        attendances: studentsAttendance
+            .map(
+              (student) => AttendanceRecordModel(
+                studentId: student.studentId,
+                status: student.currentStatus,
+                notes: student.notes,
+                attendanceId: student.attendanceId, // Include this!
+              ),
+            )
+            .toList(),
       );
 
       await _apiService.submitAttendance(submission);
@@ -212,10 +211,9 @@ class AttendanceController extends GetxController {
                     color: _getStatusColor(status),
                   ),
                   title: Text(status.displayName),
-                  trailing:
-                      student.currentStatus == status
-                          ? Icon(Icons.check, color: Colors.green)
-                          : null,
+                  trailing: student.currentStatus == status
+                      ? Icon(Icons.check, color: Colors.green)
+                      : null,
                   onTap: () {
                     updateStudentAttendance(student.studentId, status);
                     Get.back();
@@ -234,8 +232,9 @@ class AttendanceController extends GetxController {
   Map<AttendanceStatus, int> get attendanceSummary {
     final summary = <AttendanceStatus, int>{};
     for (final status in AttendanceStatus.values) {
-      summary[status] =
-          studentsAttendance.where((s) => s.currentStatus == status).length;
+      summary[status] = studentsAttendance
+          .where((s) => s.currentStatus == status)
+          .length;
     }
     return summary;
   }

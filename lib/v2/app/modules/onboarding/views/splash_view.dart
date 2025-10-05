@@ -105,7 +105,6 @@ class _SplashViewState extends State<SplashView>
     developer.log('User Roles: ${user.roleNames}');
     developer.log('User Permissions: ${user.permissions}');
     developer.log('======================');
-
     // Redirect based on user role
     if (user.isTeacher) {
       developer.log('SplashView: Redirecting to teacher dashboard');

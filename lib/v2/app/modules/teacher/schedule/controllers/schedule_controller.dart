@@ -66,10 +66,9 @@ class ScheduleController extends GetxController {
           final day = entry.key; // "SENIN", "SELASA", etc
           final schedules = entry.value as List;
 
-          schedulesByDay[day] =
-              schedules
-                  .map((json) => TodayScheduleModel.fromJson(json))
-                  .toList();
+          schedulesByDay[day] = schedules
+              .map((json) => TodayScheduleModel.fromJson(json))
+              .toList();
 
           // Sort by time
           schedulesByDay[day]!.sort(
