@@ -43,7 +43,7 @@ class AuthController extends GetxController {
   Future<bool> checkAuthStatus() async {
     try {
       isLoading.value = true;
-      
+
       if (_storageService.hasValidToken) {
         final savedUser = _storageService.getUser();
         if (savedUser != null) {
@@ -55,7 +55,7 @@ class AuthController extends GetxController {
             final freshUser = await _apiService.getCurrentUser();
             user.value = freshUser;
             await _storageService.saveUser(freshUser);
-            
+
             developer.log('Auto-login successful for user: ${freshUser.name}');
             return true;
           } catch (e) {
@@ -66,7 +66,7 @@ class AuthController extends GetxController {
           }
         }
       }
-      
+
       developer.log('No valid auth data found');
       return false;
     } catch (e) {
@@ -94,6 +94,8 @@ class AuthController extends GetxController {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
+
+      print("Raw response body: ${response}");
 
       developer.log('Login response success: ${response.success}');
       developer.log('Login response message: ${response.message}');
@@ -123,13 +125,18 @@ class AuthController extends GetxController {
         // Clear form
         _clearForm();
       } else {
-        final errorMessage = response.message.isNotEmpty ? response.message : 'Login gagal';
+        final errorMessage =
+            response.message.isNotEmpty ? response.message : 'Login gagal';
         developer.log('Login failed: $errorMessage');
         _showErrorSnackbar('Login Gagal', errorMessage);
       }
-    } catch (e) {
+    } catch (e, response) {
+      print("Raw response body: ${response}");
       developer.log('Login error: $e');
-      final errorMessage = e.toString().isNotEmpty ? e.toString() : 'Terjadi kesalahan tidak terduga';
+      final errorMessage =
+          e.toString().isNotEmpty
+              ? e.toString()
+              : 'Terjadi kesalahan tidak terduga';
       _showErrorSnackbar('خطأ في تسجيل الدخول', errorMessage);
     } finally {
       isLoading.value = false;
@@ -231,7 +238,8 @@ class AuthController extends GetxController {
   /// Show success snackbar
   void _showSuccessSnackbar(String title, String message) {
     final validTitle = title.isEmpty ? 'Success' : title;
-    final validMessage = message.isEmpty ? 'Operation completed successfully' : message;
+    final validMessage =
+        message.isEmpty ? 'Operation completed successfully' : message;
 
     Get.snackbar(
       validTitle,
@@ -281,7 +289,7 @@ class AuthController extends GetxController {
   Future<bool> isSessionValid() async {
     try {
       if (!_storageService.hasValidToken) return false;
-      
+
       // Try to get current user to validate token
       await getCurrentUser();
       return true;
@@ -294,7 +302,7 @@ class AuthController extends GetxController {
   Future<bool> tryAutoLogin() async {
     try {
       if (!rememberMe.value) return false;
-      
+
       // Check if we have valid token and user data
       return await checkAuthStatus();
     } catch (e) {

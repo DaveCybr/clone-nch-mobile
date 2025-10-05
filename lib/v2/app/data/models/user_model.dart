@@ -26,6 +26,7 @@ class UserModel {
   final bool? isTeacherFromServer;
   final EmployeeModel? employee;
   final StudentModel? student;
+  final List<RoleModel> roles; // ← ADD THIS
 
   const UserModel({
     required this.id,
@@ -50,44 +51,84 @@ class UserModel {
     this.isTeacherFromServer,
     this.employee,
     this.student,
+    this.roles = const [], // ← ADD THIS
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Handle roles: bisa string list atau object list
+    final roles = <RoleModel>[];
+    if (json['roles'] is List) {
+      final rawRoles = json['roles'] as List;
+      if (rawRoles.isNotEmpty && rawRoles.first is String) {
+        // Convert list string ke RoleModel sederhana
+        for (var r in rawRoles) {
+          roles.add(
+            RoleModel(id: '', name: r, guardName: 'web', permissions: []),
+          );
+        }
+      } else {
+        roles.addAll(rawRoles.map((r) => RoleModel.fromJson(r)).toList());
+      }
+    }
+
+    // Handle permission/permissions
+    final allPermissions = <String>[];
+    if (json['permission'] is List) {
+      allPermissions.addAll(List<String>.from(json['permission']));
+    }
+    if (json['permissions'] is List) {
+      allPermissions.addAll(List<String>.from(json['permissions']));
+    }
+
+    // Determine if user is teacher from roles or employee data
+    final hasTeacherRole = roles.any(
+      (role) => role.name.toLowerCase() == 'teacher',
+    );
+    final hasEmployeeData = json['employee'] != null;
+    final currentRole = json['current_role'] as String?;
+
     return UserModel(
       id: json['id'] as String,
       name: json['name'] as String,
       email: json['email'] as String,
-      emailVerifiedAt: json['email_verified_at'] != null
-          ? DateTime.parse(json['email_verified_at'])
-          : null,
+      emailVerifiedAt:
+          json['email_verified_at'] != null
+              ? DateTime.parse(json['email_verified_at'])
+              : null,
       isChangePassword: _safeBoolConversion(json['is_change_password']),
       status: json['status'] ?? 'ACTIVE',
       gender: json['gender'],
       religion: json['religion'] ?? 'ISLAM',
       birthPlace: json['birth_place'],
-      birthDate: json['birth_date'] != null
-          ? DateTime.tryParse(json['birth_date'])
-          : null,
+      birthDate:
+          json['birth_date'] != null
+              ? DateTime.tryParse(json['birth_date'])
+              : null,
       phoneNumber: json['phone_number'],
       nationality: json['nationality'],
       imgPath: json['img_path'],
       imgName: json['img_name'],
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'])
-          : null,
-      updatedAt: json['updated_at'] != null
-          ? DateTime.tryParse(json['updated_at'])
-          : null,
-      currentRole: json['current_role'],
-      permissions: json['permissions'] != null 
-          ? List<String>.from(json['permissions'])
-          : [],
+      createdAt:
+          json['created_at'] != null
+              ? DateTime.tryParse(json['created_at'])
+              : null,
+      updatedAt:
+          json['updated_at'] != null
+              ? DateTime.tryParse(json['updated_at'])
+              : null,
+      currentRole: currentRole,
+      permissions: allPermissions.toSet().toList(), // Remove duplicates
       isAdmin: _safeBoolConversion(json['is_admin']),
       isTeacherFromServer: _safeBoolConversion(json['is_teacher']),
-      employee: json['employee'] != null
-          ? EmployeeModel.fromJson(json['employee'])
-          : null,
-      student: json['student'],
+      employee:
+          json['employee'] != null
+              ? EmployeeModel.fromJson(json['employee'])
+              : null,
+      student:
+          json['student'] != null
+              ? StudentModel.fromJson(json['student'])
+              : null,
+      roles: roles,
     );
   }
 
@@ -123,17 +164,31 @@ class UserModel {
       'is_teacher': isTeacherFromServer,
       'employee': employee?.toJson(),
       'student': student?.toJson(),
+      'roles': roles.map((r) => r.toJson()).toList(),
     };
   }
 
-  // Helper methods
+  // ✅ IMPROVED HELPER METHODS
   bool get isActive => status == 'ACTIVE';
-  bool get isTeacher => isTeacherFromServer ?? (currentRole == 'teacher' || employee != null);
-  bool get isParent => currentRole == 'parent' || student != null;
-  bool get isAdminUser => isAdmin ?? (currentRole == 'admin');
+
+  // ✅ FIX: Better teacher detection logic
+  bool get isTeacher {
+    // Check multiple sources to determine if user is a teacher
+    if (currentRole?.toLowerCase() == 'teacher') return true;
+    if (roles.any((role) => role.name.toLowerCase() == 'teacher')) return true;
+    if (employee != null && employee!.isTeacher) return true;
+    if (isTeacherFromServer == true) return true;
+    return false;
+  }
+
+  bool get isParent =>
+      currentRole?.toLowerCase() == 'parent' || student != null;
+  bool get isAdminUser => isAdmin ?? (currentRole?.toLowerCase() == 'admin');
 
   String get displayName => name;
   String get avatarUrl => imgPath ?? '';
+
+  // ✅ FIX: Better role display logic
   String get roleDisplay {
     if (isTeacher) return 'Ustadz/Ustadzah';
     if (isAdminUser) return 'Administrator';
@@ -147,6 +202,9 @@ class UserModel {
   bool hasPermission(String permission) {
     return permissions.contains(permission);
   }
+
+  // ✅ ADD: Get role names
+  List<String> get roleNames => roles.map((r) => r.name).toList();
 
   UserModel copyWith({
     String? id,
@@ -171,6 +229,7 @@ class UserModel {
     bool? isTeacherFromServer,
     EmployeeModel? employee,
     StudentModel? student,
+    List<RoleModel>? roles,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -195,7 +254,70 @@ class UserModel {
       isTeacherFromServer: isTeacherFromServer ?? this.isTeacherFromServer,
       employee: employee ?? this.employee,
       student: student ?? this.student,
+      roles: roles ?? this.roles,
     );
+  }
+}
+
+// ✅ ADD: RoleModel class
+class RoleModel {
+  final String id;
+  final String name;
+  final String guardName;
+  final List<PermissionModel> permissions;
+
+  const RoleModel({
+    required this.id,
+    required this.name,
+    required this.guardName,
+    required this.permissions,
+  });
+
+  factory RoleModel.fromJson(Map<String, dynamic> json) {
+    return RoleModel(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      guardName: json['guard_name'] as String,
+      permissions:
+          (json['permissions'] as List?)
+              ?.map((p) => PermissionModel.fromJson(p))
+              .toList() ??
+          [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'guard_name': guardName,
+      'permissions': permissions.map((p) => p.toJson()).toList(),
+    };
+  }
+}
+
+// ✅ ADD: PermissionModel class
+class PermissionModel {
+  final String id;
+  final String name;
+  final String guardName;
+
+  const PermissionModel({
+    required this.id,
+    required this.name,
+    required this.guardName,
+  });
+
+  factory PermissionModel.fromJson(Map<String, dynamic> json) {
+    return PermissionModel(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      guardName: json['guard_name'] as String,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'name': name, 'guard_name': guardName};
   }
 }
 
@@ -311,8 +433,8 @@ class EmployeeModel {
     };
   }
 
-  bool get isTeacher => position == 'TEACHER';
-  bool get isAdmin => position == 'ADMINISTRATOR';
+  bool get isTeacher => position.toLowerCase() == 'teacher';
+  bool get isAdmin => position.toLowerCase() == 'administrator';
 }
 
 class StudentModel {

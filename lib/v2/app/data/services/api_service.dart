@@ -11,9 +11,8 @@ import 'storage_service.dart';
 class ApiService extends GetxService {
   late Dio _dio;
   final StorageService _storageService = Get.find<StorageService>();
-
   // Base URL - sesuaikan dengan server Laravel Anda
-  static const String baseUrl = 'https://be.nurulchotib.com/api';
+  static const String baseUrl = 'http://be.nurulchotib.com/api';
 
   @override
   void onInit() {
@@ -73,7 +72,7 @@ class ApiService extends GetxService {
     Get.offAllNamed('/login');
   }
 
-  // Auth endpoints sesuai dengan struktur database JTI NCH
+  // Auth endpoints sesuai dengan struktur database
   Future<AuthResponse> login({
     required String email,
     required String password,
@@ -225,32 +224,18 @@ class ApiService extends GetxService {
     }
   }
 
-  // Get announcements
-  Future<List<dynamic>> getAnnouncements({int page = 1}) async {
-    try {
-      final response = await _dio.get(
-        '/announcements',
-        queryParameters: {'page': page},
-      );
-      return response.data['berita'] as List<dynamic>;
-    } on DioException catch (e) {
-      throw _handleDioError(e);
-    }
-  }
-
   // Tambahkan methods ini ke ApiService existing (lib/v2/app/data/services/api_service.dart)
 
   /// Get students by schedule for attendance
   Future<ScheduleDetailModel> getScheduleAttendance({
     required String scheduleId,
-    DateTime? date,
+    String? date,
   }) async {
+    developer.log(date!);
     try {
       final response = await _dio.get(
         '/teacher/schedule/$scheduleId/attendance',
-        queryParameters: {
-          if (date != null) 'date': date.toIso8601String().split('T')[0],
-        },
+        queryParameters: {if (date != null) 'date': date},
       );
 
       return ScheduleDetailModel.fromJson(response.data['data']);
@@ -262,10 +247,7 @@ class ApiService extends GetxService {
   /// Submit attendance for students
   Future<void> submitAttendance(AttendanceSubmissionModel submission) async {
     try {
-      await _dio.post(
-        '/teacher/attendance',
-        data: submission.toJson(),
-      );
+      await _dio.post('/teacher/attendance', data: submission.toJson());
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -295,8 +277,10 @@ class ApiService extends GetxService {
         '/teacher/student/$studentId/attendance-history',
         queryParameters: {
           'subject_id': subjectId,
-          if (startDate != null) 'start_date': startDate.toIso8601String().split('T')[0],
-          if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
+          if (startDate != null)
+            'start_date': startDate.toIso8601String().split('T')[0],
+          if (endDate != null)
+            'end_date': endDate.toIso8601String().split('T')[0],
         },
       );
 
@@ -307,7 +291,7 @@ class ApiService extends GetxService {
   }
 
   /// Get teacher's schedule (weekly/daily view)
-  Future<List<dynamic>> getTeacherScheduleList({
+  Future<Map<String, dynamic>> getTeacherScheduleList({
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -315,11 +299,14 @@ class ApiService extends GetxService {
       final response = await _dio.get(
         '/teacher/schedule',
         queryParameters: {
-          if (startDate != null) 'start_date': startDate.toIso8601String().split('T')[0],
-          if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
+          if (startDate != null)
+            'start_date': startDate.toIso8601String().split('T')[0],
+          if (endDate != null)
+            'end_date': endDate.toIso8601String().split('T')[0],
         },
       );
-      return response.data['data'] as List;
+
+      return response.data['data'] as Map<String, dynamic>;
     } on DioException catch (e) {
       throw _handleDioError(e);
     }
@@ -334,10 +321,7 @@ class ApiService extends GetxService {
     try {
       await _dio.put(
         '/teacher/attendance/$attendanceId',
-        data: {
-          'status': status.value,
-          'notes': notes,
-        },
+        data: {'status': status.value, 'notes': notes},
       );
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -373,4 +357,136 @@ class ApiService extends GetxService {
 
   // Getter for dio instance
   Dio get dio => _dio;
+
+  /// Get schedules by date - IMPLEMENTASI YANG HILANG
+  Future<List<dynamic>> getSchedulesByDate(DateTime date) async {
+    try {
+      final response = await _dio.get(
+        '/teacher/schedules',
+        queryParameters: {'date': date.toIso8601String().split('T')[0]},
+      );
+      return response.data['data'] as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get announcements/berita - IMPLEMENTASI DIPERBAIKI
+  /// Get announcements/berita - FIXED VERSION
+  /// Get announcements/berita - FIXED VERSION
+  Future<List<dynamic>> getAnnouncements({int page = 1, int limit = 10}) async {
+    try {
+      final response = await _dio.get(
+        '/announcements',
+        queryParameters: {'page': page, 'limit': limit},
+      );
+
+      developer.log('Announcements Response: ${response.data}');
+
+      // Response adalah Map dengan struktur laravel pagination
+      final responseData = response.data as Map<String, dynamic>;
+
+      // Laravel pagination structure: { "data": { "data": [...], "current_page": 1, ... } }
+      if (responseData['data'] != null) {
+        final paginationData = responseData['data'];
+
+        // Cek apakah 'data' adalah Map (pagination) atau List langsung
+        if (paginationData is Map<String, dynamic>) {
+          // Laravel pagination: data.data berisi array
+          if (paginationData['data'] != null &&
+              paginationData['data'] is List) {
+            return paginationData['data'] as List<dynamic>;
+          }
+        } else if (paginationData is List) {
+          // Data langsung berupa array
+          return paginationData;
+        }
+      }
+
+      // Struktur alternatif
+      if (responseData['berita'] != null && responseData['berita'] is List) {
+        return responseData['berita'] as List<dynamic>;
+      }
+
+      if (responseData['announcements'] != null &&
+          responseData['announcements'] is List) {
+        return responseData['announcements'] as List<dynamic>;
+      }
+
+      // Jika tidak ada yang cocok, kembalikan empty list
+      developer.log('Unknown response structure, returning empty list');
+      return [];
+    } on DioException catch (e) {
+      developer.log('DioException in getAnnouncements: ${e.message}');
+      throw _handleDioError(e);
+    } catch (e) {
+      developer.log('Unexpected error in getAnnouncements: $e');
+      rethrow;
+    }
+  }
+
+  /// Get teacher profile
+  Future<Map<String, dynamic>> getTeacherProfile() async {
+    try {
+      final response = await _dio.get('/teacher/profile');
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Update teacher profile
+  Future<void> updateTeacherProfile(Map<String, dynamic> profileData) async {
+    try {
+      await _dio.put('/teacher/profile', data: profileData);
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get attendance summary for a specific date range
+  Future<Map<String, dynamic>> getAttendanceSummary({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/teacher/attendance-summary',
+        queryParameters: {
+          if (startDate != null)
+            'start_date': startDate.toIso8601String().split('T')[0],
+          if (endDate != null)
+            'end_date': endDate.toIso8601String().split('T')[0],
+        },
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get attendance history with filters
+  Future<List<dynamic>> getAttendanceHistory({
+    String? classId,
+    String? subjectId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/teacher/attendance-history',
+        queryParameters: {
+          if (classId != null) 'class_id': classId,
+          if (subjectId != null) 'subject_id': subjectId,
+          if (startDate != null)
+            'start_date': startDate.toIso8601String().split('T')[0],
+          if (endDate != null)
+            'end_date': endDate.toIso8601String().split('T')[0],
+        },
+      );
+      return response.data['data'] as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
 }

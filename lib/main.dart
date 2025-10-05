@@ -50,20 +50,20 @@ Future<void> _initializeServices() async {
   try {
     // Initialize storage service first
     Get.put(StorageService(), permanent: true);
-    
+
     // Wait for storage service to be fully initialized
     final storageService = Get.find<StorageService>();
     await storageService.onInit();
 
     // Initialize API service
     Get.put(ApiService(), permanent: true);
-    
+
     // Wait for API service to be initialized
     Get.find<ApiService>().onInit();
 
     // Initialize auth controller last
     Get.put(AuthController(), permanent: true);
-    
+
     print('All services initialized successfully');
   } catch (e) {
     print('Error initializing services: $e');
@@ -89,7 +89,7 @@ class MyApp extends StatelessWidget {
       splitScreenMode: true,
       builder: (context, child) {
         return GetMaterialApp(
-          title: 'JTI NCH Teacher Portal',
+          title: 'My NCH',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
           initialRoute: Routes.SPLASH,
@@ -99,32 +99,33 @@ class MyApp extends StatelessWidget {
 
           // Global translations
           translations: AppTranslations(),
-          
+
           // Default transition
           defaultTransition: Transition.fadeIn,
           transitionDuration: const Duration(milliseconds: 300),
-          
+
           // Error handling
           unknownRoute: GetPage(
             name: '/notfound',
-            page: () => Scaffold(
-              appBar: AppBar(title: Text('Page Not Found')),
-              body: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 64, color: Colors.red),
-                    SizedBox(height: 16),
-                    Text('Page not found'),
-                    SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => Get.offAllNamed(Routes.LOGIN),
-                      child: Text('Go to Login'),
+            page:
+                () => Scaffold(
+                  appBar: AppBar(title: Text('Page Not Found')),
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 64, color: Colors.red),
+                        SizedBox(height: 16),
+                        Text('Page not found'),
+                        SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () => Get.offAllNamed(Routes.LOGIN),
+                          child: Text('Go to Login'),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
           ),
         );
       },

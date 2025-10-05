@@ -6,6 +6,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../controllers/student_history_controller.dart';
+// import '../controllers/student_history_controller.dart';
 
 class StudentHistoryView extends GetView<StudentHistoryController> {
   const StudentHistoryView({Key? key}) : super(key: key);
@@ -15,55 +16,173 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: _buildAppBar(),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return _buildLoadingState();
-        }
+      body: SafeArea(
+        child: Obx(() {
+          if (controller.isLoading.value) {
+            return _buildLoadingState();
+          }
 
-        final history = controller.studentHistory.value;
-        if (history == null) {
-          return _buildErrorState();
-        }
+          final history = controller.studentHistory.value;
+          if (history == null) {
+            return _buildErrorState();
+          }
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Student Info Card
-              _buildStudentInfoCard(history),
-              
-              SizedBox(height: 16.h),
-              
-              // Date Range Selector
-              _buildDateRangeSelector(),
-              
-              SizedBox(height: 16.h),
-              
-              // Attendance Summary
-              _buildAttendanceSummaryCard(history.summary),
-              
-              SizedBox(height: 16.h),
-              
-              // History List
-              _buildHistorySection(history.history),
-            ],
-          ),
-        );
-      }),
+          return SingleChildScrollView(
+            padding: EdgeInsets.all(16.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Student Info Card
+                _buildStudentInfoCard(history),
+
+                SizedBox(height: 16.h),
+
+                // Date Range Selector
+                _buildDateRangeSelector(),
+
+                SizedBox(height: 16.h),
+
+                // Attendance Summary
+                _buildAttendanceSummaryCard(history.summary),
+
+                SizedBox(height: 16.h),
+
+                // History List
+                _buildHistorySection(history.history),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text('Riwayat Kehadiran'),
+      title: Text('Data Santri'),
       centerTitle: true,
       actions: [
-        IconButton(
-          icon: Icon(Icons.file_download),
-          onPressed: controller.exportReport,
+        PopupMenuButton<String>(
+          icon: Icon(Icons.more_vert),
+          onSelected: (String value) {
+            switch (value) {
+              // case 'export':
+              //   controller.exportAttendanceReport();
+              //   break;
+              // case 'refresh':
+              //   controller.loadTeacherClasses();
+              //   break;
+              case 'filter':
+                _showFilterDialog();
+                break;
+            }
+          },
+          itemBuilder:
+              (BuildContext context) => [
+                PopupMenuItem<String>(
+                  value: 'export',
+                  child: Row(
+                    children: [
+                      Icon(Icons.file_download, color: Colors.green),
+                      SizedBox(width: 8),
+                      Text('Ekspor Rekap Kelas'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'filter',
+                  child: Row(
+                    children: [
+                      Icon(Icons.filter_list, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('Filter Data'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'refresh',
+                  child: Row(
+                    children: [
+                      Icon(Icons.refresh, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Text('Muat Ulang'),
+                    ],
+                  ),
+                ),
+              ],
         ),
       ],
+    );
+  }
+
+  void _showFilterDialog() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Filter Data Siswa',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 16),
+
+              Text(
+                'Status Kehadiran:',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+
+              Wrap(
+                spacing: 8,
+                children: [
+                  FilterChip(
+                    label: Text('Semua'),
+                    selected: true,
+                    onSelected: (selected) {},
+                  ),
+                  FilterChip(
+                    label: Text('Kehadiran > 90%'),
+                    selected: false,
+                    onSelected: (selected) {},
+                  ),
+                  FilterChip(
+                    label: Text('Kehadiran 75-90%'),
+                    selected: false,
+                    onSelected: (selected) {},
+                  ),
+                  FilterChip(
+                    label: Text('Kehadiran < 75%'),
+                    selected: false,
+                    onSelected: (selected) {},
+                  ),
+                ],
+              ),
+
+              SizedBox(height: 16),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(onPressed: () => Get.back(), child: Text('Batal')),
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      Get.back();
+                      // Apply filter logic here
+                    },
+                    child: Text('Terapkan'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -121,9 +240,9 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               ),
             ],
           ),
-          
+
           SizedBox(height: 16.h),
-          
+
           Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
@@ -182,7 +301,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
                 Obx(() {
                   final range = controller.selectedDateRange.value;
                   if (range == null) return Text('Pilih periode');
-                  
+
                   return Text(
                     '${_formatDate(range.start)} - ${_formatDate(range.end)}',
                     style: AppTextStyles.bodyMedium.copyWith(
@@ -226,9 +345,9 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               Text('Ringkasan Kehadiran', style: AppTextStyles.cardTitle),
             ],
           ),
-          
+
           SizedBox(height: 16.h),
-          
+
           // Attendance percentage
           Container(
             padding: EdgeInsets.all(12.w),
@@ -239,10 +358,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  'Persentase Kehadiran: ',
-                  style: AppTextStyles.bodyMedium,
-                ),
+                Text('Persentase Kehadiran: ', style: AppTextStyles.bodyMedium),
                 Text(
                   '${summary.attendancePercentage.toStringAsFixed(1)}%',
                   style: AppTextStyles.heading2.copyWith(
@@ -253,9 +369,9 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               ],
             ),
           ),
-          
+
           SizedBox(height: 16.h),
-          
+
           // Summary grid
           Row(
             children: [
@@ -264,9 +380,9 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               _buildSummaryItem('Sakit', summary.sakit, Colors.blue),
             ],
           ),
-          
+
           SizedBox(height: 8.h),
-          
+
           Row(
             children: [
               _buildSummaryItem('Izin', summary.izin, Colors.orange),
@@ -274,15 +390,13 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               _buildSummaryItem('Alpha', summary.alpha, Colors.red),
             ],
           ),
-          
+
           SizedBox(height: 12.h),
-          
+
           Container(
             padding: EdgeInsets.symmetric(vertical: 8.h),
             decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: AppColors.dividerColor),
-              ),
+              border: Border(top: BorderSide(color: AppColors.dividerColor)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -358,9 +472,9 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               Text('Riwayat Detail', style: AppTextStyles.cardTitle),
             ],
           ),
-          
+
           SizedBox(height: 16.h),
-          
+
           if (history.isEmpty)
             _buildEmptyHistory()
           else
@@ -373,7 +487,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
   Widget _buildHistoryItem(AttendanceHistoryRecordModel record) {
     final statusColor = controller.getStatusColor(record.status);
     final statusIcon = controller.getStatusIcon(record.status);
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.all(12.w),
@@ -389,15 +503,11 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               color: statusColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8.r),
             ),
-            child: Icon(
-              statusIcon,
-              color: statusColor,
-              size: 20.sp,
-            ),
+            child: Icon(statusIcon, color: statusColor, size: 20.sp),
           ),
-          
+
           SizedBox(width: 12.w),
-          
+
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,17 +599,11 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 64.sp,
-            color: Colors.red,
-          ),
+          Icon(Icons.error_outline, size: 64.sp, color: Colors.red),
           SizedBox(height: 16.h),
           Text(
             'Gagal memuat riwayat',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: Colors.red,
-            ),
+            style: AppTextStyles.bodyMedium.copyWith(color: Colors.red),
           ),
           SizedBox(height: 16.h),
           ElevatedButton(
@@ -516,12 +620,32 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
   }
 
   String _formatDateFull(DateTime date) {
-    final days = ['', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-    final months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+    final days = [
+      '',
+      'Senin',
+      'Selasa',
+      'Rabu',
+      'Kamis',
+      'Jumat',
+      'Sabtu',
+      'Minggu',
     ];
-    
+    final months = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+
     return '${days[date.weekday]}, ${date.day} ${months[date.month]} ${date.year}';
   }
 }

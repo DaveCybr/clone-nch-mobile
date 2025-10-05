@@ -83,7 +83,7 @@ class LoginView extends GetView<AuthController> {
 
         // App Name
         Text(
-          'JTI NCH',
+          'My NCH',
           style: AppTextStyles.heading1.copyWith(
             color: AppColors.primaryGreen,
             fontWeight: FontWeight.bold,

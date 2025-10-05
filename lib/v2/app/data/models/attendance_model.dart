@@ -33,7 +33,8 @@ class ScheduleDetailModel {
       endTime: json['end_time'] ?? '',
       attendanceDate: _parseDate(json['attendance_date']),
       totalStudents: json['total_students'] ?? 0,
-      students: (json['students'] as List?)
+      students:
+          (json['students'] as List?)
               ?.map((e) => StudentAttendanceModel.fromJson(e))
               .toList() ??
           [],
@@ -159,11 +160,13 @@ class AttendanceRecordModel {
   final String studentId;
   final AttendanceStatus status;
   final String? notes;
+  final String? attendanceId; // Already exists
 
   const AttendanceRecordModel({
     required this.studentId,
     required this.status,
     this.notes,
+    this.attendanceId,
   });
 
   Map<String, dynamic> toJson() {
@@ -171,6 +174,7 @@ class AttendanceRecordModel {
       'student_id': studentId,
       'status': status.value,
       'notes': notes,
+      'attendance_id': attendanceId, // Include in JSON
     };
   }
 }
@@ -199,7 +203,8 @@ class StudentHistoryModel {
       nisn: json['student']['nisn'] ?? '',
       className: json['student']['class'] ?? '',
       summary: AttendanceSummaryModel.fromJson(json['summary'] ?? {}),
-      history: (json['history'] as List?)
+      history:
+          (json['history'] as List?)
               ?.map((e) => AttendanceHistoryRecordModel.fromJson(e))
               .toList() ??
           [],
@@ -279,7 +284,8 @@ class TeacherClassModel {
       subjectName: json['subject_name'] ?? '',
       className: json['class_name'] ?? '',
       studentCount: json['student_count'] ?? 0,
-      students: (json['students'] as List?)
+      students:
+          (json['students'] as List?)
               ?.map((e) => StudentSummaryModel.fromJson(e))
               .toList() ??
           [],

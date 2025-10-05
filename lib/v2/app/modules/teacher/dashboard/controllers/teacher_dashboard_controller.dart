@@ -1,6 +1,4 @@
-// =====================================
-// 1. UPDATE TeacherDashboardController
-// =====================================
+// Fixed TeacherDashboardController.dart
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,7 +6,7 @@ import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/services/api_service.dart';
 import '../../../../routes/app_routes.dart';
-import '../../../auth/controllers/auth_controller.dart';// Add this import
+import '../../../auth/controllers/auth_controller.dart';
 
 class TeacherDashboardController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
@@ -19,7 +17,7 @@ class TeacherDashboardController extends GetxController {
   final isRefreshing = false.obs;
   final dashboardData = Rxn<TeacherDashboardModel>();
   final currentTime = DateTime.now().obs;
-  final selectedNavIndex = 0.obs; // ADD THIS
+  final selectedNavIndex = 0.obs;
 
   // Prayer times
   final prayerTimes = <PrayerTimeModel>[].obs;
@@ -52,15 +50,18 @@ class TeacherDashboardController extends GetxController {
 
       // Update prayer times if available
       if (response['prayer_times'] != null) {
-        prayerTimes.value = (response['prayer_times'] as List)
-            .map((e) => PrayerTimeModel.fromJson(e))
-            .toList();
+        prayerTimes.value =
+            (response['prayer_times'] as List)
+                .map((e) => PrayerTimeModel.fromJson(e))
+                .toList();
       }
     } catch (e) {
       // Provide fallback data instead of just showing error
       _loadFallbackData();
-      _showErrorSnackbar('خطأ في تحميل البيانات', 
-        'Menggunakan data offline. Periksa koneksi internet Anda.');
+      _showErrorSnackbar(
+        'خطأ في تحميل البيانات',
+        'Menggunakan data offline. Periksa koneksi internet Anda.',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -69,7 +70,7 @@ class TeacherDashboardController extends GetxController {
   /// Provide fallback data when API fails
   void _loadFallbackData() {
     dashboardData.value = TeacherDashboardModel(
-      stats: DashboardStats(
+      stats: const DashboardStats(
         totalStudents: 0,
         totalClasses: 0,
         todayTasks: 0,
@@ -170,35 +171,68 @@ class TeacherDashboardController extends GetxController {
 
   // ===== NAVIGATION METHODS - FIXED =====
 
-  /// Navigate to attendance for specific schedule
+  /// Navigate to attendance for specific schedule - FIXED
   void navigateToAttendance(TodayScheduleModel schedule) {
-    Get.toNamed(Routes.TEACHER_ATTENDANCE, arguments: {'schedule': schedule});
+    print('🔄 Navigating to attendance for schedule: ${schedule.id}');
+
+    // Check if the route and controller exist
+    // if (!Get.isRouteActive(Routes.TEACHER_ATTENDANCE)) {
+    //   print('⚠️ Route ${Routes.TEACHER_ATTENDANCE} is not active');
+    // }
+
+    // Navigate with proper error handling
+    try {
+      Get.toNamed(
+        Routes.TEACHER_ATTENDANCE,
+        arguments: {'schedule': schedule, 'schedule_id': schedule.id},
+      );
+      print('✅ Navigation successful');
+    } catch (e) {
+      print('❌ Navigation error: $e');
+      _showErrorSnackbar('Error', 'Tidak dapat membuka halaman absensi: $e');
+    }
   }
 
   /// Navigate to announcements
   void navigateToAnnouncements() {
-    Get.toNamed(Routes.TEACHER_ANNOUNCEMENTS);
+    try {
+      Get.toNamed(Routes.TEACHER_ANNOUNCEMENTS);
+    } catch (e) {
+      _showErrorSnackbar('Info', 'Halaman pengumuman belum tersedia');
+    }
   }
 
-  /// Navigate to students  
+  /// Navigate to students
   void navigateToStudents() {
-    Get.toNamed(Routes.TEACHER_STUDENTS);
+    try {
+      Get.toNamed(Routes.TEACHER_STUDENTS);
+    } catch (e) {
+      _showErrorSnackbar('Error', 'Tidak dapat membuka halaman siswa: $e');
+    }
   }
 
   /// Navigate to schedule
   void navigateToSchedule() {
-    Get.toNamed(Routes.TEACHER_SCHEDULE);
+    try {
+      Get.toNamed(Routes.TEACHER_SCHEDULE);
+    } catch (e) {
+      _showErrorSnackbar('Info', 'Halaman jadwal belum tersedia');
+    }
   }
 
   /// Navigate to profile
   void navigateToProfile() {
-    Get.toNamed(Routes.TEACHER_PROFILE);
+    try {
+      Get.toNamed(Routes.TEACHER_PROFILE);
+    } catch (e) {
+      _showErrorSnackbar('Info', 'Halaman profil belum tersedia');
+    }
   }
 
   /// Handle bottom navigation
   void onBottomNavTapped(int index) {
     selectedNavIndex.value = index;
-    
+
     switch (index) {
       case 0:
         // Already on dashboard, refresh data
@@ -216,75 +250,87 @@ class TeacherDashboardController extends GetxController {
     }
   }
 
-  /// Show schedule options when tapping schedule card
+  /// Show schedule options when tapping schedule card - IMPROVED
   void showScheduleOptions(TodayScheduleModel schedule) {
     Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+      SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Container(
-              width: 50,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                width: 50,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            
-            Text(
-              schedule.subjectName,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              '${schedule.className} • ${schedule.timeRange}',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Options
-            ListTile(
-              leading: const Icon(Icons.how_to_reg, color: Colors.green),
-              title: const Text('Absensi Siswa'),
-              subtitle: const Text('Input kehadiran siswa'),
-              onTap: () {
-                Get.back();
-                navigateToAttendance(schedule);
-              },
-            ),
-            
-            ListTile(
-              leading: const Icon(Icons.people, color: Colors.blue),
-              title: const Text('Lihat Data Siswa'),
-              subtitle: const Text('Data dan rekap kehadiran'),
-              onTap: () {
-                Get.back();
-                navigateToStudents();
-              },
-            ),
-            
-            if (schedule.isDone)
+              const SizedBox(height: 20),
+
+              Text(
+                schedule.subjectName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '${schedule.className} • ${schedule.timeRange}',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Options - IMPROVED with error handling
               ListTile(
-                leading: const Icon(Icons.edit, color: Colors.orange),
-                title: const Text('Edit Absensi'),
-                subtitle: const Text('Perbaiki data kehadiran'),
+                leading: const Icon(Icons.how_to_reg, color: Colors.green),
+                title: const Text('Absensi Siswa'),
+                subtitle: const Text('Input kehadiran siswa'),
                 onTap: () {
                   Get.back();
-                  navigateToAttendance(schedule);
+                  // Add delay to ensure bottom sheet is closed
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    navigateToAttendance(schedule);
+                  });
                 },
               ),
-          ],
+
+              ListTile(
+                leading: const Icon(Icons.people, color: Colors.blue),
+                title: const Text('Lihat Data Siswa'),
+                subtitle: const Text('Data dan rekap kehadiran'),
+                onTap: () {
+                  Get.back();
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    navigateToStudents();
+                  });
+                },
+              ),
+
+              if (schedule.isDone)
+                ListTile(
+                  leading: const Icon(Icons.edit, color: Colors.orange),
+                  title: const Text('Edit Absensi'),
+                  subtitle: const Text('Perbaiki data kehadiran'),
+                  onTap: () {
+                    Get.back();
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      navigateToAttendance(schedule);
+                    });
+                  },
+                ),
+            ],
+          ),
         ),
       ),
       isScrollControlled: true,
@@ -300,10 +346,7 @@ class TeacherDashboardController extends GetxController {
           'هل أنت متأكد من تسجيل الخروج؟\nApakah Anda yakin ingin keluar?',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('إلغاء'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
