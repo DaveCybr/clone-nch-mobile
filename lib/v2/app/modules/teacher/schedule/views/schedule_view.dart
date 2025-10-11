@@ -48,6 +48,34 @@ class ScheduleView extends GetView<ScheduleController> {
                 break;
             }
           },
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+          itemBuilder:
+              (context) => [
+                const PopupMenuItem<String>(
+                  value: 'today',
+                  child: Row(
+                    children: [
+                      Icon(Icons.today, color: AppColors.primaryGreen),
+                      SizedBox(width: 8),
+                      Text('Hari Ini'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'refresh',
+                  child: Row(
+                    children: [
+                      Icon(Icons.refresh, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('Muat Ulang'),
+                    ],
+                  ),
+                ),
+              ],
+=======
+>>>>>>> prod
           itemBuilder: (context) => [
             PopupMenuItem<String>(
               value: 'today',
@@ -70,6 +98,10 @@ class ScheduleView extends GetView<ScheduleController> {
               ),
             ),
           ],
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
         ),
       ],
     );
@@ -83,11 +115,24 @@ class ScheduleView extends GetView<ScheduleController> {
           if (controller.isLoading.value) {
             return Expanded(child: _buildLoadingState());
           }
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         }),
 
         // Main content - only show when not loading
         Obx(
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+          () =>
+              controller.isLoading.value
+                  ? const SizedBox.shrink()
+                  : Expanded(
+                    child: Column(
+                      children: [
+                        // Week Navigation Header
+                        _buildWeekHeader(),
+=======
+>>>>>>> prod
           () => controller.isLoading.value
               ? SizedBox.shrink()
               : Expanded(
@@ -95,6 +140,10 @@ class ScheduleView extends GetView<ScheduleController> {
                     children: [
                       // Week Navigation Header
                       _buildWeekHeader(),
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
 
                       // Days of Week Tabs
                       _buildDayTabs(),
@@ -365,7 +414,7 @@ class ScheduleView extends GetView<ScheduleController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -545,8 +594,8 @@ class ScheduleView extends GetView<ScheduleController> {
             SizedBox(height: 16.h),
             TextButton.icon(
               onPressed: controller.loadWeeklySchedule,
-              icon: Icon(Icons.refresh),
-              label: Text('Muat Ulang'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Muat Ulang'),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.primaryGreen,
               ),
@@ -562,7 +611,7 @@ class ScheduleView extends GetView<ScheduleController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
           SizedBox(height: 16.h),

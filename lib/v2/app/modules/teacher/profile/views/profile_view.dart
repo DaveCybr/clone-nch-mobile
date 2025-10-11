@@ -49,11 +49,11 @@ class ProfileView extends GetView<ProfileController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text('Profil Saya'),
+      title: const Text('Profil Saya'),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: Icon(Icons.edit),
+          icon: const Icon(Icons.edit),
           onPressed: () {
             // Toggle edit mode or show edit dialog
           },
@@ -66,7 +66,7 @@ class ProfileView extends GetView<ProfileController> {
     return Container(
       padding: EdgeInsets.all(20.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [AppColors.primaryGreen, AppColors.primaryGreenDark],
         ),
         borderRadius: BorderRadius.circular(16.r),
@@ -96,7 +96,7 @@ class ProfileView extends GetView<ProfileController> {
                 right: 0,
                 child: Container(
                   padding: EdgeInsets.all(6.w),
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppColors.goldAccent,
                     shape: BoxShape.circle,
                   ),
@@ -162,7 +162,7 @@ class ProfileView extends GetView<ProfileController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -177,7 +177,7 @@ class ProfileView extends GetView<ProfileController> {
             // Name Field
             TextFormField(
               controller: controller.nameController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Nama Lengkap',
                 prefixIcon: Icon(Icons.person, color: AppColors.primaryGreen),
               ),
@@ -190,12 +190,12 @@ class ProfileView extends GetView<ProfileController> {
             // Email Field (Read-only)
             TextFormField(
               controller: controller.emailController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Email',
                 prefixIcon: Icon(Icons.email, color: AppColors.primaryGreen),
               ),
               readOnly: true,
-              style: TextStyle(color: AppColors.textSecondary),
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
 
             SizedBox(height: 16.h),
@@ -203,7 +203,7 @@ class ProfileView extends GetView<ProfileController> {
             // Phone Field
             TextFormField(
               controller: controller.phoneController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Nomor Telepon',
                 prefixIcon: Icon(Icons.phone, color: AppColors.primaryGreen),
               ),
@@ -215,7 +215,7 @@ class ProfileView extends GetView<ProfileController> {
             // Address Field
             TextFormField(
               controller: controller.addressController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Alamat',
                 prefixIcon: Icon(
                   Icons.location_on,
@@ -224,7 +224,7 @@ class ProfileView extends GetView<ProfileController> {
               ),
               maxLines: 2,
               readOnly: true,
-              style: TextStyle(color: AppColors.textSecondary),
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
 
             SizedBox(height: 20.h),
@@ -234,6 +234,7 @@ class ProfileView extends GetView<ProfileController> {
               width: double.infinity,
               child: Obx(
                 () => ElevatedButton(
+<<<<<<< HEAD
                   onPressed: controller.isSaving.value
                       ? null
                       : controller.updateProfile,
@@ -248,12 +249,56 @@ class ProfileView extends GetView<ProfileController> {
                                 color: Colors.white,
                                 strokeWidth: 2,
                               ),
+=======
+<<<<<<< HEAD
+                  onPressed:
+                      controller.isSaving.value
+                          ? null
+                          : controller.updateProfile,
+                  child:
+                      controller.isSaving.value
+                          ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                width: 20.w,
+                                height: 20.h,
+                                child: const CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                              SizedBox(width: 12.w),
+                              const Text('Menyimpan...'),
+                            ],
+                          )
+                          : const Text('Simpan Perubahan'),
+=======
+                  onPressed: controller.isSaving.value
+                      ? null
+                      : controller.updateProfile,
+                  child: controller.isSaving.value
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 20.w,
+                              height: 20.h,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+>>>>>>> prod
                             ),
                             SizedBox(width: 12.w),
                             Text('Menyimpan...'),
                           ],
                         )
                       : Text('Simpan Perubahan'),
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
                 ),
               ),
             ),
@@ -313,7 +358,7 @@ class ProfileView extends GetView<ProfileController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 5,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -343,7 +388,7 @@ class ProfileView extends GetView<ProfileController> {
             color: AppColors.textSecondary,
           ),
         ),
-        trailing: Icon(Icons.chevron_right, color: AppColors.textHint),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.textHint),
         onTap: onTap,
       ),
     );
@@ -359,7 +404,7 @@ class ProfileView extends GetView<ProfileController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -463,7 +508,7 @@ class ProfileView extends GetView<ProfileController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
           SizedBox(height: 16.h),
@@ -483,7 +528,7 @@ class ProfileView extends GetView<ProfileController> {
       AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.school, color: AppColors.primaryGreen),
+            const Icon(Icons.school, color: AppColors.primaryGreen),
             SizedBox(width: 8.w),
             Text('My NCH'),
           ],
@@ -497,9 +542,9 @@ class ProfileView extends GetView<ProfileController> {
               style: AppTextStyles.arabicText.copyWith(fontSize: 16.sp),
             ),
             SizedBox(height: 12.h),
-            Text('Aplikasi Absensi Guru'),
-            Text('Versi: 1.0.0'),
-            Text('Build: 2025.01.01'),
+            const Text('Aplikasi Absensi Guru'),
+            const Text('Versi: 1.0.0'),
+            const Text('Build: 2025.01.01'),
             SizedBox(height: 8.h),
             Text('جزاك الله خيرا', style: AppTextStyles.arabicSubtitle),
             Text(
@@ -511,7 +556,7 @@ class ProfileView extends GetView<ProfileController> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: Text('Tutup')),
+          TextButton(onPressed: () => Get.back(), child: const Text('Tutup')),
         ],
       ),
     );

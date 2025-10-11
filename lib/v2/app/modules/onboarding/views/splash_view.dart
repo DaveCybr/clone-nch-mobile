@@ -90,14 +90,18 @@ class _SplashViewState extends State<SplashView>
       return;
     }
 
-    // ✅ ADD MORE DEBUG INFO
-    developer.log('=== USER DEBUG INFO ===');
-    developer.log('User ID: ${user.id}');
-    developer.log('User Name: ${user.name}');
-    developer.log('Current Role: ${user.currentRole}');
-    developer.log('Role Display: ${user.roleDisplay}');
-    developer.log('Is Teacher (new logic): ${user.isTeacher}');
+    developer.log('=== USER REDIRECT INFO ===');
+    developer.log('User: ${user.name}');
+    developer.log('Is Teacher: ${user.isTeacher}');
     developer.log('Is Parent: ${user.isParent}');
+<<<<<<< HEAD
+    developer.log('Roles: ${user.roleNames}');
+    developer.log('========================');
+
+    if (user.isTeacher) {
+      developer.log('Redirecting to teacher main wrapper');
+      Get.offAllNamed('/main${Routes.TEACHER_DASHBOARD}');
+=======
     developer.log('Is Admin: ${user.isAdminUser}');
     developer.log('Has Employee Data: ${user.employee != null}');
     developer.log('Employee Position: ${user.employee?.position}');
@@ -109,15 +113,26 @@ class _SplashViewState extends State<SplashView>
     if (user.isTeacher) {
       developer.log('SplashView: Redirecting to teacher dashboard');
       Get.offAllNamed('/main');
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
     } else if (user.isParent) {
-      developer.log('SplashView: Redirecting to parent dashboard');
-      Get.offAllNamed('/parent/dashboard');
+      developer.log('Redirecting to parent wrapper');
+      Get.offAllNamed('/parent${Routes.PARENT_DASHBOARD}');
     } else {
+<<<<<<< HEAD
+      developer.log('Unknown role, going to login');
+=======
       // Unknown role, go to login
       developer.log('SplashView: Unknown role, going to login');
       developer.log(
         'Debug: user.isTeacher=${user.isTeacher}, user.isParent=${user.isParent}',
       );
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
       Get.offAllNamed(Routes.LOGIN);
     }
   }
@@ -210,7 +225,7 @@ class _SplashViewState extends State<SplashView>
                     SizedBox(
                       width: 40.w,
                       height: 40.h,
-                      child: CircularProgressIndicator(
+                      child: const CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
                           AppColors.goldAccent,
                         ),

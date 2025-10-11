@@ -170,8 +170,18 @@ class AttendanceController extends GetxController {
     Get.bottomSheet(
       SafeArea(
         child: Container(
+<<<<<<< HEAD
           padding: EdgeInsets.all(20),
           decoration: BoxDecoration(
+=======
+<<<<<<< HEAD
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+=======
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
             color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
@@ -190,18 +200,40 @@ class AttendanceController extends GetxController {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+              const SizedBox(height: 20),
+
+              Text(
+                student.name,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+=======
+>>>>>>> prod
               SizedBox(height: 20),
 
               Text(
                 student.name,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
               ),
               Text(
                 'NIS: ${student.nisn}',
                 style: TextStyle(color: Colors.grey[600]),
               ),
 
+<<<<<<< HEAD
               SizedBox(height: 20),
+=======
+<<<<<<< HEAD
+              const SizedBox(height: 20),
+=======
+              SizedBox(height: 20),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
 
               // Attendance options
               ...AttendanceStatus.values.map(
@@ -211,9 +243,22 @@ class AttendanceController extends GetxController {
                     color: _getStatusColor(status),
                   ),
                   title: Text(status.displayName),
+<<<<<<< HEAD
                   trailing: student.currentStatus == status
                       ? Icon(Icons.check, color: Colors.green)
                       : null,
+=======
+<<<<<<< HEAD
+                  trailing:
+                      student.currentStatus == status
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : null,
+=======
+                  trailing: student.currentStatus == status
+                      ? Icon(Icons.check, color: Colors.green)
+                      : null,
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
                   onTap: () {
                     updateStudentAttendance(student.studentId, status);
                     Get.back();
@@ -273,11 +318,11 @@ class AttendanceController extends GetxController {
       message,
       backgroundColor: Colors.green,
       colorText: Colors.white,
-      icon: Icon(Icons.check_circle, color: Colors.white),
+      icon: const Icon(Icons.check_circle, color: Colors.white),
       snackPosition: SnackPosition.TOP,
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       borderRadius: 8,
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
     );
   }
 
@@ -287,11 +332,11 @@ class AttendanceController extends GetxController {
       message,
       backgroundColor: Colors.red,
       colorText: Colors.white,
-      icon: Icon(Icons.error, color: Colors.white),
+      icon: const Icon(Icons.error, color: Colors.white),
       snackPosition: SnackPosition.TOP,
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       borderRadius: 8,
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
     );
   }
 
@@ -323,8 +368,8 @@ class AttendanceController extends GetxController {
   void showExportOptions() {
     Get.bottomSheet(
       Container(
-        padding: EdgeInsets.all(20),
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(20),
@@ -343,20 +388,20 @@ class AttendanceController extends GetxController {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-            Text(
+            const Text(
               'Ekspor Laporan Absensi',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
 
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             // Export to Excel option
             ListTile(
-              leading: Icon(Icons.file_download, color: Colors.green),
-              title: Text('Ekspor ke Excel'),
-              subtitle: Text('Download file Excel (.xlsx)'),
+              leading: const Icon(Icons.file_download, color: Colors.green),
+              title: const Text('Ekspor ke Excel'),
+              subtitle: const Text('Download file Excel (.xlsx)'),
               onTap: () {
                 Get.back();
                 exportToExcel();
@@ -365,9 +410,9 @@ class AttendanceController extends GetxController {
 
             // Print option
             ListTile(
-              leading: Icon(Icons.print, color: Colors.blue),
-              title: Text('Cetak Laporan'),
-              subtitle: Text('Cetak atau simpan sebagai PDF'),
+              leading: const Icon(Icons.print, color: Colors.blue),
+              title: const Text('Cetak Laporan'),
+              subtitle: const Text('Cetak atau simpan sebagai PDF'),
               onTap: () {
                 Get.back();
                 _showSnackbar('Info', 'Fitur cetak akan segera tersedia');
@@ -376,9 +421,9 @@ class AttendanceController extends GetxController {
 
             // Share option
             ListTile(
-              leading: Icon(Icons.share, color: Colors.orange),
-              title: Text('Bagikan'),
-              subtitle: Text('Bagikan laporan melalui WhatsApp, Email, dll'),
+              leading: const Icon(Icons.share, color: Colors.orange),
+              title: const Text('Bagikan'),
+              subtitle: const Text('Bagikan laporan melalui WhatsApp, Email, dll'),
               onTap: () {
                 Get.back();
                 exportToExcel();
@@ -398,11 +443,11 @@ class AttendanceController extends GetxController {
       message,
       backgroundColor: Colors.blue,
       colorText: Colors.white,
-      icon: Icon(Icons.info, color: Colors.white),
+      icon: const Icon(Icons.info, color: Colors.white),
       snackPosition: SnackPosition.TOP,
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       borderRadius: 8,
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
     );
   }
 }

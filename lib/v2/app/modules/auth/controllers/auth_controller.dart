@@ -95,7 +95,7 @@ class AuthController extends GetxController {
         password: passwordController.text.trim(),
       );
 
-      print("Raw response body: ${response}");
+      print("Raw response body: $response");
 
       developer.log('Login response success: ${response.success}');
       developer.log('Login response message: ${response.message}');
@@ -131,7 +131,7 @@ class AuthController extends GetxController {
         _showErrorSnackbar('Login Gagal', errorMessage);
       }
     } catch (e, response) {
-      print("Raw response body: ${response}");
+      print("Raw response body: $response");
       developer.log('Login error: $e');
       final errorMessage =
           e.toString().isNotEmpty
@@ -191,16 +191,23 @@ class AuthController extends GetxController {
       return;
     }
 
-    developer.log('Redirecting user: ${currentUser.name}');
-    developer.log('User role: ${currentUser.currentRole}');
-    developer.log('Is teacher: ${currentUser.isTeacher}');
-    developer.log('Is parent: ${currentUser.isParent}');
+    developer.log('=== REDIRECT DEBUG ===');
+    developer.log('User: ${currentUser.name}');
+    developer.log('Is Teacher: ${currentUser.isTeacher}');
+    developer.log('Is Parent: ${currentUser.isParent}');
+    developer.log('Current Role: ${currentUser.currentRole}');
+    developer.log('=====================');
 
     if (currentUser.isTeacher) {
-      Get.offAllNamed(Routes.TEACHER_DASHBOARD);
+      Get.offAllNamed(Routes.MAIN);
     } else if (currentUser.isParent) {
-      Get.offAllNamed(Routes.PARENT_DASHBOARD);
+      Get.offAllNamed(Routes.MAIN);
     } else {
+      developer.log('Unknown role, redirecting to login');
+      _showErrorSnackbar(
+        'Error',
+        'Role tidak dikenali. Hubungi administrator.',
+      );
       Get.offAllNamed(Routes.LOGIN);
     }
   }
@@ -281,7 +288,7 @@ class AuthController extends GetxController {
       isLoggedIn.value = true;
     } catch (e) {
       developer.log('Failed to get current user: $e');
-      throw e; // Rethrow to let caller handle it
+      rethrow; // Rethrow to let caller handle it
     }
   }
 

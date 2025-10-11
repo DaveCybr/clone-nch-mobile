@@ -49,15 +49,15 @@ class AttendanceView extends GetView<AttendanceController> {
   // lib/v2/app/modules/teacher/attendance/views/attendance_view.dart - UPDATE AppBar
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text('Absensi Siswa'),
+      title: const Text('Absensi Siswa'),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: Icon(Icons.calendar_today),
+          icon: const Icon(Icons.calendar_today),
           onPressed: _showDatePicker,
         ),
         PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert),
+          icon: const Icon(Icons.more_vert),
           onSelected: (String value) {
             switch (value) {
               case 'export':
@@ -71,6 +71,44 @@ class AttendanceView extends GetView<AttendanceController> {
                 break;
             }
           },
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+          itemBuilder:
+              (BuildContext context) => [
+                const PopupMenuItem<String>(
+                  value: 'export',
+                  child: Row(
+                    children: [
+                      Icon(Icons.file_download, color: Colors.green),
+                      SizedBox(width: 8),
+                      Text('Ekspor Laporan'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'print',
+                  child: Row(
+                    children: [
+                      Icon(Icons.print, color: Colors.blue),
+                      SizedBox(width: 8),
+                      Text('Cetak'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'summary',
+                  child: Row(
+                    children: [
+                      Icon(Icons.analytics, color: Colors.orange),
+                      SizedBox(width: 8),
+                      Text('Ringkasan'),
+                    ],
+                  ),
+                ),
+              ],
+=======
+>>>>>>> prod
           itemBuilder: (BuildContext context) => [
             PopupMenuItem<String>(
               value: 'export',
@@ -103,6 +141,10 @@ class AttendanceView extends GetView<AttendanceController> {
               ),
             ),
           ],
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
         ),
       ],
     );
@@ -116,6 +158,20 @@ class AttendanceView extends GetView<AttendanceController> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Padding(
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Ringkasan Absensi',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+=======
+>>>>>>> prod
             padding: EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -125,6 +181,10 @@ class AttendanceView extends GetView<AttendanceController> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 SizedBox(height: 16),
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
 
                 Obx(() {
                   final summary = controller.attendanceSummary;
@@ -154,15 +214,36 @@ class AttendanceView extends GetView<AttendanceController> {
                         Colors.red,
                       ),
 
+<<<<<<< HEAD
                       Divider(),
+=======
+<<<<<<< HEAD
+                      const Divider(),
+=======
+                      Divider(),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+                          const Text('Persentase Kehadiran:'),
+                          Text(
+                            '${total > 0 ? ((summary[AttendanceStatus.hadir] ?? 0) / total * 100).toStringAsFixed(1) : 0}%',
+                            style: const TextStyle(
+=======
+>>>>>>> prod
                           Text('Persentase Kehadiran:'),
                           Text(
                             '${total > 0 ? ((summary[AttendanceStatus.hadir] ?? 0) / total * 100).toStringAsFixed(1) : 0}%',
                             style: TextStyle(
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
                               fontWeight: FontWeight.bold,
                               color: Colors.green,
                               fontSize: 16,
@@ -174,22 +255,50 @@ class AttendanceView extends GetView<AttendanceController> {
                   );
                 }),
 
+<<<<<<< HEAD
                 SizedBox(height: 20),
+=======
+<<<<<<< HEAD
+                const SizedBox(height: 20),
+=======
+                SizedBox(height: 20),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
                       onPressed: () => Get.back(),
+<<<<<<< HEAD
                       child: Text('Tutup'),
                     ),
                     SizedBox(width: 8),
+=======
+<<<<<<< HEAD
+                      child: const Text('Tutup'),
+                    ),
+                    const SizedBox(width: 8),
+=======
+                      child: Text('Tutup'),
+                    ),
+                    SizedBox(width: 8),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
                     ElevatedButton(
                       onPressed: () {
                         Get.back();
                         controller.showExportOptions();
                       },
+<<<<<<< HEAD
                       child: Text('Ekspor'),
+=======
+<<<<<<< HEAD
+                      child: const Text('Ekspor'),
+=======
+                      child: Text('Ekspor'),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
                     ),
                   ],
                 ),
@@ -203,13 +312,13 @@ class AttendanceView extends GetView<AttendanceController> {
 
   Widget _buildSummaryRow(String label, String value, Color color) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
@@ -229,7 +338,7 @@ class AttendanceView extends GetView<AttendanceController> {
       margin: EdgeInsets.all(16.w),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [AppColors.primaryGreen, AppColors.primaryGreenDark],
         ),
         borderRadius: BorderRadius.circular(12.r),
@@ -275,7 +384,7 @@ class AttendanceView extends GetView<AttendanceController> {
                   ),
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
@@ -308,7 +417,7 @@ class AttendanceView extends GetView<AttendanceController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -317,7 +426,7 @@ class AttendanceView extends GetView<AttendanceController> {
         onChanged: controller.updateSearchQuery,
         decoration: InputDecoration(
           hintText: 'Cari siswa...',
-          prefixIcon: Icon(Icons.search, color: AppColors.textHint),
+          prefixIcon: const Icon(Icons.search, color: AppColors.textHint),
           border: InputBorder.none,
           hintStyle: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.textHint,
@@ -407,7 +516,7 @@ class AttendanceView extends GetView<AttendanceController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 5,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -490,7 +599,7 @@ class AttendanceView extends GetView<AttendanceController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
           SizedBox(height: 16.h),
@@ -519,7 +628,7 @@ class AttendanceView extends GetView<AttendanceController> {
           SizedBox(height: 16.h),
           ElevatedButton(
             onPressed: controller.loadScheduleAttendance,
-            child: Text('Coba Lagi'),
+            child: const Text('Coba Lagi'),
           ),
         ],
       ),
@@ -537,7 +646,7 @@ class AttendanceView extends GetView<AttendanceController> {
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
               blurRadius: 10,
-              offset: Offset(0, -4),
+              offset: const Offset(0, -4),
             ),
           ],
         ),
@@ -546,6 +655,27 @@ class AttendanceView extends GetView<AttendanceController> {
             width: double.infinity,
             height: 50.h,
             child: ElevatedButton(
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+              onPressed:
+                  controller.isSaving.value
+                      ? null
+                      : controller.submitAttendance,
+              child:
+                  controller.isSaving.value
+                      ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20.w,
+                            height: 20.h,
+                            child: const CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+=======
+>>>>>>> prod
               onPressed: controller.isSaving.value
                   ? null
                   : controller.submitAttendance,
@@ -559,6 +689,10 @@ class AttendanceView extends GetView<AttendanceController> {
                           child: CircularProgressIndicator(
                             color: Colors.white,
                             strokeWidth: 2,
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
                           ),
                         ),
                         SizedBox(width: 12.w),
@@ -577,12 +711,12 @@ class AttendanceView extends GetView<AttendanceController> {
     final DateTime? picked = await showDatePicker(
       context: Get.context!,
       initialDate: controller.selectedDate.value,
-      firstDate: DateTime.now().subtract(Duration(days: 30)),
-      lastDate: DateTime.now().add(Duration(days: 7)),
+      firstDate: DateTime.now().subtract(const Duration(days: 30)),
+      lastDate: DateTime.now().add(const Duration(days: 7)),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppColors.primaryGreen,
               onPrimary: Colors.white,
               surface: Colors.white,

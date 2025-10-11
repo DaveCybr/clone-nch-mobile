@@ -33,11 +33,11 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text('Pengumuman'),
+      title: const Text('Pengumuman'),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: Icon(Icons.refresh),
+          icon: const Icon(Icons.refresh),
           onPressed: controller.refreshAnnouncements,
         ),
       ],
@@ -64,7 +64,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                 onChanged: controller.searchAnnouncements,
                 decoration: InputDecoration(
                   hintText: 'Cari pengumuman...',
-                  prefixIcon: Icon(Icons.search, color: AppColors.textHint),
+                  prefixIcon: const Icon(Icons.search, color: AppColors.textHint),
                   border: InputBorder.none,
                   hintStyle: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textHint,
@@ -84,7 +84,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
             ),
             child: IconButton(
               onPressed: _showFilterDialog,
-              icon: Icon(Icons.filter_list, color: Colors.white),
+              icon: const Icon(Icons.filter_list, color: Colors.white),
             ),
           ),
         ],
@@ -154,7 +154,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -201,7 +201,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                       ),
                     ),
 
-                  Expanded(child: SizedBox.shrink()),
+                  const Expanded(child: SizedBox.shrink()),
 
                   // Category Badge
                   Container(
@@ -302,7 +302,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                     onPressed: () =>
                         controller.viewAnnouncementDetail(announcement),
                     icon: Icon(Icons.read_more, size: 16.sp),
-                    label: Text('Baca Selengkapnya'),
+                    label: const Text('Baca Selengkapnya'),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.primaryGreen,
                       padding: EdgeInsets.symmetric(
@@ -325,7 +325,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
           SizedBox(height: 16.h),
@@ -350,7 +350,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
             SizedBox(
               width: 20.w,
               height: 20.h,
-              child: CircularProgressIndicator(
+              child: const CircularProgressIndicator(
                 strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation<Color>(
                   AppColors.primaryGreen,
@@ -453,8 +453,8 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
             SizedBox(height: 16.h),
             ElevatedButton.icon(
               onPressed: controller.refreshAnnouncements,
-              icon: Icon(Icons.refresh),
-              label: Text('Muat Ulang'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Muat Ulang'),
             ),
           ],
         ),
@@ -470,6 +470,22 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
       return FloatingActionButton(
         onPressed: controller.refreshAnnouncements,
         backgroundColor: AppColors.primaryGreen,
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+        child:
+            isLoading
+                ? SizedBox(
+                  width: 20.w,
+                  height: 20.h,
+                  child: const CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+                : const Icon(Icons.refresh, color: Colors.white),
+=======
+>>>>>>> prod
         child: isLoading
             ? SizedBox(
                 width: 20.w,
@@ -480,6 +496,10 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                 ),
               )
             : Icon(Icons.refresh, color: Colors.white),
+<<<<<<< HEAD
+=======
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
+>>>>>>> prod
       );
     });
   }
@@ -543,14 +563,14 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => Get.back(), child: Text('Batal')),
+                  TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
                   SizedBox(width: 8.w),
                   ElevatedButton(
                     onPressed: () {
                       controller.filterByCategory('all');
                       Get.back();
                     },
-                    child: Text('Reset'),
+                    child: const Text('Reset'),
                   ),
                 ],
               ),

@@ -105,7 +105,7 @@ class ScheduleController extends GetxController {
 
     final sampleSchedules = {
       'SENIN': [
-        TodayScheduleModel(
+        const TodayScheduleModel(
           id: 'senin-1',
           subjectName: 'Fiqih (Thaharah)',
           className: 'Kelas 7A',
@@ -116,7 +116,7 @@ class ScheduleController extends GetxController {
           isDone: false,
           totalStudents: 25,
         ),
-        TodayScheduleModel(
+        const TodayScheduleModel(
           id: 'senin-2',
           subjectName: 'Hadits Arba\'in',
           className: 'Kelas 8B',
@@ -129,7 +129,7 @@ class ScheduleController extends GetxController {
         ),
       ],
       'SELASA': [
-        TodayScheduleModel(
+        const TodayScheduleModel(
           id: 'selasa-1',
           subjectName: 'Bahasa Arab 7A',
           className: 'Kelas 7A',
@@ -238,7 +238,7 @@ class ScheduleController extends GetxController {
   /// Format week range for display
   String get weekRangeText {
     final weekStart = _getWeekStart(currentWeek.value);
-    final weekEnd = weekStart.add(Duration(days: 6));
+    final weekEnd = weekStart.add(const Duration(days: 6));
 
     return '${weekStart.day}/${weekStart.month} - ${weekEnd.day}/${weekEnd.month}/${weekEnd.year}';
   }
