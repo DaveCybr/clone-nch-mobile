@@ -181,27 +181,71 @@ class UserModel {
     return false;
   }
 
-  bool get isParent {
-    // Check multiple sources
-    if (currentRole?.toLowerCase() == 'parent') return true;
-    if (roles.any((role) => role.name.toLowerCase() == 'parent')) return true;
-    if (student != null)
-      return true; // User yang punya data student adalah parent
+  // lib/v2/app/data/models/user_model.dart
+  // UPDATE bagian getter isStudent
+
+  bool get isStudent {
+    // 1. Cek dari current_role
+    if (currentRole?.toLowerCase() == 'student' ||
+        currentRole?.toLowerCase() == 'santri') {
+      print('✅ isStudent: true (from current_role: $currentRole)');
+      return true;
+    }
+
+    // 2. Cek dari roles array
+    if (roles.any(
+      (role) =>
+          role.name.toLowerCase() == 'student' ||
+          role.name.toLowerCase() == 'santri',
+    )) {
+      print('✅ isStudent: true (from roles array)');
+      return true;
+    }
+
+    // 3. Jika punya student data sendiri (bukan parent)
+    if (student != null && !isTeacher && !isParent) {
+      print('✅ isStudent: true (has student data)');
+      return true;
+    }
+
+    print('❌ isStudent: false');
     return false;
+  }
+
+  bool get isParent {
+    // 1. Cek dari current_role
+    if (currentRole?.toLowerCase() == 'parent' ||
+        currentRole?.toLowerCase() == 'wali') {
+      print('✅ isParent: true (from current_role: $currentRole)');
+      return true;
+    }
+
+    // 2. Cek dari roles array
+    if (roles.any(
+      (role) =>
+          role.name.toLowerCase() == 'parent' ||
+          role.name.toLowerCase() == 'wali',
+    )) {
+      print('✅ isParent: true (from roles array)');
+      return true;
+    }
+
+    print('❌ isParent: false');
+    return false;
+  }
+
+  String get roleDisplay {
+    if (isTeacher) return 'Ustadz/Ustadzah';
+    if (isStudent) return 'Santri';
+    if (isParent) return 'Wali Santri';
+    if (isAdminUser) return 'Administrator';
+    return 'User';
   }
 
   bool get isAdminUser => isAdmin ?? (currentRole?.toLowerCase() == 'admin');
 
   String get displayName => name;
   String get avatarUrl => imgPath ?? '';
-
-  // ✅ FIX: Better role display logic
-  String get roleDisplay {
-    if (isTeacher) return 'Ustadz/Ustadzah';
-    if (isAdminUser) return 'Administrator';
-    if (isParent) return 'Wali Santri';
-    return 'User';
-  }
 
   String? get nip => employee?.nip;
   String? get position => employee?.position;

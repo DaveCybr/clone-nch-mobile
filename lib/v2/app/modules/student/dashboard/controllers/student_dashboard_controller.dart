@@ -1,19 +1,20 @@
 // lib/v2/app/modules/student/dashboard/controllers/student_dashboard_controller.dart
 
 import 'package:get/get.dart';
-import 'package:nch_mobile/v2/app/data/models/attendance_model.dart';
-import '../../../../data/models/student_dashboard_model.dart';
+import 'package:nch_mobile/v2/app/data/models/student_dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
 
 class StudentDashboardController extends GetxController {
   final ApiService _apiService = Get.find();
 
+  // Dashboard data
   final isLoading = true.obs;
   final error = Rx<String?>(null);
-
   final dashboardData = Rx<StudentDashboardModel?>(null);
-  final schedulesToday = <ScheduleModel>[].obs;
-  final attendanceToday = <StudentAttendanceModel>[].obs;
+
+  // Computed observables from dashboard
+  final schedulesToday = <StudentScheduleModel>[].obs;
+  final attendanceToday = <StudentAttendanceItemModel>[].obs;
 
   @override
   void onInit() {
@@ -21,6 +22,7 @@ class StudentDashboardController extends GetxController {
     loadDashboard();
   }
 
+  /// Load dashboard data
   Future<void> loadDashboard() async {
     try {
       isLoading.value = true;
@@ -35,27 +37,46 @@ class StudentDashboardController extends GetxController {
       }
     } catch (e) {
       error.value = e.toString();
-      Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Gagal memuat dashboard: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
+  /// Refresh dashboard
   Future<void> refreshDashboard() async {
     await loadDashboard();
   }
 
+  // ===== COMPUTED GETTERS =====
+
   int get totalSchedulesToday => schedulesToday.length;
 
   int get attendanceHadir =>
-      attendanceToday.where((a) => a.currentStatus == 'HADIR').length;
+      attendanceToday.where((a) => a.status == 'HADIR').length;
 
   int get attendanceSakit =>
-      attendanceToday.where((a) => a.currentStatus == 'SAKIT').length;
+      attendanceToday.where((a) => a.status == 'SAKIT').length;
 
   int get attendanceIzin =>
-      attendanceToday.where((a) => a.currentStatus == 'IZIN').length;
+      attendanceToday.where((a) => a.status == 'IZIN').length;
 
   int get attendanceAlpha =>
-      attendanceToday.where((a) => a.currentStatus == 'ALPHA').length;
+      attendanceToday.where((a) => a.status == 'ALPHA').length;
+
+  // User & class info
+  String get userName => dashboardData.value?.user.name ?? 'Santri';
+  String get userEmail => dashboardData.value?.user.email ?? '';
+  String get className => dashboardData.value?.classInfo.name ?? '-';
+  String get classLevel => dashboardData.value?.classInfo.level ?? '';
+
+  // Attendance percentage
+  double get attendancePercentage {
+    if (attendanceToday.isEmpty) return 0.0;
+    return (attendanceHadir / attendanceToday.length) * 100;
+  }
 }

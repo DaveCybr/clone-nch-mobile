@@ -90,23 +90,17 @@ class _SplashViewState extends State<SplashView>
       return;
     }
 
-    developer.log('=== USER REDIRECT INFO ===');
+    developer.log('=== SPLASH REDIRECT INFO ===');
     developer.log('User: ${user.name}');
+    developer.log('Email: ${user.email}');
     developer.log('Is Teacher: ${user.isTeacher}');
     developer.log('Is Parent: ${user.isParent}');
+    developer.log('Current Role: ${user.currentRole}');
     developer.log('Roles: ${user.roleNames}');
-    developer.log('========================');
+    developer.log('===========================');
 
-    if (user.isTeacher) {
-      developer.log('Redirecting to teacher main wrapper');
-      Get.offAllNamed('/main${Routes.TEACHER_DASHBOARD}');
-    } else if (user.isParent) {
-      developer.log('Redirecting to parent wrapper');
-      Get.offAllNamed('/parent${Routes.PARENT_DASHBOARD}');
-    } else {
-      developer.log('Unknown role, going to login');
-      Get.offAllNamed(Routes.LOGIN);
-    }
+    // Gunakan method yang sudah ada di AuthController
+    authController.redirectBasedOnRole();
   }
 
   @override

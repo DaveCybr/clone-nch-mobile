@@ -193,17 +193,36 @@ class AuthController extends GetxController {
 
     developer.log('=== REDIRECT DEBUG ===');
     developer.log('User: ${currentUser.name}');
+    developer.log('Email: ${currentUser.email}');
     developer.log('Is Teacher: ${currentUser.isTeacher}');
     developer.log('Is Parent: ${currentUser.isParent}');
+    developer.log('Is Student: ${currentUser.isStudent}');
     developer.log('Current Role: ${currentUser.currentRole}');
+    developer.log('Roles: ${currentUser.roleNames}');
+    developer.log('Has Employee: ${currentUser.employee != null}');
+    developer.log('Has Student Data: ${currentUser.student != null}');
     developer.log('=====================');
 
+    // Priority: Teacher > Student > Parent
+
+    // 1. Jika user punya role teacher, arahkan ke teacher dashboard
     if (currentUser.isTeacher) {
-      Get.offAllNamed(Routes.MAIN);
-    } else if (currentUser.isParent) {
-      Get.offAllNamed(Routes.MAIN);
-    } else {
-      developer.log('Unknown role, redirecting to login');
+      developer.log('✅ Redirecting to TEACHER dashboard');
+      Get.offAllNamed('${Routes.MAIN}');
+    }
+    // 2. Jika user punya student data (santri yang login sendiri)
+    else if (currentUser.student != null || currentUser.isStudent) {
+      developer.log('✅ Redirecting to STUDENT dashboard');
+      Get.offAllNamed('${Routes.STUDENT}');
+    }
+    // 3. Jika user adalah parent
+    else if (currentUser.isParent) {
+      developer.log('✅ Redirecting to PARENT dashboard');
+      Get.offAllNamed('${Routes.PARENT}');
+    }
+    // 4. Jika tidak ada role yang dikenali
+    else {
+      developer.log('❌ Unknown role, redirecting to login');
       _showErrorSnackbar(
         'Error',
         'Role tidak dikenali. Hubungi administrator.',

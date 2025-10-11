@@ -1,9 +1,14 @@
+// lib/v2/app/routes/app_pages.dart - UPDATED VERSION
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/widgets/common/main_navigation_wrapper.dart';
 import '../../core/widgets/common/parent_navigation_wrapper.dart';
+import '../../core/widgets/common/student_navigation_wrapper.dart';
 import '../modules/auth/views/login_view.dart';
 import '../modules/onboarding/views/splash_view.dart';
+
+// Teacher imports
 import '../modules/teacher/announcements/bindings/announcement_binding.dart';
 import '../modules/teacher/announcements/views/announcement_view.dart';
 import '../modules/teacher/attendance/bindings/attendance_binding.dart';
@@ -18,22 +23,29 @@ import '../modules/teacher/student/bindings/student_data_binding.dart';
 import '../modules/teacher/student/views/student_data_view.dart';
 import '../modules/teacher/student_history/bindings/student_history_binding.dart';
 import '../modules/teacher/student_history/views/student_history_view.dart';
-import 'app_routes.dart';
 
-// ... imports lainnya
+// Student imports
+import '../modules/student/dashboard/bindings/student_dashboard_binding.dart';
+import '../modules/student/dashboard/views/student_dashboard_view.dart';
+import '../modules/student/schedule/bindings/student_schedule_binding.dart';
+import '../modules/student/schedule/views/student_schedule_view.dart';
+import '../modules/student/attendance/bindings/student_attendance_binding.dart';
+import '../modules/student/attendance/views/student_attendance_view.dart';
+
+import 'app_routes.dart';
 
 class AppPages {
   static const INITIAL = Routes.SPLASH;
 
   static final routes = [
-    // Splash & Login
+    // ===== COMMON ROUTES =====
     GetPage(name: Routes.SPLASH, page: () => const SplashView()),
     GetPage(name: Routes.LOGIN, page: () => const LoginView()),
 
-    // TEACHER NAVIGATION WRAPPER
+    // ===== TEACHER NAVIGATION WRAPPER =====
     GetPage(
       name: '/main',
-      page: () => const MainNavigationWrapper(), // Untuk teacher
+      page: () => const MainNavigationWrapper(),
       children: [
         GetPage(
           name: Routes.TEACHER_DASHBOARD,
@@ -68,10 +80,10 @@ class AppPages {
       ],
     ),
 
-    // PARENT NAVIGATION WRAPPER
+    // ===== PARENT NAVIGATION WRAPPER =====
     GetPage(
       name: '/parent',
-      page: () => const ParentNavigationWrapper(), // Untuk parent
+      page: () => const ParentNavigationWrapper(),
       children: [
         GetPage(
           name: Routes.PARENT_DASHBOARD,
@@ -104,7 +116,42 @@ class AppPages {
       ],
     ),
 
-    // Attendance page (outside wrapper karena full screen)
+    // ===== STUDENT NAVIGATION WRAPPER =====
+    GetPage(
+      name: '/student',
+      page: () => const StudentNavigationWrapper(),
+      children: [
+        GetPage(
+          name: Routes.STUDENT_DASHBOARD,
+          page: () => const StudentDashboardView(),
+          binding: StudentDashboardBinding(),
+        ),
+        GetPage(
+          name: Routes.STUDENT_SCHEDULE,
+          page: () => const StudentScheduleView(),
+          binding: StudentScheduleBinding(),
+        ),
+        GetPage(
+          name: Routes.STUDENT_ATTENDANCE,
+          page: () => const StudentAttendanceView(),
+          binding: StudentAttendanceBinding(),
+        ),
+        GetPage(
+          name: Routes.STUDENT_ANNOUNCEMENTS,
+          page:
+              () => _buildPlaceholderPage(
+                'Pengumuman',
+                'Pengumuman untuk santri',
+              ),
+        ),
+        GetPage(
+          name: Routes.STUDENT_PROFILE,
+          page: () => _buildPlaceholderPage('Profil', 'Profil santri'),
+        ),
+      ],
+    ),
+
+    // ===== FULL SCREEN ROUTES (Outside Wrapper) =====
     GetPage(
       name: Routes.TEACHER_ATTENDANCE,
       page: () => const AttendanceView(),

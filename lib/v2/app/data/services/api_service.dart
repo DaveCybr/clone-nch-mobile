@@ -12,11 +12,7 @@ import 'dart:convert'; // for jsonEncode
 class ApiService extends GetxService {
   late Dio _dio;
   final StorageService _storageService = Get.find<StorageService>();
-<<<<<<< HEAD
 
-=======
-  // Base URL - sesuaikan dengan server Laravel Anda
->>>>>>> cfd321dd31e80d0aaa50ca0dbf7d4c5292c03afd
   static String baseUrl = 'https://be.nurulchotib.com/api';
 
   @override
@@ -134,6 +130,7 @@ class ApiService extends GetxService {
     _dio.options.baseUrl = newBaseUrl; // Update dio juga
     print('Base URL updated to: $newBaseUrl');
   }
+
   Future<AuthResponse> login({
     required String email,
     required String password,
