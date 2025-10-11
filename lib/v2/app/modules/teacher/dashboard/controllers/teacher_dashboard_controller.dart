@@ -50,10 +50,9 @@ class TeacherDashboardController extends GetxController {
 
       // Update prayer times if available
       if (response['prayer_times'] != null) {
-        prayerTimes.value =
-            (response['prayer_times'] as List)
-                .map((e) => PrayerTimeModel.fromJson(e))
-                .toList();
+        prayerTimes.value = (response['prayer_times'] as List)
+            .map((e) => PrayerTimeModel.fromJson(e))
+            .toList();
       }
     } catch (e) {
       // Provide fallback data instead of just showing error

@@ -94,17 +94,39 @@ class _SplashViewState extends State<SplashView>
     developer.log('User: ${user.name}');
     developer.log('Is Teacher: ${user.isTeacher}');
     developer.log('Is Parent: ${user.isParent}');
+<<<<<<< HEAD
     developer.log('Roles: ${user.roleNames}');
     developer.log('========================');
 
     if (user.isTeacher) {
       developer.log('Redirecting to teacher main wrapper');
       Get.offAllNamed('/main${Routes.TEACHER_DASHBOARD}');
+=======
+    developer.log('Is Admin: ${user.isAdminUser}');
+    developer.log('Has Employee Data: ${user.employee != null}');
+    developer.log('Employee Position: ${user.employee?.position}');
+    developer.log('Is Teacher From Server: ${user.isTeacherFromServer}');
+    developer.log('User Roles: ${user.roleNames}');
+    developer.log('User Permissions: ${user.permissions}');
+    developer.log('======================');
+    // Redirect based on user role
+    if (user.isTeacher) {
+      developer.log('SplashView: Redirecting to teacher dashboard');
+      Get.offAllNamed('/main');
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
     } else if (user.isParent) {
       developer.log('Redirecting to parent wrapper');
       Get.offAllNamed('/parent${Routes.PARENT_DASHBOARD}');
     } else {
+<<<<<<< HEAD
       developer.log('Unknown role, going to login');
+=======
+      // Unknown role, go to login
+      developer.log('SplashView: Unknown role, going to login');
+      developer.log(
+        'Debug: user.isTeacher=${user.isTeacher}, user.isParent=${user.isParent}',
+      );
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
       Get.offAllNamed(Routes.LOGIN);
     }
   }

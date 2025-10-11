@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+<<<<<<< HEAD
 import '../../core/widgets/common/main_navigation_wrapper.dart';
 import '../../core/widgets/common/parent_navigation_wrapper.dart';
 import '../modules/auth/views/login_view.dart';
 import '../modules/onboarding/views/splash_view.dart';
+=======
+import 'package:nch_mobile/v2/app/modules/auth/views/login_view.dart';
+import 'package:nch_mobile/v2/app/modules/onboarding/views/splash_view.dart';
+import '../../core/widgets/common/main_navigation_wrapper.dart';
+
+// Teacher modules
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
 import '../modules/teacher/announcements/bindings/announcement_binding.dart';
 import '../modules/teacher/announcements/views/announcement_view.dart';
 import '../modules/teacher/attendance/bindings/attendance_binding.dart';
@@ -29,6 +37,7 @@ class AppPages {
     // Splash & Login
     GetPage(name: Routes.SPLASH, page: () => const SplashView()),
     GetPage(name: Routes.LOGIN, page: () => const LoginView()),
+<<<<<<< HEAD
 
     // TEACHER NAVIGATION WRAPPER
     GetPage(
@@ -105,10 +114,88 @@ class AppPages {
     ),
 
     // Attendance page (outside wrapper karena full screen)
+=======
+
+    // MAIN WRAPPER with nested routes
+    GetPage(
+      name: Routes.MAIN,
+      page: () => const MainNavigationWrapper(),
+      children: [
+        GetPage(
+          name: Routes.TEACHER_DASHBOARD,
+          page: () => const TeacherDashboardView(),
+          binding: TeacherDashboardBinding(),
+        ),
+        GetPage(
+          name: Routes.TEACHER_SCHEDULE,
+          page: () => const ScheduleView(),
+          binding: ScheduleBinding(),
+          // transition: Transition.rightToLeft,
+          transitionDuration: Duration(milliseconds: 300),
+        ),
+
+        GetPage(
+          name: Routes.TEACHER_STUDENTS,
+          page: () => const StudentDataView(),
+          binding: StudentDataBinding(),
+          transition: Transition.fadeIn,
+          transitionDuration: Duration(milliseconds: 300),
+        ),
+        GetPage(
+          name: Routes.STUDENT_ATTENDANCE_HISTORY,
+          page: () => const StudentHistoryView(),
+          binding: StudentHistoryBinding(),
+          transition: Transition.fadeIn,
+          transitionDuration: Duration(milliseconds: 300),
+        ),
+        GetPage(
+          name: Routes.TEACHER_ANNOUNCEMENTS,
+          page: () => const AnnouncementsView(),
+          binding: AnnouncementsBinding(),
+          transition: Transition.fadeIn,
+          transitionDuration: Duration(milliseconds: 300),
+        ),
+        GetPage(
+          name: Routes.TEACHER_PROFILE,
+          page: () => const ProfileView(),
+          binding: ProfileBinding(),
+          transition: Transition.fadeIn,
+          transitionDuration: Duration(milliseconds: 300),
+        ),
+      ],
+    ),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
     GetPage(
       name: Routes.TEACHER_ATTENDANCE,
       page: () => const AttendanceView(),
       binding: AttendanceBinding(),
+<<<<<<< HEAD
+=======
+      // transition: Transition.rightToLeft,
+      transitionDuration: Duration(milliseconds: 300),
+    ),
+    // Teacher routes
+    // GetPage(
+    //   name: Routes.TEACHER_DASHBOARD,
+    //   page: () => const TeacherDashboardView(),
+    //   binding: TeacherDashboardBinding(),
+    // ),
+    // GetPage(
+    //   name: Routes.TEACHER_SCHEDULE,
+    //   page: () => const ScheduleView(),
+    //   binding: ScheduleBinding(),
+    //   transition: Transition.rightToLeft,
+    //   transitionDuration: Duration(milliseconds: 300),
+    // ),
+
+    // Parent routes placeholder
+    GetPage(
+      name: Routes.PARENT_DASHBOARD,
+      page: () => _buildPlaceholderPage(
+        'Parent Dashboard',
+        'Halaman wali santri sedang dalam pengembangan',
+      ),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
     ),
   ];
 

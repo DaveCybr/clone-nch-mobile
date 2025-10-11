@@ -24,7 +24,11 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       backgroundColor: AppColors.scaffoldBackground,
       appBar: _buildAppBar(),
       body: _buildBody(refreshController, context),
+<<<<<<< HEAD
       // ✅ DIHAPUS - BottomNav dihandle oleh parent widget
+=======
+      // bottomNavigationBar: _buildBottomNavigationBar(),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
     );
   }
 
@@ -39,6 +43,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
         ),
         PopupMenuButton(
           icon: const Icon(Icons.more_vert),
+<<<<<<< HEAD
           itemBuilder:
               (context) => [
                 PopupMenuItem(
@@ -75,6 +80,40 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
                   ),
                 ),
               ],
+=======
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'refresh',
+              child: Row(
+                children: [
+                  Icon(Icons.refresh, color: AppColors.primaryGreen),
+                  SizedBox(width: 12.w),
+                  const Text('Refresh'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'profile',
+              child: Row(
+                children: [
+                  Icon(Icons.person_outline, color: AppColors.primaryGreen),
+                  SizedBox(width: 12.w),
+                  const Text('Profil'),
+                ],
+              ),
+            ),
+            PopupMenuItem(
+              value: 'logout',
+              child: Row(
+                children: [
+                  const Icon(Icons.logout, color: Colors.red),
+                  SizedBox(width: 12.w),
+                  const Text('Keluar'),
+                ],
+              ),
+            ),
+          ],
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
           onSelected: (value) {
             switch (value) {
               case 'refresh':
@@ -185,18 +224,12 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
           CircleAvatar(
             radius: 35.r,
             backgroundColor: AppColors.goldAccent,
-            backgroundImage:
-                controller.currentUser!.avatarUrl.isNotEmpty
-                    ? NetworkImage(controller.currentUser!.avatarUrl)
-                    : null,
-            child:
-                controller.currentUser!.avatarUrl.isEmpty
-                    ? Icon(
-                      Icons.person,
-                      size: 35.sp,
-                      color: AppColors.primaryGreen,
-                    )
-                    : null,
+            backgroundImage: controller.currentUser!.avatarUrl.isNotEmpty
+                ? NetworkImage(controller.currentUser!.avatarUrl)
+                : null,
+            child: controller.currentUser!.avatarUrl.isEmpty
+                ? Icon(Icons.person, size: 35.sp, color: AppColors.primaryGreen)
+                : null,
           ),
           SizedBox(width: 16.w),
           Expanded(
@@ -339,6 +372,11 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
             ),
           ],
         ),
+<<<<<<< HEAD
+=======
+
+        // SizedBox(height: 12.h),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
         if (schedules.isEmpty)
           _buildEmptySchedule(context)
         else
@@ -481,10 +519,9 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       decoration: BoxDecoration(
         color: AppColors.lightGreenBg,
         borderRadius: BorderRadius.circular(8.r),
-        border:
-            announcement.isPriority
-                ? Border.all(color: Colors.orange, width: 1)
-                : null,
+        border: announcement.isPriority
+            ? Border.all(color: Colors.orange, width: 1)
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

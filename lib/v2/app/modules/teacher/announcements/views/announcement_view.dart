@@ -117,10 +117,9 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                   color: isSelected ? AppColors.primaryGreen : Colors.white,
                   borderRadius: BorderRadius.circular(25.r),
                   border: Border.all(
-                    color:
-                        isSelected
-                            ? AppColors.primaryGreen
-                            : AppColors.dividerColor,
+                    color: isSelected
+                        ? AppColors.primaryGreen
+                        : AppColors.dividerColor,
                   ),
                 ),
                 child: Center(
@@ -128,8 +127,9 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                     categoryName,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: isSelected ? Colors.white : AppColors.textPrimary,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -147,10 +147,9 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12.r),
-        border:
-            announcement.isPriority
-                ? Border.all(color: Colors.red, width: 2)
-                : null,
+        border: announcement.isPriority
+            ? Border.all(color: Colors.red, width: 2)
+            : null,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -300,8 +299,8 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                   ),
 
                   TextButton.icon(
-                    onPressed:
-                        () => controller.viewAnnouncementDetail(announcement),
+                    onPressed: () =>
+                        controller.viewAnnouncementDetail(announcement),
                     icon: Icon(Icons.read_more, size: 16.sp),
                     label: const Text('Baca Selengkapnya'),
                     style: TextButton.styleFrom(
@@ -471,6 +470,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
       return FloatingActionButton(
         onPressed: controller.refreshAnnouncements,
         backgroundColor: AppColors.primaryGreen,
+<<<<<<< HEAD
         child:
             isLoading
                 ? SizedBox(
@@ -482,6 +482,18 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                   ),
                 )
                 : const Icon(Icons.refresh, color: Colors.white),
+=======
+        child: isLoading
+            ? SizedBox(
+                width: 20.w,
+                height: 20.h,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Icon(Icons.refresh, color: Colors.white),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
       );
     });
   }
@@ -524,24 +536,20 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
               Wrap(
                 spacing: 8.w,
                 runSpacing: 8.h,
-                children:
-                    controller.categories.entries.map((entry) {
-                      return Obx(
-                        () => FilterChip(
-                          label: Text(entry.value),
-                          selected:
-                              controller.selectedCategory.value == entry.key,
-                          onSelected: (selected) {
-                            controller.filterByCategory(entry.key);
-                            Get.back();
-                          },
-                          selectedColor: AppColors.primaryGreen.withOpacity(
-                            0.2,
-                          ),
-                          checkmarkColor: AppColors.primaryGreen,
-                        ),
-                      );
-                    }).toList(),
+                children: controller.categories.entries.map((entry) {
+                  return Obx(
+                    () => FilterChip(
+                      label: Text(entry.value),
+                      selected: controller.selectedCategory.value == entry.key,
+                      onSelected: (selected) {
+                        controller.filterByCategory(entry.key);
+                        Get.back();
+                      },
+                      selectedColor: AppColors.primaryGreen.withOpacity(0.2),
+                      checkmarkColor: AppColors.primaryGreen,
+                    ),
+                  );
+                }).toList(),
               ),
 
               SizedBox(height: 16.h),

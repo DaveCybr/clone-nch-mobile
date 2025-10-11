@@ -126,8 +126,13 @@ class StudentDataController extends GetxController {
     Get.bottomSheet(
       SafeArea(
         child: Container(
+<<<<<<< HEAD
           padding: const EdgeInsets.all(20),
           decoration: const BoxDecoration(
+=======
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
             color: Colors.white,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
@@ -146,7 +151,11 @@ class StudentDataController extends GetxController {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
+<<<<<<< HEAD
               const SizedBox(height: 20),
+=======
+              SizedBox(height: 20),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
 
               CircleAvatar(
                 radius: 30,
@@ -161,21 +170,36 @@ class StudentDataController extends GetxController {
                 ),
               ),
 
+<<<<<<< HEAD
               const SizedBox(height: 16),
 
               Text(
                 student.name,
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+=======
+              SizedBox(height: 16),
+
+              Text(
+                student.name,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
               ),
               Text(
                 'NIS: ${student.nisn}',
                 style: TextStyle(color: Colors.grey[600]),
               ),
 
+<<<<<<< HEAD
               const SizedBox(height: 8),
 
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+=======
+              SizedBox(height: 8),
+
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
                 decoration: BoxDecoration(
                   color: getAttendanceStatusColor(
                     student.attendancePercentage,
@@ -193,12 +217,21 @@ class StudentDataController extends GetxController {
                 ),
               ),
 
+<<<<<<< HEAD
               const SizedBox(height: 20),
 
               // Action buttons
               ListTile(
                 leading: const Icon(Icons.history, color: Colors.blue),
                 title: const Text('Lihat Riwayat Kehadiran'),
+=======
+              SizedBox(height: 20),
+
+              // Action buttons
+              ListTile(
+                leading: Icon(Icons.history, color: Colors.blue),
+                title: Text('Lihat Riwayat Kehadiran'),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
                 onTap: () {
                   Get.back();
                   viewStudentHistory(student);
@@ -206,8 +239,13 @@ class StudentDataController extends GetxController {
               ),
 
               ListTile(
+<<<<<<< HEAD
                 leading: const Icon(Icons.person, color: Colors.green),
                 title: const Text('Detail Profil Siswa'),
+=======
+                leading: Icon(Icons.person, color: Colors.green),
+                title: Text('Detail Profil Siswa'),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
                 onTap: () {
                   Get.back();
                   _showSnackbar(

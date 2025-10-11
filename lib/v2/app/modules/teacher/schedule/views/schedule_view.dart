@@ -48,6 +48,7 @@ class ScheduleView extends GetView<ScheduleController> {
                 break;
             }
           },
+<<<<<<< HEAD
           itemBuilder:
               (context) => [
                 const PopupMenuItem<String>(
@@ -71,6 +72,30 @@ class ScheduleView extends GetView<ScheduleController> {
                   ),
                 ),
               ],
+=======
+          itemBuilder: (context) => [
+            PopupMenuItem<String>(
+              value: 'today',
+              child: Row(
+                children: [
+                  Icon(Icons.today, color: AppColors.primaryGreen),
+                  SizedBox(width: 8),
+                  Text('Hari Ini'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'refresh',
+              child: Row(
+                children: [
+                  Icon(Icons.refresh, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Text('Muat Ulang'),
+                ],
+              ),
+            ),
+          ],
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
         ),
       ],
     );
@@ -89,6 +114,7 @@ class ScheduleView extends GetView<ScheduleController> {
 
         // Main content - only show when not loading
         Obx(
+<<<<<<< HEAD
           () =>
               controller.isLoading.value
                   ? const SizedBox.shrink()
@@ -97,15 +123,24 @@ class ScheduleView extends GetView<ScheduleController> {
                       children: [
                         // Week Navigation Header
                         _buildWeekHeader(),
+=======
+          () => controller.isLoading.value
+              ? SizedBox.shrink()
+              : Expanded(
+                  child: Column(
+                    children: [
+                      // Week Navigation Header
+                      _buildWeekHeader(),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
 
-                        // Days of Week Tabs
-                        _buildDayTabs(),
+                      // Days of Week Tabs
+                      _buildDayTabs(),
 
-                        // Selected Day Schedule
-                        Expanded(child: _buildSelectedDaySchedule()),
-                      ],
-                    ),
+                      // Selected Day Schedule
+                      Expanded(child: _buildSelectedDaySchedule()),
+                    ],
                   ),
+                ),
         ),
       ],
     );
@@ -181,17 +216,15 @@ class ScheduleView extends GetView<ScheduleController> {
                   width: 80.w,
                   margin: EdgeInsets.symmetric(horizontal: 4.w, vertical: 8.h),
                   decoration: BoxDecoration(
-                    color:
-                        isSelected
-                            ? AppColors.goldAccent
-                            : isToday
-                            ? Colors.white.withOpacity(0.2)
-                            : Colors.transparent,
+                    color: isSelected
+                        ? AppColors.goldAccent
+                        : isToday
+                        ? Colors.white.withOpacity(0.2)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(12.r),
-                    border:
-                        isToday && !isSelected
-                            ? Border.all(color: Colors.white.withOpacity(0.5))
-                            : null,
+                    border: isToday && !isSelected
+                        ? Border.all(color: Colors.white.withOpacity(0.5))
+                        : null,
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -199,24 +232,21 @@ class ScheduleView extends GetView<ScheduleController> {
                       Text(
                         dayDisplay,
                         style: AppTextStyles.bodySmall.copyWith(
-                          color:
-                              isSelected
-                                  ? AppColors.primaryGreen
-                                  : Colors.white,
-                          fontWeight:
-                              isSelected || isToday
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
+                          color: isSelected
+                              ? AppColors.primaryGreen
+                              : Colors.white,
+                          fontWeight: isSelected || isToday
+                              ? FontWeight.bold
+                              : FontWeight.w500,
                         ),
                       ),
                       SizedBox(height: 2.h),
                       Text(
                         '${dayDate.day}',
                         style: AppTextStyles.bodyMedium.copyWith(
-                          color:
-                              isSelected
-                                  ? AppColors.primaryGreen
-                                  : Colors.white,
+                          color: isSelected
+                              ? AppColors.primaryGreen
+                              : Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -227,10 +257,9 @@ class ScheduleView extends GetView<ScheduleController> {
                           width: 6.w,
                           height: 6.h,
                           decoration: BoxDecoration(
-                            color:
-                                isSelected
-                                    ? AppColors.primaryGreen
-                                    : AppColors.goldAccent,
+                            color: isSelected
+                                ? AppColors.primaryGreen
+                                : AppColors.goldAccent,
                             shape: BoxShape.circle,
                           ),
                         )
@@ -360,13 +389,12 @@ class ScheduleView extends GetView<ScheduleController> {
         borderRadius: BorderRadius.circular(12.r),
         border: Border(
           left: BorderSide(
-            color:
-                isDone
-                    ? AppColors
-                        .attendancePresent // Green for done
-                    : isOngoing
-                    ? AppColors.goldAccent
-                    : AppColors.primaryGreen,
+            color: isDone
+                ? AppColors
+                      .attendancePresent // Green for done
+                : isOngoing
+                ? AppColors.goldAccent
+                : AppColors.primaryGreen,
             width: 4.w,
           ),
         ),
@@ -465,8 +493,9 @@ class ScheduleView extends GetView<ScheduleController> {
                   isDone ? 'Edit Absensi' : 'Buka Absensi',
                 ), // ✅ Change label
                 style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      isOngoing ? AppColors.goldAccent : AppColors.primaryGreen,
+                  backgroundColor: isOngoing
+                      ? AppColors.goldAccent
+                      : AppColors.primaryGreen,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   shape: RoundedRectangleBorder(

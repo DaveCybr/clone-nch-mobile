@@ -16,8 +16,12 @@ class ApiService extends GetxService {
 
 =======
   // Base URL - sesuaikan dengan server Laravel Anda
+<<<<<<< HEAD
 >>>>>>> cfd321dd31e80d0aaa50ca0dbf7d4c5292c03afd
   static String baseUrl = 'https://be.nurulchotib.com/api';
+=======
+  static const String baseUrl = 'http://be.nurulchotib.com/api';
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
 
   @override
   void onInit() {
@@ -129,11 +133,15 @@ class ApiService extends GetxService {
     Get.offAllNamed('/login');
   }
 
+<<<<<<< HEAD
   void updateBaseUrl(String newBaseUrl) {
     baseUrl = newBaseUrl;
     _dio.options.baseUrl = newBaseUrl; // Update dio juga
     print('Base URL updated to: $newBaseUrl');
   }
+=======
+  // Auth endpoints sesuai dengan struktur database
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
   Future<AuthResponse> login({
     required String email,
     required String password,
@@ -270,7 +278,11 @@ class ApiService extends GetxService {
     try {
       final response = await _dio.get(
         '/teacher/schedule/$scheduleId/attendance',
+<<<<<<< HEAD
         queryParameters: {'date': date},
+=======
+        queryParameters: {if (date != null) 'date': date},
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
       );
 
       return ScheduleDetailModel.fromJson(response.data['data']);

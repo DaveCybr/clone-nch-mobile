@@ -71,6 +71,7 @@ class AttendanceView extends GetView<AttendanceController> {
                 break;
             }
           },
+<<<<<<< HEAD
           itemBuilder:
               (BuildContext context) => [
                 const PopupMenuItem<String>(
@@ -104,6 +105,40 @@ class AttendanceView extends GetView<AttendanceController> {
                   ),
                 ),
               ],
+=======
+          itemBuilder: (BuildContext context) => [
+            PopupMenuItem<String>(
+              value: 'export',
+              child: Row(
+                children: [
+                  Icon(Icons.file_download, color: Colors.green),
+                  SizedBox(width: 8),
+                  Text('Ekspor Laporan'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'print',
+              child: Row(
+                children: [
+                  Icon(Icons.print, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Text('Cetak'),
+                ],
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'summary',
+              child: Row(
+                children: [
+                  Icon(Icons.analytics, color: Colors.orange),
+                  SizedBox(width: 8),
+                  Text('Ringkasan'),
+                ],
+              ),
+            ),
+          ],
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
         ),
       ],
     );
@@ -117,6 +152,7 @@ class AttendanceView extends GetView<AttendanceController> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Padding(
+<<<<<<< HEAD
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -126,6 +162,17 @@ class AttendanceView extends GetView<AttendanceController> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
+=======
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Ringkasan Absensi',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 16),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
 
                 Obx(() {
                   final summary = controller.attendanceSummary;
@@ -155,15 +202,26 @@ class AttendanceView extends GetView<AttendanceController> {
                         Colors.red,
                       ),
 
+<<<<<<< HEAD
                       const Divider(),
+=======
+                      Divider(),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+<<<<<<< HEAD
                           const Text('Persentase Kehadiran:'),
                           Text(
                             '${total > 0 ? ((summary[AttendanceStatus.hadir] ?? 0) / total * 100).toStringAsFixed(1) : 0}%',
                             style: const TextStyle(
+=======
+                          Text('Persentase Kehadiran:'),
+                          Text(
+                            '${total > 0 ? ((summary[AttendanceStatus.hadir] ?? 0) / total * 100).toStringAsFixed(1) : 0}%',
+                            style: TextStyle(
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
                               fontWeight: FontWeight.bold,
                               color: Colors.green,
                               fontSize: 16,
@@ -175,22 +233,36 @@ class AttendanceView extends GetView<AttendanceController> {
                   );
                 }),
 
+<<<<<<< HEAD
                 const SizedBox(height: 20),
+=======
+                SizedBox(height: 20),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
                       onPressed: () => Get.back(),
+<<<<<<< HEAD
                       child: const Text('Tutup'),
                     ),
                     const SizedBox(width: 8),
+=======
+                      child: Text('Tutup'),
+                    ),
+                    SizedBox(width: 8),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
                     ElevatedButton(
                       onPressed: () {
                         Get.back();
                         controller.showExportOptions();
                       },
+<<<<<<< HEAD
                       child: const Text('Ekspor'),
+=======
+                      child: Text('Ekspor'),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
                     ),
                   ],
                 ),
@@ -334,42 +406,41 @@ class AttendanceView extends GetView<AttendanceController> {
       child: Obx(() {
         final summary = controller.attendanceSummary;
         return Row(
-          children:
-              AttendanceStatus.values.map((status) {
-                final count = summary[status] ?? 0;
-                final color = _getStatusColor(status);
+          children: AttendanceStatus.values.map((status) {
+            final count = summary[status] ?? 0;
+            final color = _getStatusColor(status);
 
-                return Expanded(
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 2.w),
-                    padding: EdgeInsets.symmetric(vertical: 12.h),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8.r),
-                      border: Border.all(color: color.withOpacity(0.3)),
+            return Expanded(
+              child: Container(
+                margin: EdgeInsets.symmetric(horizontal: 2.w),
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8.r),
+                  border: Border.all(color: color.withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      count.toString(),
+                      style: AppTextStyles.heading2.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    child: Column(
-                      children: [
-                        Text(
-                          count.toString(),
-                          style: AppTextStyles.heading2.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 4.h),
-                        Text(
-                          status.displayName,
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: color,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                    SizedBox(height: 4.h),
+                    Text(
+                      status.displayName,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
         );
       }),
     );
@@ -548,6 +619,7 @@ class AttendanceView extends GetView<AttendanceController> {
             width: double.infinity,
             height: 50.h,
             child: ElevatedButton(
+<<<<<<< HEAD
               onPressed:
                   controller.isSaving.value
                       ? null
@@ -564,12 +636,28 @@ class AttendanceView extends GetView<AttendanceController> {
                               color: Colors.white,
                               strokeWidth: 2,
                             ),
+=======
+              onPressed: controller.isSaving.value
+                  ? null
+                  : controller.submitAttendance,
+              child: controller.isSaving.value
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20.w,
+                          height: 20.h,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
                           ),
-                          SizedBox(width: 12.w),
-                          Text('Menyimpan...', style: AppTextStyles.buttonText),
-                        ],
-                      )
-                      : Text('Simpan Absensi', style: AppTextStyles.buttonText),
+                        ),
+                        SizedBox(width: 12.w),
+                        Text('Menyimpan...', style: AppTextStyles.buttonText),
+                      ],
+                    )
+                  : Text('Simpan Absensi', style: AppTextStyles.buttonText),
             ),
           ),
         ),

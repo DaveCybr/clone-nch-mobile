@@ -81,16 +81,15 @@ class ProfileView extends GetView<ProfileController> {
                 backgroundColor: AppColors.goldAccent,
                 backgroundImage:
                     controller.user.value?.avatarUrl.isNotEmpty == true
-                        ? NetworkImage(controller.user.value!.avatarUrl)
-                        : null,
-                child:
-                    controller.user.value?.avatarUrl.isEmpty != false
-                        ? Icon(
-                          Icons.person,
-                          size: 50.sp,
-                          color: AppColors.primaryGreen,
-                        )
-                        : null,
+                    ? NetworkImage(controller.user.value!.avatarUrl)
+                    : null,
+                child: controller.user.value?.avatarUrl.isEmpty != false
+                    ? Icon(
+                        Icons.person,
+                        size: 50.sp,
+                        color: AppColors.primaryGreen,
+                      )
+                    : null,
               ),
               Positioned(
                 bottom: 0,
@@ -182,9 +181,8 @@ class ProfileView extends GetView<ProfileController> {
                 labelText: 'Nama Lengkap',
                 prefixIcon: Icon(Icons.person, color: AppColors.primaryGreen),
               ),
-              validator:
-                  (value) =>
-                      value?.isEmpty == true ? 'Nama tidak boleh kosong' : null,
+              validator: (value) =>
+                  value?.isEmpty == true ? 'Nama tidak boleh kosong' : null,
             ),
 
             SizedBox(height: 16.h),
@@ -236,6 +234,7 @@ class ProfileView extends GetView<ProfileController> {
               width: double.infinity,
               child: Obx(
                 () => ElevatedButton(
+<<<<<<< HEAD
                   onPressed:
                       controller.isSaving.value
                           ? null
@@ -258,6 +257,28 @@ class ProfileView extends GetView<ProfileController> {
                             ],
                           )
                           : const Text('Simpan Perubahan'),
+=======
+                  onPressed: controller.isSaving.value
+                      ? null
+                      : controller.updateProfile,
+                  child: controller.isSaving.value
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 20.w,
+                              height: 20.h,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            SizedBox(width: 12.w),
+                            Text('Menyimpan...'),
+                          ],
+                        )
+                      : Text('Simpan Perubahan'),
+>>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
                 ),
               ),
             ),
