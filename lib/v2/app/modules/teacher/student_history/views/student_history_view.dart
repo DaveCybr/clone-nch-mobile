@@ -59,11 +59,11 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text('Data Santri'),
+      title: const Text('Data Santri'),
       centerTitle: true,
       actions: [
         PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert),
+          icon: const Icon(Icons.more_vert),
           onSelected: (String value) {
             switch (value) {
               // case 'export':
@@ -79,7 +79,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
           },
           itemBuilder:
               (BuildContext context) => [
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'export',
                   child: Row(
                     children: [
@@ -89,7 +89,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
                     ],
                   ),
                 ),
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'filter',
                   child: Row(
                     children: [
@@ -99,7 +99,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
                     ],
                   ),
                 ),
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'refresh',
                   child: Row(
                     children: [
@@ -120,62 +120,65 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Filter Data Siswa',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-              Text(
+              const Text(
                 'Status Kehadiran:',
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
 
               Wrap(
                 spacing: 8,
                 children: [
                   FilterChip(
-                    label: Text('Semua'),
+                    label: const Text('Semua'),
                     selected: true,
                     onSelected: (selected) {},
                   ),
                   FilterChip(
-                    label: Text('Kehadiran > 90%'),
+                    label: const Text('Kehadiran > 90%'),
                     selected: false,
                     onSelected: (selected) {},
                   ),
                   FilterChip(
-                    label: Text('Kehadiran 75-90%'),
+                    label: const Text('Kehadiran 75-90%'),
                     selected: false,
                     onSelected: (selected) {},
                   ),
                   FilterChip(
-                    label: Text('Kehadiran < 75%'),
+                    label: const Text('Kehadiran < 75%'),
                     selected: false,
                     onSelected: (selected) {},
                   ),
                 ],
               ),
 
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => Get.back(), child: Text('Batal')),
-                  SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text('Batal'),
+                  ),
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
                       Get.back();
                       // Apply filter logic here
                     },
-                    child: Text('Terapkan'),
+                    child: const Text('Terapkan'),
                   ),
                 ],
               ),
@@ -190,7 +193,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [AppColors.primaryGreen, AppColors.primaryGreenDark],
         ),
         borderRadius: BorderRadius.circular(12.r),
@@ -280,13 +283,13 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
-          Icon(Icons.date_range, color: AppColors.primaryGreen),
+          const Icon(Icons.date_range, color: AppColors.primaryGreen),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
@@ -300,7 +303,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
                 ),
                 Obx(() {
                   final range = controller.selectedDateRange.value;
-                  if (range == null) return Text('Pilih periode');
+                  if (range == null) return const Text('Pilih periode');
 
                   return Text(
                     '${_formatDate(range.start)} - ${_formatDate(range.end)}',
@@ -312,10 +315,6 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               ],
             ),
           ),
-          // TextButton(
-          //   onPressed: controller.showDateRangePicker,
-          //   child: Text('Ubah'),
-          // ),
         ],
       ),
     );
@@ -331,7 +330,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -340,7 +339,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
         children: [
           Row(
             children: [
-              Icon(Icons.analytics, color: AppColors.primaryGreen),
+              const Icon(Icons.analytics, color: AppColors.primaryGreen),
               SizedBox(width: 8.w),
               Text('Ringkasan Kehadiran', style: AppTextStyles.cardTitle),
             ],
@@ -395,7 +394,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
 
           Container(
             padding: EdgeInsets.symmetric(vertical: 8.h),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               border: Border(top: BorderSide(color: AppColors.dividerColor)),
             ),
             child: Row(
@@ -458,7 +457,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -467,7 +466,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
         children: [
           Row(
             children: [
-              Icon(Icons.history, color: AppColors.primaryGreen),
+              const Icon(Icons.history, color: AppColors.primaryGreen),
               SizedBox(width: 8.w),
               Text('Riwayat Detail', style: AppTextStyles.cardTitle),
             ],
@@ -579,7 +578,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
           SizedBox(height: 16.h),
@@ -608,7 +607,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
           SizedBox(height: 16.h),
           ElevatedButton(
             onPressed: controller.loadStudentHistory,
-            child: Text('Coba Lagi'),
+            child: const Text('Coba Lagi'),
           ),
         ],
       ),

@@ -21,7 +21,7 @@ class PrayerTimeWidget extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -136,11 +136,11 @@ class PrayerTime {
 
   static List<PrayerTime> getDefaultPrayerTimes() {
     return [
-      PrayerTime(name: 'Subuh', time: '04:30', color: AppColors.fajrColor),
-      PrayerTime(name: 'Dzuhur', time: '12:00', color: AppColors.dhuhrColor),
-      PrayerTime(name: 'Ashar', time: '15:30', color: AppColors.asrColor),
-      PrayerTime(name: 'Maghrib', time: '18:15', color: AppColors.maghribColor),
-      PrayerTime(name: 'Isya', time: '19:30', color: AppColors.ishaColor),
+      const PrayerTime(name: 'Subuh', time: '04:30', color: AppColors.fajrColor),
+      const PrayerTime(name: 'Dzuhur', time: '12:00', color: AppColors.dhuhrColor),
+      const PrayerTime(name: 'Ashar', time: '15:30', color: AppColors.asrColor),
+      const PrayerTime(name: 'Maghrib', time: '18:15', color: AppColors.maghribColor),
+      const PrayerTime(name: 'Isya', time: '19:30', color: AppColors.ishaColor),
     ];
   }
 }

@@ -184,17 +184,17 @@ class ProfileController extends GetxController {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
+                const Text(
                   'Ubah Password',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                 // Current Password
                 TextFormField(
                   controller: currentPasswordController,
                   obscureText: true,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Password Saat Ini',
                     prefixIcon: Icon(Icons.lock_outline),
                   ),
@@ -205,37 +205,39 @@ class ProfileController extends GetxController {
                               : null,
                 ),
 
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // New Password
                 TextFormField(
                   controller: newPasswordController,
                   obscureText: true,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Password Baru',
                     prefixIcon: Icon(Icons.lock),
                   ),
                   validator: (value) {
-                    if (value?.isEmpty == true)
+                    if (value?.isEmpty == true) {
                       return 'Password baru wajib diisi';
+                    }
                     if (value!.length < 6) return 'Password minimal 6 karakter';
                     return null;
                   },
                 ),
 
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // Confirm Password
                 TextFormField(
                   controller: confirmPasswordController,
                   obscureText: true,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Konfirmasi Password',
                     prefixIcon: Icon(Icons.lock),
                   ),
                   validator: (value) {
-                    if (value?.isEmpty == true)
+                    if (value?.isEmpty == true) {
                       return 'Konfirmasi password wajib diisi';
+                    }
                     if (value != newPasswordController.text) {
                       return 'Konfirmasi password tidak cocok';
                     }
@@ -243,7 +245,7 @@ class ProfileController extends GetxController {
                   },
                 ),
 
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
 
                 // Buttons
                 Row(
@@ -256,9 +258,9 @@ class ProfileController extends GetxController {
                         confirmPasswordController.dispose();
                         Get.back();
                       },
-                      child: Text('Batal'),
+                      child: const Text('Batal'),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Obx(
                       () => ElevatedButton(
                         onPressed:
@@ -277,14 +279,14 @@ class ProfileController extends GetxController {
                                 },
                         child:
                             isSaving.value
-                                ? SizedBox(
+                                ? const SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                   ),
                                 )
-                                : Text('Simpan'),
+                                : const Text('Simpan'),
                       ),
                     ),
                   ],
@@ -301,19 +303,19 @@ class ProfileController extends GetxController {
   void logout() {
     Get.dialog(
       AlertDialog(
-        title: Text('تسجيل الخروج'),
-        content: Text(
+        title: const Text('تسجيل الخروج'),
+        content: const Text(
           'هل أنت متأكد من تسجيل الخروج؟\nApakah Anda yakin ingin keluar?',
         ),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: Text('إلغاء')),
+          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () {
               Get.back();
               _authController.logout();
             },
-            child: Text('خروج', style: TextStyle(color: Colors.white)),
+            child: const Text('خروج', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -326,11 +328,11 @@ class ProfileController extends GetxController {
       message,
       backgroundColor: Colors.green,
       colorText: Colors.white,
-      icon: Icon(Icons.check_circle, color: Colors.white),
+      icon: const Icon(Icons.check_circle, color: Colors.white),
       snackPosition: SnackPosition.TOP,
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       borderRadius: 8,
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
     );
   }
 
@@ -340,11 +342,11 @@ class ProfileController extends GetxController {
       message,
       backgroundColor: Colors.red,
       colorText: Colors.white,
-      icon: Icon(Icons.error, color: Colors.white),
+      icon: const Icon(Icons.error, color: Colors.white),
       snackPosition: SnackPosition.TOP,
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       borderRadius: 8,
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
     );
   }
 }

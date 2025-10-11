@@ -47,11 +47,11 @@ class StudentDataView extends GetView<StudentDataController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text('Data Santri'),
+      title: const Text('Data Santri'),
       centerTitle: true,
       actions: [
         PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert),
+          icon: const Icon(Icons.more_vert),
           onSelected: (String value) {
             switch (value) {
               case 'export':
@@ -67,7 +67,7 @@ class StudentDataView extends GetView<StudentDataController> {
           },
           itemBuilder:
               (BuildContext context) => [
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'export',
                   child: Row(
                     children: [
@@ -77,7 +77,7 @@ class StudentDataView extends GetView<StudentDataController> {
                     ],
                   ),
                 ),
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'filter',
                   child: Row(
                     children: [
@@ -87,7 +87,7 @@ class StudentDataView extends GetView<StudentDataController> {
                     ],
                   ),
                 ),
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'refresh',
                   child: Row(
                     children: [
@@ -108,62 +108,62 @@ class StudentDataView extends GetView<StudentDataController> {
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Filter Data Siswa',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-              Text(
+              const Text(
                 'Status Kehadiran:',
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
 
               Wrap(
                 spacing: 8,
                 children: [
                   FilterChip(
-                    label: Text('Semua'),
+                    label: const Text('Semua'),
                     selected: true,
                     onSelected: (selected) {},
                   ),
                   FilterChip(
-                    label: Text('Kehadiran > 90%'),
+                    label: const Text('Kehadiran > 90%'),
                     selected: false,
                     onSelected: (selected) {},
                   ),
                   FilterChip(
-                    label: Text('Kehadiran 75-90%'),
+                    label: const Text('Kehadiran 75-90%'),
                     selected: false,
                     onSelected: (selected) {},
                   ),
                   FilterChip(
-                    label: Text('Kehadiran < 75%'),
+                    label: const Text('Kehadiran < 75%'),
                     selected: false,
                     onSelected: (selected) {},
                   ),
                 ],
               ),
 
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => Get.back(), child: Text('Batal')),
-                  SizedBox(width: 8),
+                  TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
+                  const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
                       Get.back();
                       // Apply filter logic here
                     },
-                    child: Text('Terapkan'),
+                    child: const Text('Terapkan'),
                   ),
                 ],
               ),
@@ -232,7 +232,7 @@ class StudentDataView extends GetView<StudentDataController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -241,7 +241,7 @@ class StudentDataView extends GetView<StudentDataController> {
         onChanged: controller.updateSearchQuery,
         decoration: InputDecoration(
           hintText: 'Cari santri...',
-          prefixIcon: Icon(Icons.search, color: AppColors.textHint),
+          prefixIcon: const Icon(Icons.search, color: AppColors.textHint),
           border: InputBorder.none,
           hintStyle: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.textHint,
@@ -256,12 +256,12 @@ class StudentDataView extends GetView<StudentDataController> {
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
       child: Obx(() {
         final selectedClass = controller.selectedClass;
-        if (selectedClass == null) return SizedBox.shrink();
+        if (selectedClass == null) return const SizedBox.shrink();
 
         return Container(
           padding: EdgeInsets.all(16.w),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               colors: [AppColors.primaryGreen, AppColors.primaryGreenDark],
             ),
             borderRadius: BorderRadius.circular(12.r),
@@ -347,7 +347,7 @@ class StudentDataView extends GetView<StudentDataController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 5,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -415,7 +415,7 @@ class StudentDataView extends GetView<StudentDataController> {
             ),
           ],
         ),
-        trailing: Icon(Icons.chevron_right, color: AppColors.textHint),
+        trailing: const Icon(Icons.chevron_right, color: AppColors.textHint),
         onTap: () => controller.showStudentOptions(student),
       ),
     );
@@ -467,7 +467,7 @@ class StudentDataView extends GetView<StudentDataController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
           SizedBox(height: 16.h),

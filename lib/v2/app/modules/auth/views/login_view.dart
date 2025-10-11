@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'dart:async';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../controllers/auth_controller.dart';
+import '../../../data/widgets/developer_settings_dialog.dart';
 
 class LoginView extends GetView<AuthController> {
   const LoginView({Key? key}) : super(key: key);
@@ -25,8 +28,8 @@ class LoginView extends GetView<AuthController> {
                 // _buildIslamicHeader(),
                 SizedBox(height: 40.h),
 
-                // Login Form
-                _buildLoginForm(),
+                // Login Form with Easter Egg
+                _LoginFormWithEasterEgg(controller: controller),
 
                 SizedBox(height: 24.h),
 
@@ -53,13 +56,13 @@ class LoginView extends GetView<AuthController> {
               BoxShadow(
                 color: AppColors.primaryGreen.withOpacity(0.3),
                 blurRadius: 20,
-                offset: Offset(0, 8),
+                offset: const Offset(0, 8),
               ),
             ],
           ),
           child: Container(
             padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.goldAccent,
               shape: BoxShape.circle,
             ),
@@ -83,7 +86,7 @@ class LoginView extends GetView<AuthController> {
 
         // App Name
         Text(
-          'JTI NCH',
+          'My NCH',
           style: AppTextStyles.heading1.copyWith(
             color: AppColors.primaryGreen,
             fontWeight: FontWeight.bold,
@@ -107,138 +110,6 @@ class LoginView extends GetView<AuthController> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildLoginForm() {
-    return Container(
-      padding: EdgeInsets.all(24.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Form Title
-          Center(
-            child: Column(
-              children: [
-                // Text(
-                //   'أَهْلاً وَسَهْلاً',
-                //   style: AppTextStyles.arabicText.copyWith(fontSize: 18.sp),
-                // ),
-                SizedBox(height: 4.h),
-                Text('Selamat Datang', style: AppTextStyles.heading2),
-              ],
-            ),
-          ),
-
-          SizedBox(height: 24.h),
-
-          // Email Field
-          Text(
-            'Email',
-            style: AppTextStyles.bodyMedium.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          TextFormField(
-            controller: controller.emailController,
-            keyboardType: TextInputType.emailAddress,
-            validator: (value) {
-              if (value?.isEmpty ?? true) {
-                return 'Email tidak boleh kosong';
-              }
-              if (!GetUtils.isEmail(value!)) {
-                return 'Format email tidak valid';
-              }
-              return null;
-            },
-            decoration: InputDecoration(
-              hintText: 'Masukkan email Anda',
-              prefixIcon: Icon(
-                Icons.email_outlined,
-                color: AppColors.primaryGreen,
-              ),
-            ),
-          ),
-
-          SizedBox(height: 16.h),
-
-          // Password Field
-          Text(
-            'Password',
-            style: AppTextStyles.bodyMedium.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          // Fixed: Removed unnecessary Obx here since we're not using any observable
-          TextFormField(
-            controller: controller.passwordController,
-            obscureText: true,
-            validator: (value) {
-              if (value?.isEmpty ?? true) {
-                return 'Password tidak boleh kosong';
-              }
-              if (value!.length < 6) {
-                return 'Password minimal 6 karakter';
-              }
-              return null;
-            },
-            decoration: InputDecoration(
-              hintText: 'Masukkan password Anda',
-              prefixIcon: Icon(
-                Icons.lock_outlined,
-                color: AppColors.primaryGreen,
-              ),
-            ),
-          ),
-
-          SizedBox(height: 24.h),
-
-          // Login Button - Only wrap this in Obx since it uses observable
-          Obx(
-            () => SizedBox(
-              width: double.infinity,
-              height: 50.h,
-              child: ElevatedButton(
-                onPressed: controller.isLoading.value ? null : controller.login,
-                child:
-                    controller.isLoading.value
-                        ? Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 20.w,
-                              height: 20.h,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            ),
-                            SizedBox(width: 12.w),
-                            Text(
-                              'Sedang masuk...',
-                              style: AppTextStyles.buttonText,
-                            ),
-                          ],
-                        )
-                        : Text('Masuk', style: AppTextStyles.buttonText),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -271,5 +142,213 @@ class LoginView extends GetView<AuthController> {
         ),
       ],
     );
+  }
+}
+
+// Stateful widget untuk handle easter egg
+class _LoginFormWithEasterEgg extends StatefulWidget {
+  final AuthController controller;
+
+  const _LoginFormWithEasterEgg({required this.controller});
+
+  @override
+  State<_LoginFormWithEasterEgg> createState() =>
+      _LoginFormWithEasterEggState();
+}
+
+class _LoginFormWithEasterEggState extends State<_LoginFormWithEasterEgg> {
+  // Easter egg variables
+  int _tapCount = 0;
+  Timer? _resetTimer;
+
+  void _handleEasterEgg() {
+    _tapCount++;
+
+    // Reset counter setelah 2 detik tidak ada tap
+    _resetTimer?.cancel();
+    _resetTimer = Timer(const Duration(seconds: 2), () {
+      setState(() {
+        _tapCount = 0;
+      });
+    });
+
+    // Jika tap 5 kali, buka developer settings
+    if (_tapCount >= 5) {
+      setState(() {
+        _tapCount = 0;
+      });
+      _resetTimer?.cancel();
+
+      // Tampilkan feedback
+      Get.snackbar(
+        '🔓 Developer Mode',
+        'Developer settings unlocked!',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: AppColors.primaryGreen,
+        colorText: Colors.white,
+        duration: const Duration(milliseconds: 800),
+        margin: EdgeInsets.all(16.w),
+      );
+
+      // Delay sedikit untuk efek
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Get.dialog(const DeveloperSettingsDialog(), barrierDismissible: true);
+      });
+    } else if (_tapCount >= 3) {
+      // Hint setelah 3x tap
+      Get.snackbar(
+        '',
+        '${5 - _tapCount} more taps...',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.orange.shade400,
+        colorText: Colors.white,
+        duration: const Duration(milliseconds: 500),
+        margin: EdgeInsets.only(top: 10.h, left: 20.w, right: 20.w),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(24.w),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Form Title with Easter Egg
+          Center(
+            child: Column(
+              children: [
+                // Text(
+                //   'أَهْلاً وَسَهْلاً',
+                //   style: AppTextStyles.arabicText.copyWith(fontSize: 18.sp),
+                // ),
+                SizedBox(height: 4.h),
+                GestureDetector(
+                  onTap: _handleEasterEgg,
+                  child: Text('Selamat Datang', style: AppTextStyles.heading2),
+                ),
+              ],
+            ),
+          ),
+
+          SizedBox(height: 24.h),
+
+          // Email Field
+          Text(
+            'Email',
+            style: AppTextStyles.bodyMedium.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          TextFormField(
+            controller: widget.controller.emailController,
+            keyboardType: TextInputType.emailAddress,
+            validator: (value) {
+              if (value?.isEmpty ?? true) {
+                return 'Email tidak boleh kosong';
+              }
+              if (!GetUtils.isEmail(value!)) {
+                return 'Format email tidak valid';
+              }
+              return null;
+            },
+            decoration: const InputDecoration(
+              hintText: 'Masukkan email Anda',
+              prefixIcon: Icon(
+                Icons.email_outlined,
+                color: AppColors.primaryGreen,
+              ),
+            ),
+          ),
+
+          SizedBox(height: 16.h),
+
+          // Password Field
+          Text(
+            'Password',
+            style: AppTextStyles.bodyMedium.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 8.h),
+          TextFormField(
+            controller: widget.controller.passwordController,
+            obscureText: true,
+            validator: (value) {
+              if (value?.isEmpty ?? true) {
+                return 'Password tidak boleh kosong';
+              }
+              if (value!.length < 6) {
+                return 'Password minimal 6 karakter';
+              }
+              return null;
+            },
+            decoration: const InputDecoration(
+              hintText: 'Masukkan password Anda',
+              prefixIcon: Icon(
+                Icons.lock_outlined,
+                color: AppColors.primaryGreen,
+              ),
+            ),
+          ),
+
+          SizedBox(height: 24.h),
+
+          // Login Button
+          Obx(
+            () => SizedBox(
+              width: double.infinity,
+              height: 50.h,
+              child: ElevatedButton(
+                onPressed:
+                    widget.controller.isLoading.value
+                        ? null
+                        : widget.controller.login,
+                child:
+                    widget.controller.isLoading.value
+                        ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 20.w,
+                              height: 20.h,
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                            SizedBox(width: 12.w),
+                            Text(
+                              'Sedang masuk...',
+                              style: AppTextStyles.buttonText,
+                            ),
+                          ],
+                        )
+                        : Text('Masuk', style: AppTextStyles.buttonText),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _resetTimer?.cancel();
+    super.dispose();
   }
 }

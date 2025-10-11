@@ -160,7 +160,7 @@ class AttendanceRecordModel {
   final String studentId;
   final AttendanceStatus status;
   final String? notes;
-  final String? attendanceId; // Already exists
+  final String? attendanceId;
 
   const AttendanceRecordModel({
     required this.studentId,
@@ -174,11 +174,12 @@ class AttendanceRecordModel {
       'student_id': studentId,
       'status': status.value,
       'notes': notes,
-      'attendance_id': attendanceId, // Include in JSON
+      'attendance_id': attendanceId,
     };
   }
 }
 
+// ✅ FIXED: Robust parsing untuk berbagai struktur response API
 class StudentHistoryModel {
   final String studentId;
   final String name;
@@ -197,21 +198,53 @@ class StudentHistoryModel {
   });
 
   factory StudentHistoryModel.fromJson(Map<String, dynamic> json) {
+    // ✅ Handle multiple API response structures
+
+    // Try structure 1: { "student": {...}, "summary": {...}, "history": [...] }
+    if (json['student'] != null && json['student'] is Map) {
+      final studentData = json['student'] as Map<String, dynamic>;
+      return StudentHistoryModel(
+        studentId: studentData['student_id'] ?? studentData['id'] ?? '',
+        name: studentData['name'] ?? '',
+        nisn: studentData['nisn'] ?? '',
+        className: studentData['class'] ?? studentData['class_name'] ?? '',
+        summary: AttendanceSummaryModel.fromJson(json['summary'] ?? {}),
+        history: _parseHistory(json['history']),
+      );
+    }
+
+    // Try structure 2: Flat structure
     return StudentHistoryModel(
-      studentId: json['student']['student_id'] ?? '',
-      name: json['student']['name'] ?? '',
-      nisn: json['student']['nisn'] ?? '',
-      className: json['student']['class'] ?? '',
+      studentId: json['student_id'] ?? json['id'] ?? '',
+      name: json['name'] ?? json['student_name'] ?? '',
+      nisn: json['nisn'] ?? '',
+      className: json['class_name'] ?? json['class'] ?? '',
       summary: AttendanceSummaryModel.fromJson(json['summary'] ?? {}),
-      history:
-          (json['history'] as List?)
-              ?.map((e) => AttendanceHistoryRecordModel.fromJson(e))
-              .toList() ??
-          [],
+      history: _parseHistory(json['history']),
     );
+  }
+
+  static List<AttendanceHistoryRecordModel> _parseHistory(dynamic historyData) {
+    if (historyData == null) return [];
+    if (historyData is! List) return [];
+
+    return historyData
+        .map((e) {
+          try {
+            return AttendanceHistoryRecordModel.fromJson(
+              e as Map<String, dynamic>,
+            );
+          } catch (ex) {
+            print('⚠️ Error parsing history record: $ex');
+            return null;
+          }
+        })
+        .whereType<AttendanceHistoryRecordModel>()
+        .toList();
   }
 }
 
+// ✅ FIXED: Added validation and default values
 class AttendanceSummaryModel {
   final int totalSessions;
   final int hadir;
@@ -228,21 +261,42 @@ class AttendanceSummaryModel {
   });
 
   factory AttendanceSummaryModel.fromJson(Map<String, dynamic> json) {
+    // ✅ Parse dengan type checking yang robust
     return AttendanceSummaryModel(
-      totalSessions: json['total_sessions'] ?? 0,
-      hadir: json['hadir'] ?? 0,
-      sakit: json['sakit'] ?? 0,
-      izin: json['izin'] ?? 0,
-      alpha: json['alpha'] ?? 0,
+      totalSessions: _parseInt(json['total_sessions']),
+      hadir: _parseInt(json['hadir']),
+      sakit: _parseInt(json['sakit']),
+      izin: _parseInt(json['izin']),
+      alpha: _parseInt(json['alpha']),
     );
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) {
+      try {
+        return int.parse(value);
+      } catch (e) {
+        return 0;
+      }
+    }
+    return 0;
   }
 
   double get attendancePercentage {
     if (totalSessions == 0) return 0.0;
     return (hadir / totalSessions) * 100;
   }
+
+  @override
+  String toString() {
+    return 'AttendanceSummary(total: $totalSessions, hadir: $hadir, sakit: $sakit, izin: $izin, alpha: $alpha, percentage: ${attendancePercentage.toStringAsFixed(1)}%)';
+  }
 }
 
+// ✅ FIXED: Better error handling
 class AttendanceHistoryRecordModel {
   final DateTime date;
   final AttendanceStatus status;
@@ -256,10 +310,29 @@ class AttendanceHistoryRecordModel {
 
   factory AttendanceHistoryRecordModel.fromJson(Map<String, dynamic> json) {
     return AttendanceHistoryRecordModel(
-      date: DateTime.parse(json['date']),
-      status: AttendanceStatus.fromString(json['status']),
+      date: _parseDate(json['date'] ?? json['attendance_date']),
+      status: AttendanceStatus.fromString(
+        json['status'] ?? json['attendance_status'],
+      ),
       notes: json['notes'],
     );
+  }
+
+  static DateTime _parseDate(dynamic value) {
+    if (value == null) return DateTime.now();
+
+    try {
+      if (value is String) {
+        return DateTime.parse(value);
+      }
+      if (value is DateTime) {
+        return value;
+      }
+    } catch (e) {
+      print('⚠️ Error parsing date: $value - $e');
+    }
+
+    return DateTime.now();
   }
 }
 
@@ -311,7 +384,21 @@ class StudentSummaryModel {
       studentId: json['student_id'] ?? '',
       name: json['name'] ?? '',
       nisn: json['nisn'] ?? '',
-      attendancePercentage: (json['attendance_percentage'] ?? 0.0).toDouble(),
+      attendancePercentage: _parseDouble(json['attendance_percentage']),
     );
+  }
+
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      try {
+        return double.parse(value);
+      } catch (e) {
+        return 0.0;
+      }
+    }
+    return 0.0;
   }
 }

@@ -4,11 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/services/api_service.dart';
-// import '../../../../data/services/export_servic.dart';
 
 class StudentHistoryController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
-  // final ExportService _exportService = Get.find<ExportService>(); // ADD THIS
 
   // Observables
   final isLoading = false.obs;
@@ -25,16 +23,28 @@ class StudentHistoryController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Set default date range (current month)
+
+    developer.log('📋 Arguments received:');
+    developer.log('  - Student: ${student?.name} (${student?.studentId})');
+    developer.log('  - Subject ID: $subjectId');
+    developer.log('  - Subject Name: $subjectName');
+    developer.log('  - Class Name: $className');
+
+    // ✅ FIXED: Set date range ke SEMUA DATA (6 bulan ke belakang sampai sekarang)
     final now = DateTime.now();
     selectedDateRange.value = DateTimeRange(
-      start: DateTime(now.year, now.month, 1),
-      end: DateTime(now.year, now.month + 1, 0),
+      start: DateTime(now.year, now.month - 6, 1), // 6 bulan lalu
+      end: now, // Sampai hari ini
+    );
+
+    developer.log(
+      '📅 Default date range: ${selectedDateRange.value?.start} to ${selectedDateRange.value?.end}',
     );
 
     if (student != null && subjectId != null) {
       loadStudentHistory();
     } else {
+      developer.log('❌ Missing required data: student or subjectId');
       _showErrorSnackbar('Error', 'Data siswa tidak ditemukan');
       Get.back();
     }
@@ -44,9 +54,13 @@ class StudentHistoryController extends GetxController {
   Future<void> loadStudentHistory() async {
     try {
       isLoading.value = true;
-      developer.log('Loading student history for: ${student?.studentId}');
 
       final dateRange = selectedDateRange.value;
+      developer.log('🔄 Loading student history:');
+      developer.log('  - Student ID: ${student?.studentId}');
+      developer.log('  - Subject ID: $subjectId');
+      developer.log('  - Date Range: ${dateRange?.start} to ${dateRange?.end}');
+
       final history = await _apiService.getStudentAttendanceHistory(
         studentId: student!.studentId,
         subjectId: subjectId!,
@@ -54,21 +68,105 @@ class StudentHistoryController extends GetxController {
         endDate: dateRange?.end,
       );
 
+      developer.log('✅ History loaded successfully:');
+      developer.log('  - Student: ${history.name}');
+      developer.log('  - NISN: ${history.nisn}');
+      developer.log('  - Class: ${history.className}');
+      developer.log('  - Total Sessions: ${history.summary.totalSessions}');
+      developer.log('  - Hadir: ${history.summary.hadir}');
+      developer.log('  - Sakit: ${history.summary.sakit}');
+      developer.log('  - Izin: ${history.summary.izin}');
+      developer.log('  - Alpha: ${history.summary.alpha}');
+      developer.log(
+        '  - Attendance %: ${history.summary.attendancePercentage.toStringAsFixed(1)}%',
+      );
+      developer.log('  - History Records: ${history.history.length}');
+
       studentHistory.value = history;
-      developer.log('Loaded history with ${history.history.length} records');
-    } catch (e) {
-      developer.log('Error loading student history: $e');
+
+      if (history.history.isEmpty && history.summary.totalSessions == 0) {
+        developer.log('⚠️ WARNING: No history records found!');
+        developer.log('  Possible reasons:');
+        developer.log('  1. No attendance has been recorded yet');
+        developer.log('  2. Backend API filter is too strict');
+        developer.log('  3. Data exists but date range is incorrect');
+
+        // ✅ ADDED: Try loading without date filter
+        developer.log('🔄 Retrying without date range filter...');
+        await _loadHistoryWithoutDateFilter();
+      }
+    } catch (e, stackTrace) {
+      developer.log('❌ Error loading student history: $e');
+      developer.log('Stack trace: $stackTrace');
       _showErrorSnackbar('Error', 'Gagal memuat riwayat kehadiran: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
+  /// ✅ ADDED: Load history without date filter as fallback
+  Future<void> _loadHistoryWithoutDateFilter() async {
+    try {
+      developer.log('🔄 Loading ALL history (no date filter)...');
+
+      final history = await _apiService.getStudentAttendanceHistory(
+        studentId: student!.studentId,
+        subjectId: subjectId!,
+        startDate: null, // No date filter
+        endDate: null, // No date filter
+      );
+
+      if (history.summary.totalSessions > 0) {
+        developer.log(
+          '✅ Found ${history.summary.totalSessions} sessions without date filter!',
+        );
+        studentHistory.value = history;
+
+        // Update date range based on actual data
+        if (history.history.isNotEmpty) {
+          final dates = history.history.map((e) => e.date).toList()..sort();
+          selectedDateRange.value = DateTimeRange(
+            start: dates.first,
+            end: dates.last,
+          );
+          developer.log(
+            '📅 Updated date range based on data: ${dates.first} to ${dates.last}',
+          );
+        }
+      } else {
+        developer.log('⚠️ Still no data found even without date filter');
+        developer.log(
+          '   This means no attendance has been recorded for this student+subject combination',
+        );
+      }
+    } catch (e) {
+      developer.log('❌ Error loading history without date filter: $e');
+    }
+  }
+
   /// Change date range
   Future<void> changeDateRange(DateTimeRange newRange) async {
+    developer.log(
+      '📅 Changing date range to: ${newRange.start} - ${newRange.end}',
+    );
     selectedDateRange.value = newRange;
     await loadStudentHistory();
   }
+
+  /// Show date range picker
+  // Future<void> showDateRangePicker() async {
+  //   final now = DateTime.now();
+  //   final DateTimeRange? picked = await showDateRangePicker(
+  //     context: Get.context!,
+  //     firstDate: DateTime(now.year - 1),
+  //     lastDate: now,
+  //     initialDateRange: selectedDateRange.value,
+  //   );
+
+  //   if (picked != null && picked != selectedDateRange.value) {
+  //     await changeDateRange(picked);
+  //   }
+  // }
 
   /// Get attendance status color
   Color getStatusColor(AttendanceStatus status) {
@@ -97,33 +195,6 @@ class StudentHistoryController extends GetxController {
         return Icons.cancel;
     }
   }
-
-  /// Show date range picker
-  // Future<void> showDateRangePicker() async {
-  //   final DateTimeRange? picked = await showDateRangePicker(
-  //     context: Get.context!,
-  //     firstDate: DateTime.now().subtract(const Duration(days: 365)),
-  //     lastDate: DateTime.now(),
-  //     initialDateRange: selectedDateRange.value,
-  //     builder: (BuildContext context, Widget? child) {
-  //       return Theme(
-  //         data: Theme.of(context).copyWith(
-  //           colorScheme: const ColorScheme.light(
-  //             primary: Colors.green,
-  //             onPrimary: Colors.white,
-  //             surface: Colors.white,
-  //             onSurface: Colors.black,
-  //           ),
-  //         ),
-  //         child: child!,
-  //       );
-  //     },
-  //   );
-
-  //   if (picked != null && picked != selectedDateRange.value) {
-  //     await changeDateRange(picked);
-  //   }
-  // }
 
   void _showErrorSnackbar(String title, String message) {
     Get.snackbar(
@@ -163,11 +234,7 @@ class StudentHistoryController extends GetxController {
 
       _showSnackbar('Info', 'Sedang memproses ekspor...');
 
-      // await _exportService.exportAttendanceHistoryToPDF(
-      //   studentHistory: history,
-      //   subjectName: subjectName ?? 'Mata Pelajaran',
-      //   className: className ?? 'Kelas',
-      // );
+      // TODO: Implement export functionality
 
       _showSnackbar(
         'تبارك الله',

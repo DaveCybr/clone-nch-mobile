@@ -31,7 +31,7 @@ class ScheduleCard extends StatelessWidget {
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: Offset(0, 4),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -106,7 +106,7 @@ class ScheduleCard extends StatelessWidget {
                   TextButton.icon(
                     onPressed: onTap,
                     icon: Icon(Icons.how_to_reg, size: 16.sp),
-                    label: Text('Absensi'),
+                    label: const Text('Absensi'),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.primaryGreen,
                       padding: EdgeInsets.symmetric(

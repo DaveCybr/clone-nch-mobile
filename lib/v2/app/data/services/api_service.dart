@@ -7,12 +7,17 @@ import '../models/attendance_model.dart';
 import '../models/dashboard_model.dart';
 import '../models/user_model.dart';
 import 'storage_service.dart';
+import 'dart:convert'; // for jsonEncode
 
 class ApiService extends GetxService {
   late Dio _dio;
   final StorageService _storageService = Get.find<StorageService>();
+<<<<<<< HEAD
+
+=======
   // Base URL - sesuaikan dengan server Laravel Anda
-  static const String baseUrl = 'http://192.168.1.40:8000/api';
+>>>>>>> cfd321dd31e80d0aaa50ca0dbf7d4c5292c03afd
+  static String baseUrl = 'https://be.nurulchotib.com/api';
 
   @override
   void onInit() {
@@ -24,11 +29,63 @@ class ApiService extends GetxService {
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: Duration(seconds: 30),
-        receiveTimeout: Duration(seconds: 30),
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+        },
+        validateStatus: (status) {
+          return status! < 500; // Accept semua status code < 500
+        },
+      ),
+      // ✅ Tambahkan ini untuk debugging
+    );
+
+    _dio.interceptors.add(
+      PrettyDioLogger(
+        requestHeader: true,
+        requestBody: true,
+        responseBody: true,
+        responseHeader: true,
+        error: true,
+        compact: false, // ✅ Ubah ke false untuk log lebih detail
+        maxWidth: 90,
+      ),
+    );
+
+    // Auth interceptor
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          final token = _storageService.getToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+
+          // ✅ Log detail request
+          developer.log('🌐 REQUEST: ${options.method} ${options.uri}');
+          developer.log('📤 Headers: ${options.headers}');
+          developer.log('📤 Body: ${options.data}');
+
+          handler.next(options);
+        },
+        onResponse: (response, handler) {
+          // ✅ Log detail response
+          developer.log('✅ RESPONSE: ${response.statusCode}');
+          developer.log('📥 Data: ${response.data}');
+          handler.next(response);
+        },
+        onError: (error, handler) {
+          // ✅ Log detail error
+          developer.log('❌ ERROR: ${error.type}');
+          developer.log('❌ Message: ${error.message}');
+          developer.log('❌ Response: ${error.response?.data}');
+
+          if (error.response?.statusCode == 401) {
+            _handleUnauthorized();
+          }
+          handler.next(error);
         },
       ),
     );
@@ -72,34 +129,44 @@ class ApiService extends GetxService {
     Get.offAllNamed('/login');
   }
 
-  // Auth endpoints sesuai dengan struktur database JTI NCH
+  void updateBaseUrl(String newBaseUrl) {
+    baseUrl = newBaseUrl;
+    _dio.options.baseUrl = newBaseUrl; // Update dio juga
+    print('Base URL updated to: $newBaseUrl');
+  }
   Future<AuthResponse> login({
     required String email,
     required String password,
   }) async {
     try {
+      developer.log('=== LOGIN REQUEST START ===');
+      developer.log('Email: $email');
+      developer.log('Base URL: $baseUrl');
+      developer.log('Full URL: $baseUrl/auth/login');
+
       final response = await _dio.post(
         '/auth/login',
         data: {'email': email, 'password': password},
       );
 
-      // Expected response structure:
-      // {
-      //   "success": true,
-      //   "message": "Login successful",
-      //   "token": "your-jwt-token",
-      //   "user": {
-      //     "id": "uuid",
-      //     "name": "User Name",
-      //     "email": "user@email.com",
-      //     "roles": [{"name": "teacher"}],
-      //     "employee": {...} // if teacher
-      //   }
-      // }
+      developer.log('=== LOGIN RESPONSE ===');
+      developer.log('Status Code: ${response.statusCode}');
+      developer.log('Response Data: ${response.data}');
 
       return AuthResponse.fromJson(response.data);
     } on DioException catch (e) {
+      developer.log('=== DIO EXCEPTION ===');
+      developer.log('Type: ${e.type}');
+      developer.log('Message: ${e.message}');
+      developer.log('Response: ${e.response?.data}');
+      developer.log('Status Code: ${e.response?.statusCode}');
+
       throw _handleDioError(e);
+    } catch (e, stackTrace) {
+      developer.log('=== GENERAL EXCEPTION ===');
+      developer.log('Error: $e');
+      developer.log('StackTrace: $stackTrace');
+      throw 'Terjadi kesalahan tidak terduga: $e';
     }
   }
 
@@ -109,22 +176,6 @@ class ApiService extends GetxService {
   Future<Map<String, dynamic>> getTeacherDashboard() async {
     try {
       final response = await _dio.get('/teacher/dashboard');
-
-      // Expected response structure:
-      // {
-      //   "success": true,
-      //   "stats": {
-      //     "total_students": 250,
-      //     "total_classes": 12,
-      //     "today_tasks": 8,
-      //     "total_announcements": 3
-      //   },
-      //   "today_schedules": [...],
-      //   "prayer_times": [...],
-      //   "announcements": [...],
-      //   "teacher": {...}
-      // }
-
       return response.data;
     } on DioException catch (e) {
       throw _handleDioError(e);
@@ -146,7 +197,7 @@ class ApiService extends GetxService {
     try {
       final response = await _dio.get('/prayer-times');
       return response.data['prayer_times'] as List<dynamic>;
-    } on DioException catch (e) {
+    } on DioException {
       // Return default prayer times if API fails
       return PrayerTimeModel.getDefaultTimes()
           .map(
@@ -174,12 +225,6 @@ class ApiService extends GetxService {
   Future<UserModel> getCurrentUser() async {
     try {
       final response = await _dio.get('/me');
-
-      // Expected response:
-      // {
-      //   "success": true,
-      //   "user": {...}
-      // }
       developer.log(response.toString());
 
       return UserModel.fromJson(response.data['user']);
@@ -187,16 +232,6 @@ class ApiService extends GetxService {
       throw _handleDioError(e);
     }
   }
-
-  // Dashboard data untuk teacher
-  // Future<Map<String, dynamic>> getTeacherDashboard() async {
-  //   try {
-  //     final response = await _dio.get('/teacher/dashboard');
-  //     return response.data;
-  //   } on DioException catch (e) {
-  //     throw _handleDioError(e);
-  //   }
-  // }
 
   // Get schedules for teacher
   Future<List<dynamic>> getTeacherSchedules({String? date}) async {
@@ -229,14 +264,13 @@ class ApiService extends GetxService {
   /// Get students by schedule for attendance
   Future<ScheduleDetailModel> getScheduleAttendance({
     required String scheduleId,
-    DateTime? date,
+    String? date,
   }) async {
+    developer.log(date!);
     try {
       final response = await _dio.get(
         '/teacher/schedule/$scheduleId/attendance',
-        queryParameters: {
-          if (date != null) 'date': date.toIso8601String().split('T')[0],
-        },
+        queryParameters: {'date': date},
       );
 
       return ScheduleDetailModel.fromJson(response.data['data']);
@@ -274,20 +308,83 @@ class ApiService extends GetxService {
     DateTime? endDate,
   }) async {
     try {
+      final queryParams = {
+        'subject_id': subjectId,
+        if (startDate != null)
+          'start_date': startDate.toIso8601String().split('T')[0],
+        if (endDate != null)
+          'end_date': endDate.toIso8601String().split('T')[0],
+      };
+
+      developer.log('🌐 API Request:');
+      developer.log('  URL: /teacher/student/$studentId/attendance-history');
+      developer.log('  Params: $queryParams');
+
       final response = await _dio.get(
         '/teacher/student/$studentId/attendance-history',
-        queryParameters: {
-          'subject_id': subjectId,
-          if (startDate != null)
-            'start_date': startDate.toIso8601String().split('T')[0],
-          if (endDate != null)
-            'end_date': endDate.toIso8601String().split('T')[0],
-        },
+        queryParameters: queryParams,
       );
 
-      return StudentHistoryModel.fromJson(response.data['data']);
+      // ✅ DEBUG: Print full response
+      developer.log('📥 API Response Status: ${response.statusCode}');
+      developer.log('📥 API Response Data:');
+      developer.log(jsonEncode(response.data)); // Pretty print JSON
+
+      // ✅ Check response structure
+      final responseData = response.data;
+
+      // Handle different response structures
+      Map<String, dynamic> data;
+
+      if (responseData is Map<String, dynamic>) {
+        // Structure 1: { "data": {...} }
+        if (responseData.containsKey('data')) {
+          data = responseData['data'] as Map<String, dynamic>;
+          developer.log('✅ Found data in response.data');
+        }
+        // Structure 2: Direct data
+        else {
+          data = responseData;
+          developer.log('✅ Using response as direct data');
+        }
+      } else {
+        throw Exception(
+          'Invalid response format: expected Map, got ${responseData.runtimeType}',
+        );
+      }
+
+      // ✅ DEBUG: Print data structure before parsing
+      developer.log('📊 Parsing data structure:');
+      developer.log('  - Has student key: ${data.containsKey('student')}');
+      developer.log('  - Has summary key: ${data.containsKey('summary')}');
+      developer.log('  - Has history key: ${data.containsKey('history')}');
+
+      if (data.containsKey('summary')) {
+        developer.log('  - Summary data: ${data['summary']}');
+      }
+
+      if (data.containsKey('history')) {
+        final historyList = data['history'];
+        developer.log('  - History is List: ${historyList is List}');
+        developer.log(
+          '  - History length: ${historyList is List ? historyList.length : 0}',
+        );
+      }
+
+      // Parse model
+      final history = StudentHistoryModel.fromJson(data);
+
+      developer.log('✅ Model parsed successfully');
+      return history;
     } on DioException catch (e) {
+      developer.log('❌ DioException: ${e.message}');
+      developer.log('   Response: ${e.response?.data}');
+      developer.log('   Status Code: ${e.response?.statusCode}');
       throw _handleDioError(e);
+    } catch (e, stackTrace) {
+      developer.log('❌ Unexpected error in getStudentAttendanceHistory: $e');
+      developer.log('   Stack trace: $stackTrace');
+      rethrow;
     }
   }
 
@@ -373,23 +470,56 @@ class ApiService extends GetxService {
   }
 
   /// Get announcements/berita - IMPLEMENTASI DIPERBAIKI
+  /// Get announcements/berita - FIXED VERSION
+  /// Get announcements/berita - FIXED VERSION
   Future<List<dynamic>> getAnnouncements({int page = 1, int limit = 10}) async {
     try {
       final response = await _dio.get(
-        '/mobile/berita',
+        '/announcements',
         queryParameters: {'page': page, 'limit': limit},
       );
 
-      // Handle different response structures
-      if (response.data['data'] != null) {
-        return response.data['data'] as List<dynamic>;
-      } else if (response.data['berita'] != null) {
-        return response.data['berita'] as List<dynamic>;
+      developer.log('Announcements Response: ${response.data}');
+
+      // Response adalah Map dengan struktur laravel pagination
+      final responseData = response.data as Map<String, dynamic>;
+
+      // Laravel pagination structure: { "data": { "data": [...], "current_page": 1, ... } }
+      if (responseData['data'] != null) {
+        final paginationData = responseData['data'];
+
+        // Cek apakah 'data' adalah Map (pagination) atau List langsung
+        if (paginationData is Map<String, dynamic>) {
+          // Laravel pagination: data.data berisi array
+          if (paginationData['data'] != null &&
+              paginationData['data'] is List) {
+            return paginationData['data'] as List<dynamic>;
+          }
+        } else if (paginationData is List) {
+          // Data langsung berupa array
+          return paginationData;
+        }
       }
 
-      return response.data as List<dynamic>;
+      // Struktur alternatif
+      if (responseData['berita'] != null && responseData['berita'] is List) {
+        return responseData['berita'] as List<dynamic>;
+      }
+
+      if (responseData['announcements'] != null &&
+          responseData['announcements'] is List) {
+        return responseData['announcements'] as List<dynamic>;
+      }
+
+      // Jika tidak ada yang cocok, kembalikan empty list
+      developer.log('Unknown response structure, returning empty list');
+      return [];
     } on DioException catch (e) {
+      developer.log('DioException in getAnnouncements: ${e.message}');
       throw _handleDioError(e);
+    } catch (e) {
+      developer.log('Unexpected error in getAnnouncements: $e');
+      rethrow;
     }
   }
 
@@ -453,6 +583,85 @@ class ApiService extends GetxService {
         },
       );
       return response.data['data'] as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> getStudentDashboard() async {
+    try {
+      final response = await _dio.get('/student/dashboard');
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get student schedules
+  Future<List<dynamic>> getStudentSchedules({String? date}) async {
+    try {
+      final response = await _dio.get(
+        '/student/schedules',
+        queryParameters: {if (date != null) 'date': date},
+      );
+      return response.data['data'] as List<dynamic>;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get student attendance
+  Future<Map<String, dynamic>> getStudentAttendance({
+    String? date,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/student/attendance',
+        queryParameters: {
+          if (date != null) 'date': date,
+          'page': page,
+          'limit': limit,
+        },
+      );
+      return response.data;
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get student berita/announcements
+  Future<List<dynamic>> getStudentBerita({int page = 1}) async {
+    try {
+      final response = await _dio.get(
+        '/student/berita',
+        queryParameters: {'page': page},
+      );
+
+      final responseData = response.data as Map<String, dynamic>;
+
+      if (responseData['data'] != null) {
+        final paginationData = responseData['data'];
+        if (paginationData is Map<String, dynamic> &&
+            paginationData['data'] != null) {
+          return paginationData['data'] as List<dynamic>;
+        } else if (paginationData is List) {
+          return paginationData;
+        }
+      }
+
+      return [];
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  /// Get berita detail by slug
+  Future<Map<String, dynamic>> getBeritaDetail(String slug) async {
+    try {
+      final response = await _dio.get('/berita/$slug');
+      return response.data;
     } on DioException catch (e) {
       throw _handleDioError(e);
     }

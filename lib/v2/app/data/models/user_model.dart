@@ -181,8 +181,15 @@ class UserModel {
     return false;
   }
 
-  bool get isParent =>
-      currentRole?.toLowerCase() == 'parent' || student != null;
+  bool get isParent {
+    // Check multiple sources
+    if (currentRole?.toLowerCase() == 'parent') return true;
+    if (roles.any((role) => role.name.toLowerCase() == 'parent')) return true;
+    if (student != null)
+      return true; // User yang punya data student adalah parent
+    return false;
+  }
+
   bool get isAdminUser => isAdmin ?? (currentRole?.toLowerCase() == 'admin');
 
   String get displayName => name;

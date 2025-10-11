@@ -33,11 +33,11 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text('Pengumuman'),
+      title: const Text('Pengumuman'),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: Icon(Icons.refresh),
+          icon: const Icon(Icons.refresh),
           onPressed: controller.refreshAnnouncements,
         ),
       ],
@@ -64,7 +64,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                 onChanged: controller.searchAnnouncements,
                 decoration: InputDecoration(
                   hintText: 'Cari pengumuman...',
-                  prefixIcon: Icon(Icons.search, color: AppColors.textHint),
+                  prefixIcon: const Icon(Icons.search, color: AppColors.textHint),
                   border: InputBorder.none,
                   hintStyle: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textHint,
@@ -84,7 +84,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
             ),
             child: IconButton(
               onPressed: _showFilterDialog,
-              icon: Icon(Icons.filter_list, color: Colors.white),
+              icon: const Icon(Icons.filter_list, color: Colors.white),
             ),
           ),
         ],
@@ -96,15 +96,17 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
     return Container(
       height: 50.h,
       margin: EdgeInsets.symmetric(vertical: 8.h),
-      child: Obx(
-        () => ListView.builder(
+      child: Obx(() {
+        // ✅ tetap pakai Obx kalau selectedCategory reactive
+        final selectedCat = controller.selectedCategory.value;
+        return ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: EdgeInsets.symmetric(horizontal: 16.w),
           itemCount: controller.categories.length,
           itemBuilder: (context, index) {
             final category = controller.categories.keys.elementAt(index);
             final categoryName = controller.categories[category]!;
-            final isSelected = controller.selectedCategory.value == category;
+            final isSelected = selectedCat == category;
 
             return GestureDetector(
               onTap: () => controller.filterByCategory(category),
@@ -120,16 +122,6 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                             ? AppColors.primaryGreen
                             : AppColors.dividerColor,
                   ),
-                  boxShadow:
-                      isSelected
-                          ? [
-                            BoxShadow(
-                              color: AppColors.primaryGreen.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: Offset(0, 2),
-                            ),
-                          ]
-                          : null,
                 ),
                 child: Center(
                   child: Text(
@@ -144,49 +136,9 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
               ),
             );
           },
-        ),
-      ),
+        );
+      }),
     );
-  }
-
-  Widget _buildAnnouncementsList() {
-    return Obx(() {
-      if (controller.isLoading.value && controller.announcements.isEmpty) {
-        return _buildLoadingState();
-      }
-
-      final announcements = controller.filteredAnnouncements;
-
-      if (announcements.isEmpty && !controller.isLoading.value) {
-        return _buildEmptyState();
-      }
-
-      return NotificationListener<ScrollNotification>(
-        onNotification: (ScrollNotification scrollInfo) {
-          if (!controller.isLoadingMore.value &&
-              scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
-            controller.loadMore();
-          }
-          return false;
-        },
-        child: RefreshIndicator(
-          onRefresh: controller.refreshAnnouncements,
-          color: AppColors.primaryGreen,
-          child: ListView.builder(
-            padding: EdgeInsets.all(16.w),
-            itemCount:
-                announcements.length + (controller.isLoadingMore.value ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index == announcements.length) {
-                return _buildLoadingMoreIndicator();
-              }
-
-              return _buildAnnouncementCard(announcements[index]);
-            },
-          ),
-        ),
-      );
-    });
   }
 
   Widget _buildAnnouncementCard(AnnouncementModel announcement) {
@@ -203,7 +155,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -250,7 +202,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                       ),
                     ),
 
-                  Expanded(child: SizedBox.shrink()),
+                  const Expanded(child: SizedBox.shrink()),
 
                   // Category Badge
                   Container(
@@ -351,7 +303,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
                     onPressed:
                         () => controller.viewAnnouncementDetail(announcement),
                     icon: Icon(Icons.read_more, size: 16.sp),
-                    label: Text('Baca Selengkapnya'),
+                    label: const Text('Baca Selengkapnya'),
                     style: TextButton.styleFrom(
                       foregroundColor: AppColors.primaryGreen,
                       padding: EdgeInsets.symmetric(
@@ -374,7 +326,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
           SizedBox(height: 16.h),
@@ -399,7 +351,7 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
             SizedBox(
               width: 20.w,
               height: 20.h,
-              child: CircularProgressIndicator(
+              child: const CircularProgressIndicator(
                 strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation<Color>(
                   AppColors.primaryGreen,
@@ -418,8 +370,61 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
       ),
     );
   }
+  // BAGIAN YANG PERLU DIPERBAIKI
 
-  Widget _buildEmptyState() {
+  // 1. Fix _buildAnnouncementsList - pastikan Obx return widget dengan observable
+  Widget _buildAnnouncementsList() {
+    return Obx(() {
+      // ✅ Force akses observable di awal
+      final isLoading = controller.isLoading.value;
+      final isLoadingMore = controller.isLoadingMore.value;
+      final announcementsLength =
+          controller.announcements.length; // ✅ Trigger observer
+      final selectedCat =
+          controller.selectedCategory.value; // ✅ Trigger observer
+      final query = controller.searchQuery.value; // ✅ Trigger observer
+
+      final announcements = controller.filteredAnnouncements;
+
+      if (isLoading && announcementsLength == 0) {
+        return _buildLoadingState();
+      }
+
+      if (announcements.isEmpty && !isLoading) {
+        return _buildEmptyState(
+          query.isNotEmpty
+              ? 'Tidak ada pengumuman yang sesuai dengan pencarian'
+              : 'Belum ada pengumuman tersedia',
+        );
+      }
+
+      return NotificationListener<ScrollNotification>(
+        onNotification: (ScrollNotification scrollInfo) {
+          if (!isLoadingMore &&
+              scrollInfo.metrics.pixels == scrollInfo.metrics.maxScrollExtent) {
+            controller.loadMore();
+          }
+          return false;
+        },
+        child: RefreshIndicator(
+          onRefresh: controller.refreshAnnouncements,
+          color: AppColors.primaryGreen,
+          child: ListView.builder(
+            padding: EdgeInsets.all(16.w),
+            itemCount: announcements.length + (isLoadingMore ? 1 : 0),
+            itemBuilder: (context, index) {
+              if (index == announcements.length) {
+                return _buildLoadingMoreIndicator();
+              }
+              return _buildAnnouncementCard(announcements[index]);
+            },
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildEmptyState(String message) {
     return Center(
       child: Padding(
         padding: EdgeInsets.all(32.w),
@@ -439,23 +444,18 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
               ),
             ),
             SizedBox(height: 8.h),
-            // Text(
-            //   Obx(
-            //     () =>
-            //         controller.searchQuery.value.isNotEmpty
-            //             ? 'Tidak ada pengumuman yang sesuai dengan pencarian'
-            //             : 'Belum ada pengumuman tersedia',
-            //   ),
-            //   style: AppTextStyles.bodyMedium.copyWith(
-            //     color: AppColors.textSecondary,
-            //   ),
-            //   textAlign: TextAlign.center,
-            // ),
+            Text(
+              message,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
             SizedBox(height: 16.h),
             ElevatedButton.icon(
               onPressed: controller.refreshAnnouncements,
-              icon: Icon(Icons.refresh),
-              label: Text('Muat Ulang'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Muat Ulang'),
             ),
           ],
         ),
@@ -463,24 +463,27 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
     );
   }
 
+  // 3. Fix _buildRefreshFAB - pastikan akses observable dengan .value
   Widget _buildRefreshFAB() {
-    return Obx(
-      () => FloatingActionButton(
+    return Obx(() {
+      final isLoading = controller.isLoading.value; // ✅ Akses observable
+
+      return FloatingActionButton(
         onPressed: controller.refreshAnnouncements,
         backgroundColor: AppColors.primaryGreen,
         child:
-            controller.isLoading.value
+            isLoading
                 ? SizedBox(
                   width: 20.w,
                   height: 20.h,
-                  child: CircularProgressIndicator(
+                  child: const CircularProgressIndicator(
                     color: Colors.white,
                     strokeWidth: 2,
                   ),
                 )
-                : Icon(Icons.refresh, color: Colors.white),
-      ),
-    );
+                : const Icon(Icons.refresh, color: Colors.white),
+      );
+    });
   }
 
   Color _getCategoryColor(String category) {
@@ -546,14 +549,14 @@ class AnnouncementsView extends GetView<AnnouncementsController> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => Get.back(), child: Text('Batal')),
+                  TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
                   SizedBox(width: 8.w),
                   ElevatedButton(
                     onPressed: () {
                       controller.filterByCategory('all');
                       Get.back();
                     },
-                    child: Text('Reset'),
+                    child: const Text('Reset'),
                   ),
                 ],
               ),

@@ -110,23 +110,29 @@ class AnnouncementsController extends GetxController {
     refreshAnnouncements();
   }
 
+  // Ganti getter filteredAnnouncements di announcements_controller.dart
+
   /// Get filtered announcements
   List<AnnouncementModel> get filteredAnnouncements {
+    // ✅ PENTING: Akses .value agar Obx bisa detect perubahan
+    final selectedCat = selectedCategory.value;
+    final query = searchQuery.value;
+    final allAnnouncements = announcements.value; // ✅ Tambahkan .value
+
     var filtered =
-        announcements.where((announcement) {
+        allAnnouncements.where((announcement) {
           // Category filter
-          if (selectedCategory.value != 'all' &&
-              announcement.category != selectedCategory.value) {
+          if (selectedCat != 'all' && announcement.category != selectedCat) {
             return false;
           }
 
           // Search filter
-          if (searchQuery.value.isNotEmpty) {
+          if (query.isNotEmpty) {
             return announcement.title.toLowerCase().contains(
-                  searchQuery.value.toLowerCase(),
+                  query.toLowerCase(),
                 ) ||
                 announcement.content.toLowerCase().contains(
-                  searchQuery.value.toLowerCase(),
+                  query.toLowerCase(),
                 );
           }
 
@@ -149,7 +155,7 @@ class AnnouncementsController extends GetxController {
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Container(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           constraints: BoxConstraints(maxHeight: Get.height * 0.8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -159,13 +165,13 @@ class AnnouncementsController extends GetxController {
                 children: [
                   if (announcement.isPriority)
                     Container(
-                      margin: EdgeInsets.only(right: 8),
-                      padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      margin: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
                         color: Colors.red,
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text(
+                      child: const Text(
                         'PENTING',
                         style: TextStyle(
                           color: Colors.white,
@@ -177,7 +183,7 @@ class AnnouncementsController extends GetxController {
                   Expanded(
                     child: Text(
                       announcement.title,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -185,25 +191,25 @@ class AnnouncementsController extends GetxController {
                   ),
                   IconButton(
                     onPressed: () => Get.back(),
-                    icon: Icon(Icons.close),
+                    icon: const Icon(Icons.close),
                   ),
                 ],
               ),
 
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
 
               // Date and category
               Row(
                 children: [
-                  Icon(Icons.access_time, size: 16, color: Colors.grey),
-                  SizedBox(width: 4),
+                  const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                  const SizedBox(width: 4),
                   Text(
                     announcement.timeAgo,
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                    style: const TextStyle(color: Colors.grey, fontSize: 12),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.blue[100],
                       borderRadius: BorderRadius.circular(4),
@@ -220,14 +226,14 @@ class AnnouncementsController extends GetxController {
                 ],
               ),
 
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
 
               // Image if available
               if (announcement.image != null && announcement.image!.isNotEmpty)
                 Container(
                   width: double.infinity,
                   height: 200,
-                  margin: EdgeInsets.only(bottom: 16),
+                  margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
                     image: DecorationImage(
@@ -242,7 +248,7 @@ class AnnouncementsController extends GetxController {
                 child: SingleChildScrollView(
                   child: Text(
                     announcement.content,
-                    style: TextStyle(fontSize: 14, height: 1.5),
+                    style: const TextStyle(fontSize: 14, height: 1.5),
                   ),
                 ),
               ),
@@ -259,11 +265,11 @@ class AnnouncementsController extends GetxController {
       message,
       backgroundColor: Colors.red,
       colorText: Colors.white,
-      icon: Icon(Icons.error, color: Colors.white),
+      icon: const Icon(Icons.error, color: Colors.white),
       snackPosition: SnackPosition.TOP,
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       borderRadius: 8,
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
     );
   }
 }

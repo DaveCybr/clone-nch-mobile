@@ -49,15 +49,15 @@ class AttendanceView extends GetView<AttendanceController> {
   // lib/v2/app/modules/teacher/attendance/views/attendance_view.dart - UPDATE AppBar
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: Text('Absensi Siswa'),
+      title: const Text('Absensi Siswa'),
       centerTitle: true,
       actions: [
         IconButton(
-          icon: Icon(Icons.calendar_today),
+          icon: const Icon(Icons.calendar_today),
           onPressed: _showDatePicker,
         ),
         PopupMenuButton<String>(
-          icon: Icon(Icons.more_vert),
+          icon: const Icon(Icons.more_vert),
           onSelected: (String value) {
             switch (value) {
               case 'export':
@@ -73,7 +73,7 @@ class AttendanceView extends GetView<AttendanceController> {
           },
           itemBuilder:
               (BuildContext context) => [
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'export',
                   child: Row(
                     children: [
@@ -83,7 +83,7 @@ class AttendanceView extends GetView<AttendanceController> {
                     ],
                   ),
                 ),
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'print',
                   child: Row(
                     children: [
@@ -93,7 +93,7 @@ class AttendanceView extends GetView<AttendanceController> {
                     ],
                   ),
                 ),
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'summary',
                   child: Row(
                     children: [
@@ -111,84 +111,91 @@ class AttendanceView extends GetView<AttendanceController> {
 
   void _showAttendanceSummaryDialog() {
     Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Ringkasan Absensi',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 16),
+      SafeArea(
+        child: Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Ringkasan Absensi',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
 
-              Obx(() {
-                final summary = controller.attendanceSummary;
-                final total = controller.studentsAttendance.length;
+                Obx(() {
+                  final summary = controller.attendanceSummary;
+                  final total = controller.studentsAttendance.length;
 
-                return Column(
-                  children: [
-                    _buildSummaryRow('Total Siswa', '$total', Colors.grey),
-                    _buildSummaryRow(
-                      'Hadir',
-                      '${summary[AttendanceStatus.hadir] ?? 0}',
-                      Colors.green,
-                    ),
-                    _buildSummaryRow(
-                      'Sakit',
-                      '${summary[AttendanceStatus.sakit] ?? 0}',
-                      Colors.blue,
-                    ),
-                    _buildSummaryRow(
-                      'Izin',
-                      '${summary[AttendanceStatus.izin] ?? 0}',
-                      Colors.orange,
-                    ),
-                    _buildSummaryRow(
-                      'Alpha',
-                      '${summary[AttendanceStatus.alpha] ?? 0}',
-                      Colors.red,
-                    ),
+                  return Column(
+                    children: [
+                      _buildSummaryRow('Total Siswa', '$total', Colors.grey),
+                      _buildSummaryRow(
+                        'Hadir',
+                        '${summary[AttendanceStatus.hadir] ?? 0}',
+                        Colors.green,
+                      ),
+                      _buildSummaryRow(
+                        'Sakit',
+                        '${summary[AttendanceStatus.sakit] ?? 0}',
+                        Colors.blue,
+                      ),
+                      _buildSummaryRow(
+                        'Izin',
+                        '${summary[AttendanceStatus.izin] ?? 0}',
+                        Colors.orange,
+                      ),
+                      _buildSummaryRow(
+                        'Alpha',
+                        '${summary[AttendanceStatus.alpha] ?? 0}',
+                        Colors.red,
+                      ),
 
-                    Divider(),
+                      const Divider(),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Persentase Kehadiran:'),
-                        Text(
-                          '${total > 0 ? ((summary[AttendanceStatus.hadir] ?? 0) / total * 100).toStringAsFixed(1) : 0}%',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
-                            fontSize: 16,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text('Persentase Kehadiran:'),
+                          Text(
+                            '${total > 0 ? ((summary[AttendanceStatus.hadir] ?? 0) / total * 100).toStringAsFixed(1) : 0}%',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                              fontSize: 16,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ],
+                  );
+                }),
+
+                const SizedBox(height: 20),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: const Text('Tutup'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        Get.back();
+                        controller.showExportOptions();
+                      },
+                      child: const Text('Ekspor'),
                     ),
                   ],
-                );
-              }),
-
-              SizedBox(height: 20),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(onPressed: () => Get.back(), child: Text('Tutup')),
-                  SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                      controller.showExportOptions();
-                    },
-                    child: Text('Ekspor'),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -197,13 +204,13 @@ class AttendanceView extends GetView<AttendanceController> {
 
   Widget _buildSummaryRow(String label, String value, Color color) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
@@ -223,7 +230,7 @@ class AttendanceView extends GetView<AttendanceController> {
       margin: EdgeInsets.all(16.w),
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [AppColors.primaryGreen, AppColors.primaryGreenDark],
         ),
         borderRadius: BorderRadius.circular(12.r),
@@ -269,7 +276,7 @@ class AttendanceView extends GetView<AttendanceController> {
                   ),
                 ),
               ),
-              Spacer(),
+              const Spacer(),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
                 decoration: BoxDecoration(
@@ -302,7 +309,7 @@ class AttendanceView extends GetView<AttendanceController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -311,7 +318,7 @@ class AttendanceView extends GetView<AttendanceController> {
         onChanged: controller.updateSearchQuery,
         decoration: InputDecoration(
           hintText: 'Cari siswa...',
-          prefixIcon: Icon(Icons.search, color: AppColors.textHint),
+          prefixIcon: const Icon(Icons.search, color: AppColors.textHint),
           border: InputBorder.none,
           hintStyle: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.textHint,
@@ -402,7 +409,7 @@ class AttendanceView extends GetView<AttendanceController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 5,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -485,7 +492,7 @@ class AttendanceView extends GetView<AttendanceController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
           SizedBox(height: 16.h),
@@ -514,7 +521,7 @@ class AttendanceView extends GetView<AttendanceController> {
           SizedBox(height: 16.h),
           ElevatedButton(
             onPressed: controller.loadScheduleAttendance,
-            child: Text('Coba Lagi'),
+            child: const Text('Coba Lagi'),
           ),
         ],
       ),
@@ -532,7 +539,7 @@ class AttendanceView extends GetView<AttendanceController> {
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
               blurRadius: 10,
-              offset: Offset(0, -4),
+              offset: const Offset(0, -4),
             ),
           ],
         ),
@@ -553,7 +560,7 @@ class AttendanceView extends GetView<AttendanceController> {
                           SizedBox(
                             width: 20.w,
                             height: 20.h,
-                            child: CircularProgressIndicator(
+                            child: const CircularProgressIndicator(
                               color: Colors.white,
                               strokeWidth: 2,
                             ),
@@ -574,12 +581,12 @@ class AttendanceView extends GetView<AttendanceController> {
     final DateTime? picked = await showDatePicker(
       context: Get.context!,
       initialDate: controller.selectedDate.value,
-      firstDate: DateTime.now().subtract(Duration(days: 30)),
-      lastDate: DateTime.now().add(Duration(days: 7)),
+      firstDate: DateTime.now().subtract(const Duration(days: 30)),
+      lastDate: DateTime.now().add(const Duration(days: 7)),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
+            colorScheme: const ColorScheme.light(
               primary: AppColors.primaryGreen,
               onPrimary: Colors.white,
               surface: Colors.white,
@@ -590,8 +597,9 @@ class AttendanceView extends GetView<AttendanceController> {
         );
       },
     );
-
+    debugPrint(picked.toString());
     if (picked != null && picked != controller.selectedDate.value) {
+      debugPrint(picked.toIso8601String());
       await controller.changeAttendanceDate(picked);
     }
   }

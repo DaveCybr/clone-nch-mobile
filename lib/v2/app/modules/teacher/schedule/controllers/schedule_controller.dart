@@ -3,6 +3,7 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nch_mobile/v2/app/routes/app_routes.dart';
 import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
 
@@ -105,7 +106,7 @@ class ScheduleController extends GetxController {
 
     final sampleSchedules = {
       'SENIN': [
-        TodayScheduleModel(
+        const TodayScheduleModel(
           id: 'senin-1',
           subjectName: 'Fiqih (Thaharah)',
           className: 'Kelas 7A',
@@ -116,7 +117,7 @@ class ScheduleController extends GetxController {
           isDone: false,
           totalStudents: 25,
         ),
-        TodayScheduleModel(
+        const TodayScheduleModel(
           id: 'senin-2',
           subjectName: 'Hadits Arba\'in',
           className: 'Kelas 8B',
@@ -129,7 +130,7 @@ class ScheduleController extends GetxController {
         ),
       ],
       'SELASA': [
-        TodayScheduleModel(
+        const TodayScheduleModel(
           id: 'selasa-1',
           subjectName: 'Bahasa Arab 7A',
           className: 'Kelas 7A',
@@ -180,7 +181,7 @@ class ScheduleController extends GetxController {
 
     try {
       Get.toNamed(
-        '/teacher/attendance',
+        Routes.TEACHER_ATTENDANCE,
         arguments: {'schedule': schedule, 'schedule_id': schedule.id},
       );
     } catch (e) {
@@ -238,7 +239,7 @@ class ScheduleController extends GetxController {
   /// Format week range for display
   String get weekRangeText {
     final weekStart = _getWeekStart(currentWeek.value);
-    final weekEnd = weekStart.add(Duration(days: 6));
+    final weekEnd = weekStart.add(const Duration(days: 6));
 
     return '${weekStart.day}/${weekStart.month} - ${weekEnd.day}/${weekEnd.month}/${weekEnd.year}';
   }

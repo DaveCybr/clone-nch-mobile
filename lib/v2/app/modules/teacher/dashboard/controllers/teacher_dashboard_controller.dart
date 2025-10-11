@@ -253,79 +253,84 @@ class TeacherDashboardController extends GetxController {
   /// Show schedule options when tapping schedule card - IMPROVED
   void showScheduleOptions(TodayScheduleModel schedule) {
     Get.bottomSheet(
-      Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+      SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Container(
-              width: 50,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                width: 50,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            Text(
-              schedule.subjectName,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              '${schedule.className} • ${schedule.timeRange}',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
+              Text(
+                schedule.subjectName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '${schedule.className} • ${schedule.timeRange}',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Options - IMPROVED with error handling
-            ListTile(
-              leading: const Icon(Icons.how_to_reg, color: Colors.green),
-              title: const Text('Absensi Siswa'),
-              subtitle: const Text('Input kehadiran siswa'),
-              onTap: () {
-                Get.back();
-                // Add delay to ensure bottom sheet is closed
-                Future.delayed(const Duration(milliseconds: 300), () {
-                  navigateToAttendance(schedule);
-                });
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.people, color: Colors.blue),
-              title: const Text('Lihat Data Siswa'),
-              subtitle: const Text('Data dan rekap kehadiran'),
-              onTap: () {
-                Get.back();
-                Future.delayed(const Duration(milliseconds: 300), () {
-                  navigateToStudents();
-                });
-              },
-            ),
-
-            if (schedule.isDone)
+              // Options - IMPROVED with error handling
               ListTile(
-                leading: const Icon(Icons.edit, color: Colors.orange),
-                title: const Text('Edit Absensi'),
-                subtitle: const Text('Perbaiki data kehadiran'),
+                leading: const Icon(Icons.how_to_reg, color: Colors.green),
+                title: const Text('Absensi Siswa'),
+                subtitle: const Text('Input kehadiran siswa'),
                 onTap: () {
                   Get.back();
+                  // Add delay to ensure bottom sheet is closed
                   Future.delayed(const Duration(milliseconds: 300), () {
                     navigateToAttendance(schedule);
                   });
                 },
               ),
-          ],
+
+              ListTile(
+                leading: const Icon(Icons.people, color: Colors.blue),
+                title: const Text('Lihat Data Siswa'),
+                subtitle: const Text('Data dan rekap kehadiran'),
+                onTap: () {
+                  Get.back();
+                  Future.delayed(const Duration(milliseconds: 300), () {
+                    navigateToStudents();
+                  });
+                },
+              ),
+
+              if (schedule.isDone)
+                ListTile(
+                  leading: const Icon(Icons.edit, color: Colors.orange),
+                  title: const Text('Edit Absensi'),
+                  subtitle: const Text('Perbaiki data kehadiran'),
+                  onTap: () {
+                    Get.back();
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      navigateToAttendance(schedule);
+                    });
+                  },
+                ),
+            ],
+          ),
         ),
       ),
       isScrollControlled: true,

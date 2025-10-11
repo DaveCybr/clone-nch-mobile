@@ -51,7 +51,7 @@ class ExportService extends GetxService {
           'Tanggal: ${_formatDateIndonesian(date)}' as CellValue?;
 
       // Headers for data table
-      final headerRow = 6;
+      const headerRow = 6;
       final headers = ['No', 'NIS', 'Nama Siswa', 'Status', 'Keterangan'];
 
       for (int i = 0; i < headers.length; i++) {
@@ -178,7 +178,7 @@ class ExportService extends GetxService {
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4,
-          margin: pw.EdgeInsets.all(32),
+          margin: const pw.EdgeInsets.all(32),
           build: (pw.Context context) {
             return [
               // Header
@@ -190,7 +190,7 @@ class ExportService extends GetxService {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text(
-                          'JTI NCH Teacher Portal',
+                          'My NCH',
                           style: pw.TextStyle(font: titleFont, fontSize: 18),
                         ),
                         pw.Text(
@@ -216,7 +216,7 @@ class ExportService extends GetxService {
 
               // Student Info
               pw.Container(
-                padding: pw.EdgeInsets.all(16),
+                padding: const pw.EdgeInsets.all(16),
                 decoration: pw.BoxDecoration(
                   border: pw.Border.all(color: PdfColors.grey),
                   borderRadius: pw.BorderRadius.circular(8),
@@ -253,7 +253,7 @@ class ExportService extends GetxService {
 
               // Summary
               pw.Container(
-                padding: pw.EdgeInsets.all(16),
+                padding: const pw.EdgeInsets.all(16),
                 decoration: pw.BoxDecoration(
                   color: PdfColors.grey200,
                   borderRadius: pw.BorderRadius.circular(8),
@@ -319,15 +319,15 @@ class ExportService extends GetxService {
               pw.Table(
                 border: pw.TableBorder.all(),
                 columnWidths: {
-                  0: pw.FixedColumnWidth(30),
-                  1: pw.FixedColumnWidth(80),
-                  2: pw.FixedColumnWidth(60),
-                  3: pw.FlexColumnWidth(),
+                  0: const pw.FixedColumnWidth(30),
+                  1: const pw.FixedColumnWidth(80),
+                  2: const pw.FixedColumnWidth(60),
+                  3: const pw.FlexColumnWidth(),
                 },
                 children: [
                   // Table Header
                   pw.TableRow(
-                    decoration: pw.BoxDecoration(color: PdfColors.grey300),
+                    decoration: const pw.BoxDecoration(color: PdfColors.grey300),
                     children: [
                       _buildPdfTableCell('No', titleFont, 8),
                       _buildPdfTableCell('Tanggal', titleFont, 8),
@@ -442,7 +442,7 @@ class ExportService extends GetxService {
           'Total Siswa: ${teacherClass.studentCount}' as CellValue?;
 
       // Headers for student data
-      final headerRow = 7;
+      const headerRow = 7;
       final headers = [
         'No',
         'NIS',

@@ -18,7 +18,7 @@ class ScheduleView extends GetView<ScheduleController> {
           backgroundColor: AppColors.scaffoldBackground,
           appBar: _buildAppBar(),
           body: _buildBody(),
-          bottomNavigationBar: _buildBottomNavigationBar(),
+          // bottomNavigationBar: _buildBottomNavigationBar(),
         );
       },
     );
@@ -50,7 +50,7 @@ class ScheduleView extends GetView<ScheduleController> {
           },
           itemBuilder:
               (context) => [
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'today',
                   child: Row(
                     children: [
@@ -60,7 +60,7 @@ class ScheduleView extends GetView<ScheduleController> {
                     ],
                   ),
                 ),
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'refresh',
                   child: Row(
                     children: [
@@ -84,14 +84,14 @@ class ScheduleView extends GetView<ScheduleController> {
           if (controller.isLoading.value) {
             return Expanded(child: _buildLoadingState());
           }
-          return SizedBox.shrink();
+          return const SizedBox.shrink();
         }),
 
         // Main content - only show when not loading
         Obx(
           () =>
               controller.isLoading.value
-                  ? SizedBox.shrink()
+                  ? const SizedBox.shrink()
                   : Expanded(
                     child: Column(
                       children: [
@@ -374,7 +374,7 @@ class ScheduleView extends GetView<ScheduleController> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -553,8 +553,8 @@ class ScheduleView extends GetView<ScheduleController> {
             SizedBox(height: 16.h),
             TextButton.icon(
               onPressed: controller.loadWeeklySchedule,
-              icon: Icon(Icons.refresh),
-              label: Text('Muat Ulang'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Muat Ulang'),
               style: TextButton.styleFrom(
                 foregroundColor: AppColors.primaryGreen,
               ),
@@ -570,7 +570,7 @@ class ScheduleView extends GetView<ScheduleController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
           ),
           SizedBox(height: 16.h),

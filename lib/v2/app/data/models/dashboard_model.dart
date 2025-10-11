@@ -173,11 +173,11 @@ class PrayerTimeModel {
 
   static List<PrayerTimeModel> getDefaultTimes() {
     return [
-      PrayerTimeModel(name: 'Subuh', time: '04:30', arabicName: 'الفجر'),
-      PrayerTimeModel(name: 'Dzuhur', time: '12:00', arabicName: 'الظهر'),
-      PrayerTimeModel(name: 'Ashar', time: '15:30', arabicName: 'العصر'),
-      PrayerTimeModel(name: 'Maghrib', time: '18:15', arabicName: 'المغرب'),
-      PrayerTimeModel(name: 'Isya', time: '19:30', arabicName: 'العشاء'),
+      const PrayerTimeModel(name: 'Subuh', time: '04:30', arabicName: 'الفجر'),
+      const PrayerTimeModel(name: 'Dzuhur', time: '12:00', arabicName: 'الظهر'),
+      const PrayerTimeModel(name: 'Ashar', time: '15:30', arabicName: 'العصر'),
+      const PrayerTimeModel(name: 'Maghrib', time: '18:15', arabicName: 'المغرب'),
+      const PrayerTimeModel(name: 'Isya', time: '19:30', arabicName: 'العشاء'),
     ];
   }
 }

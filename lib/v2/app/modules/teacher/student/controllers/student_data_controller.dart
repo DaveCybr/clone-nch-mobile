@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:nch_mobile/v2/app/routes/app_routes.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/services/api_service.dart';
 // import '../../../../data/services/export_servic.dart';
@@ -95,7 +96,7 @@ class StudentDataController extends GetxController {
     final currentClass = selectedClass;
     if (currentClass != null) {
       Get.toNamed(
-        '/teacher/student-history',
+        Routes.STUDENT_ATTENDANCE_HISTORY,
         arguments: {
           'student': student,
           'subject_id': currentClass.subjectId,
@@ -123,96 +124,100 @@ class StudentDataController extends GetxController {
   /// Show student options bottom sheet
   void showStudentOptions(StudentSummaryModel student) {
     Get.bottomSheet(
-      Container(
-        padding: EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
+      SafeArea(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Container(
-              width: 50,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            SizedBox(height: 20),
-
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.blue[100],
-              child: Text(
-                student.name.isNotEmpty ? student.name[0].toUpperCase() : 'S',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue[800],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Container(
+                width: 50,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-            ),
+              const SizedBox(height: 20),
 
-            SizedBox(height: 16),
-
-            Text(
-              student.name,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Text(
-              'NIS: ${student.nisn}',
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-
-            SizedBox(height: 8),
-
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: getAttendanceStatusColor(
-                  student.attendancePercentage,
-                ).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'Kehadiran: ${student.attendancePercentage.toStringAsFixed(1)}% (${getAttendanceStatusText(student.attendancePercentage)})',
-                style: TextStyle(
-                  color: getAttendanceStatusColor(student.attendancePercentage),
-                  fontWeight: FontWeight.w600,
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.blue[100],
+                child: Text(
+                  student.name.isNotEmpty ? student.name[0].toUpperCase() : 'S',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue[800],
+                  ),
                 ),
               ),
-            ),
 
-            SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-            // Action buttons
-            ListTile(
-              leading: Icon(Icons.history, color: Colors.blue),
-              title: Text('Lihat Riwayat Kehadiran'),
-              onTap: () {
-                Get.back();
-                viewStudentHistory(student);
-              },
-            ),
+              Text(
+                student.name,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'NIS: ${student.nisn}',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
 
-            ListTile(
-              leading: Icon(Icons.person, color: Colors.green),
-              title: Text('Detail Profil Siswa'),
-              onTap: () {
-                Get.back();
-                _showSnackbar(
-                  'Info',
-                  'Fitur detail profil akan segera tersedia',
-                );
-              },
-            ),
-          ],
+              const SizedBox(height: 8),
+
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: getAttendanceStatusColor(
+                    student.attendancePercentage,
+                  ).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Kehadiran: ${student.attendancePercentage.toStringAsFixed(1)}% (${getAttendanceStatusText(student.attendancePercentage)})',
+                  style: TextStyle(
+                    color: getAttendanceStatusColor(
+                      student.attendancePercentage,
+                    ),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Action buttons
+              ListTile(
+                leading: const Icon(Icons.history, color: Colors.blue),
+                title: const Text('Lihat Riwayat Kehadiran'),
+                onTap: () {
+                  Get.back();
+                  viewStudentHistory(student);
+                },
+              ),
+
+              ListTile(
+                leading: const Icon(Icons.person, color: Colors.green),
+                title: const Text('Detail Profil Siswa'),
+                onTap: () {
+                  Get.back();
+                  _showSnackbar(
+                    'Info',
+                    'Fitur detail profil akan segera tersedia',
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
       isScrollControlled: true,
@@ -225,11 +230,11 @@ class StudentDataController extends GetxController {
       message,
       backgroundColor: Colors.red,
       colorText: Colors.white,
-      icon: Icon(Icons.error, color: Colors.white),
+      icon: const Icon(Icons.error, color: Colors.white),
       snackPosition: SnackPosition.TOP,
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       borderRadius: 8,
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
     );
   }
 
@@ -239,11 +244,11 @@ class StudentDataController extends GetxController {
       message,
       backgroundColor: Colors.blue,
       colorText: Colors.white,
-      icon: Icon(Icons.info, color: Colors.white),
+      icon: const Icon(Icons.info, color: Colors.white),
       snackPosition: SnackPosition.TOP,
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       borderRadius: 8,
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
     );
   }
 
@@ -276,11 +281,11 @@ class StudentDataController extends GetxController {
       message,
       backgroundColor: Colors.green,
       colorText: Colors.white,
-      icon: Icon(Icons.check_circle, color: Colors.white),
+      icon: const Icon(Icons.check_circle, color: Colors.white),
       snackPosition: SnackPosition.TOP,
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       borderRadius: 8,
-      duration: Duration(seconds: 3),
+      duration: const Duration(seconds: 3),
     );
   }
 }
