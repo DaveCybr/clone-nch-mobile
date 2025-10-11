@@ -109,22 +109,11 @@ class MyApp extends StatelessWidget {
             name: '/notfound',
             page:
                 () => Scaffold(
-<<<<<<< HEAD
-                  appBar: AppBar(title: Text('Page Not Found')),
-=======
-<<<<<<< HEAD
                   appBar: AppBar(title: const Text('Page Not Found')),
-=======
-                  appBar: AppBar(title: Text('Page Not Found')),
->>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
->>>>>>> prod
                   body: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
                         const Icon(
                           Icons.error_outline,
                           size: 64,
@@ -136,19 +125,6 @@ class MyApp extends StatelessWidget {
                         ElevatedButton(
                           onPressed: () => Get.offAllNamed(Routes.LOGIN),
                           child: const Text('Go to Login'),
-=======
->>>>>>> prod
-                        Icon(Icons.error_outline, size: 64, color: Colors.red),
-                        SizedBox(height: 16),
-                        Text('Page not found'),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => Get.offAllNamed(Routes.LOGIN),
-                          child: Text('Go to Login'),
-<<<<<<< HEAD
-=======
->>>>>>> 49d3e7f6c546314a0079c5f85aecd72981ffaa46
->>>>>>> prod
                         ),
                       ],
                     ),
