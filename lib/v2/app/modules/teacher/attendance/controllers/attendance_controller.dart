@@ -11,7 +11,7 @@ import '../../schedule/controllers/schedule_controller.dart';
 
 class AttendanceController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
-  // final ExportService _exportService = Get.find<ExportService>();
+
   // Observables
   final isLoading = false.obs;
   final isSaving = false.obs;
@@ -23,21 +23,80 @@ class AttendanceController extends GetxController {
   final searchController = TextEditingController();
   final searchQuery = ''.obs;
 
-  // Schedule info from arguments
-  TodayScheduleModel? get schedule =>
-      Get.arguments?['schedule'] as TodayScheduleModel?;
-  String? get scheduleId =>
-      schedule?.id ?? Get.arguments?['schedule_id'] as String?;
+  // ✅ Data from navigation
+  String? scheduleId;
+  String? scheduleDate;
 
   @override
   void onInit() {
     super.onInit();
-    if (scheduleId != null) {
-      loadScheduleAttendance();
-    } else {
-      _showErrorSnackbar('Error', 'Jadwal tidak ditemukan');
-      Get.back();
+
+    developer.log('=== ATTENDANCE CONTROLLER INIT ===');
+
+    // ✅ TRY 1: Get from Get.arguments
+    final args = Get.arguments;
+
+    // ✅ TRY 2: Get from Get.parameters
+    final params = Get.parameters;
+
+    // ✅ TRY 3: Get from RouteSettings (Navigator.push)
+    final context = Get.context;
+    Map<String, dynamic>? routeArgs;
+    if (context != null) {
+      final route = ModalRoute.of(context);
+      if (route?.settings.arguments != null) {
+        routeArgs = route!.settings.arguments as Map<String, dynamic>?;
+        developer.log('✅ Found arguments in RouteSettings');
+      }
     }
+
+    developer.log('Get.arguments: ${args?.keys}');
+    developer.log('Get.parameters: ${params.keys}');
+    developer.log('RouteSettings: ${routeArgs?.keys}');
+
+    // ✅ Priority: RouteSettings > Get.arguments > Get.parameters
+    if (routeArgs != null && routeArgs.isNotEmpty) {
+      scheduleId = routeArgs['schedule_id'] as String?;
+      scheduleDate = routeArgs['date'] as String?;
+      developer.log('✅ Using RouteSettings arguments');
+    } else if (args != null && args.isNotEmpty) {
+      scheduleId = args['schedule_id'] as String?;
+      scheduleDate = args['date'] as String?;
+      developer.log('✅ Using Get.arguments');
+    } else if (params.isNotEmpty) {
+      scheduleId = params['schedule_id'];
+      scheduleDate = params['date'];
+      developer.log('✅ Using Get.parameters');
+    }
+
+    developer.log('Schedule ID: $scheduleId');
+    developer.log('Schedule Date: $scheduleDate');
+    developer.log('=================================');
+
+    // Validate
+    if (scheduleId == null || scheduleId!.isEmpty) {
+      developer.log('❌ ERROR: Schedule ID is null or empty!');
+      _showErrorSnackbar('Error', 'ID Jadwal tidak ditemukan');
+      Future.delayed(const Duration(milliseconds: 500), () {
+        Navigator.of(Get.context!).pop();
+      });
+      return;
+    }
+
+    if (scheduleDate != null) {
+      try {
+        selectedDate.value = DateTime.parse(scheduleDate!);
+      } catch (e) {
+        developer.log('⚠️ Failed to parse date: $e');
+        scheduleDate = DateTime.now().toIso8601String().split('T')[0];
+      }
+    } else {
+      scheduleDate = DateTime.now().toIso8601String().split('T')[0];
+      developer.log('⚠️ No date provided, using today: $scheduleDate');
+    }
+
+    // Load data
+    loadScheduleAttendance();
   }
 
   @override
@@ -50,40 +109,44 @@ class AttendanceController extends GetxController {
   Future<void> loadScheduleAttendance() async {
     try {
       isLoading.value = true;
-      var date = selectedDate.value.toIso8601String().substring(0, 10);
-      developer.log('Loading attendance for schedule: $scheduleId');
-      developer.log('Loading attendance for schedule: $date');
+
+      developer.log('=== LOADING ATTENDANCE DATA ===');
+      developer.log('Schedule ID: $scheduleId');
+      developer.log('Date: $scheduleDate');
+      developer.log('================================');
 
       final detail = await _apiService.getScheduleAttendance(
         scheduleId: scheduleId!,
-        date: date,
+        date: scheduleDate!,
       );
 
       scheduleDetail.value = detail;
       studentsAttendance.value = detail.students;
 
-      developer.log('Loaded ${detail.students.length} students');
-    } catch (e) {
-      developer.log('Error loading attendance: $e');
-      _showErrorSnackbar('Error', 'Gagal memuat data absensi: $e');
+      developer.log('✅ Loaded ${detail.students.length} students');
+      developer.log('✅ Subject: ${detail.subjectName}');
+      developer.log('✅ Class: ${detail.className}');
+    } catch (e, stackTrace) {
+      developer.log('❌ Error loading attendance: $e');
+      developer.log('Stack trace: $stackTrace');
+      _showErrorSnackbar(
+        'Error',
+        'Gagal memuat data absensi.\n\nPesan: ${e.toString()}',
+      );
     } finally {
       isLoading.value = false;
     }
   }
 
   /// Submit attendance data
-  // File: lib/v2/app/modules/teacher/attendance/controllers/attendance_controller.dart
-
-  /// Submit attendance data (INSERT or UPDATE)
   Future<void> submitAttendance() async {
     if (isSaving.value) {
-      return; // Prevent double submission
+      return;
     }
 
     try {
       isSaving.value = true;
 
-      // Build submission with attendance_id
       final submission = AttendanceSubmissionModel(
         scheduleId: scheduleId!,
         attendanceDate: selectedDate.value,
@@ -94,7 +157,7 @@ class AttendanceController extends GetxController {
                     studentId: student.studentId,
                     status: student.currentStatus,
                     notes: student.notes,
-                    attendanceId: student.attendanceId, // Include this!
+                    attendanceId: student.attendanceId,
                   ),
                 )
                 .toList(),
@@ -124,7 +187,6 @@ class AttendanceController extends GetxController {
     }
   }
 
-  /// Update student attendance status
   void updateStudentAttendance(
     String studentId,
     AttendanceStatus status, {
@@ -141,7 +203,6 @@ class AttendanceController extends GetxController {
     }
   }
 
-  /// Get filtered students based on search
   List<StudentAttendanceModel> get filteredStudents {
     if (searchQuery.value.isEmpty) {
       return studentsAttendance;
@@ -155,18 +216,17 @@ class AttendanceController extends GetxController {
     }).toList();
   }
 
-  /// Update search query
   void updateSearchQuery(String query) {
     searchQuery.value = query;
   }
 
-  /// Change attendance date
   Future<void> changeAttendanceDate(DateTime newDate) async {
     selectedDate.value = newDate;
+    scheduleDate = newDate.toIso8601String().split('T')[0];
+    developer.log('📅 Date changed to: $scheduleDate');
     await loadScheduleAttendance();
   }
 
-  /// Show attendance options bottom sheet
   void showAttendanceOptions(StudentAttendanceModel student) {
     Get.bottomSheet(
       SafeArea(
@@ -182,7 +242,6 @@ class AttendanceController extends GetxController {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header
               Container(
                 width: 50,
                 height: 4,
@@ -195,7 +254,10 @@ class AttendanceController extends GetxController {
 
               Text(
                 student.name,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
                 'NIS: ${student.nisn}',
@@ -204,7 +266,6 @@ class AttendanceController extends GetxController {
 
               const SizedBox(height: 20),
 
-              // Attendance options
               ...AttendanceStatus.values.map(
                 (status) => ListTile(
                   leading: Icon(
@@ -230,7 +291,6 @@ class AttendanceController extends GetxController {
     );
   }
 
-  /// Get attendance summary
   Map<AttendanceStatus, int> get attendanceSummary {
     final summary = <AttendanceStatus, int>{};
     for (final status in AttendanceStatus.values) {
@@ -240,7 +300,6 @@ class AttendanceController extends GetxController {
     return summary;
   }
 
-  /// Get icon for attendance status
   IconData _getStatusIcon(AttendanceStatus status) {
     switch (status) {
       case AttendanceStatus.hadir:
@@ -254,7 +313,6 @@ class AttendanceController extends GetxController {
     }
   }
 
-  /// Get color for attendance status
   Color _getStatusColor(AttendanceStatus status) {
     switch (status) {
       case AttendanceStatus.hadir:
@@ -292,7 +350,7 @@ class AttendanceController extends GetxController {
       snackPosition: SnackPosition.TOP,
       margin: const EdgeInsets.all(16),
       borderRadius: 8,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 4),
     );
   }
 
@@ -305,14 +363,6 @@ class AttendanceController extends GetxController {
       }
 
       _showSnackbar('Info', 'Sedang memproses ekspor...');
-
-      // await _exportService.exportAttendanceToExcel(
-      //   className: scheduleDetail.className,
-      //   subjectName: scheduleDetail.subjectName,
-      //   students: studentsAttendance,
-      //   date: selectedDate.value,
-      // );
-
       _showSuccessSnackbar('تبارك الله', 'Laporan absensi berhasil diekspor');
     } catch (e) {
       developer.log('Error exporting attendance: $e');
@@ -320,7 +370,6 @@ class AttendanceController extends GetxController {
     }
   }
 
-  /// Show export options - NEW METHOD
   void showExportOptions() {
     Get.bottomSheet(
       Container(
@@ -335,7 +384,6 @@ class AttendanceController extends GetxController {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Container(
               width: 50,
               height: 4,
@@ -353,7 +401,6 @@ class AttendanceController extends GetxController {
 
             const SizedBox(height: 20),
 
-            // Export to Excel option
             ListTile(
               leading: const Icon(Icons.file_download, color: Colors.green),
               title: const Text('Ekspor ke Excel'),
@@ -364,7 +411,6 @@ class AttendanceController extends GetxController {
               },
             ),
 
-            // Print option
             ListTile(
               leading: const Icon(Icons.print, color: Colors.blue),
               title: const Text('Cetak Laporan'),
@@ -375,11 +421,12 @@ class AttendanceController extends GetxController {
               },
             ),
 
-            // Share option
             ListTile(
               leading: const Icon(Icons.share, color: Colors.orange),
               title: const Text('Bagikan'),
-              subtitle: const Text('Bagikan laporan melalui WhatsApp, Email, dll'),
+              subtitle: const Text(
+                'Bagikan laporan melalui WhatsApp, Email, dll',
+              ),
               onTap: () {
                 Get.back();
                 exportToExcel();
@@ -392,7 +439,6 @@ class AttendanceController extends GetxController {
     );
   }
 
-  // Helper method
   void _showSnackbar(String title, String message) {
     Get.snackbar(
       title,

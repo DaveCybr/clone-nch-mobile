@@ -72,13 +72,13 @@ class _SplashViewState extends State<SplashView>
         _redirectBasedOnRole(authController);
       } else {
         developer.log('SplashView: User not authenticated, going to login');
-        Get.offAllNamed(Routes.LOGIN);
+        Get.rootDelegate.offNamed(Routes.LOGIN);
       }
     } catch (e) {
       developer.log('SplashView: Error during initialization: $e');
       // If any error occurs during auth check, go to login
       await Future.delayed(const Duration(seconds: 1));
-      Get.offAllNamed(Routes.LOGIN);
+      Get.rootDelegate.offNamed(Routes.LOGIN);
     }
   }
 
@@ -86,7 +86,7 @@ class _SplashViewState extends State<SplashView>
     final user = authController.user.value;
     if (user == null) {
       developer.log('SplashView: No user data, going to login');
-      Get.offAllNamed(Routes.LOGIN);
+      Get.rootDelegate.offNamed(Routes.LOGIN);
       return;
     }
 

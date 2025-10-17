@@ -260,7 +260,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Statistik Hari Ini', style: AppTextStyles.heading3),
+        Text('Rekap Aktivitas', style: AppTextStyles.heading3),
         SizedBox(height: 12.h),
         Row(
           children: [

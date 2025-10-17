@@ -1,4 +1,4 @@
-// lib/v2/app/routes/app_pages.dart - UPDATED VERSION
+// lib/v2/app/routes/app_pages.dart - FIXED VERSION
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -46,6 +46,7 @@ class AppPages {
     GetPage(
       name: '/main',
       page: () => const MainNavigationWrapper(),
+      participatesInRootNavigator: true,
       children: [
         GetPage(
           name: Routes.TEACHER_DASHBOARD,
@@ -72,12 +73,25 @@ class AppPages {
           page: () => const AnnouncementsView(),
           binding: AnnouncementsBinding(),
         ),
-        GetPage(
-          name: Routes.STUDENT_ATTENDANCE_HISTORY,
-          page: () => const StudentHistoryView(),
-          binding: StudentHistoryBinding(),
-        ),
       ],
+    ),
+
+    // ===== ✅ FULL SCREEN ROUTES (Outside Wrapper) =====
+    GetPage(
+      name: Routes.TEACHER_ATTENDANCE,
+      page: () => const AttendanceView(),
+      binding: AttendanceBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
+
+    // ✅ CRITICAL FIX: Student History harus di LUAR wrapper
+    GetPage(
+      name: Routes.STUDENT_ATTENDANCE_HISTORY,
+      page: () => const StudentHistoryView(),
+      binding: StudentHistoryBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
     ),
 
     // ===== PARENT NAVIGATION WRAPPER =====
@@ -118,8 +132,9 @@ class AppPages {
 
     // ===== STUDENT NAVIGATION WRAPPER =====
     GetPage(
-      name: '/student',
+      name: Routes.STUDENT,
       page: () => const StudentNavigationWrapper(),
+      participatesInRootNavigator: true,
       children: [
         GetPage(
           name: Routes.STUDENT_DASHBOARD,
@@ -149,13 +164,6 @@ class AppPages {
           page: () => _buildPlaceholderPage('Profil', 'Profil santri'),
         ),
       ],
-    ),
-
-    // ===== FULL SCREEN ROUTES (Outside Wrapper) =====
-    GetPage(
-      name: Routes.TEACHER_ATTENDANCE,
-      page: () => const AttendanceView(),
-      binding: AttendanceBinding(),
     ),
   ];
 

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../routes/app_routes.dart';
 import '../controllers/student_dashboard_controller.dart';
 
 class StudentDashboardView extends GetView<StudentDashboardController> {
@@ -13,18 +14,7 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard Santri'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Navigate to notifications
-            },
-          ),
-        ],
-      ),
+      appBar: _buildAppBar(),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());
@@ -51,6 +41,65 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
           ),
         );
       }),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      title: const Text('Dashboard'),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications_outlined),
+          onPressed: () {},
+        ),
+        PopupMenuButton(
+          icon: const Icon(Icons.more_vert),
+          itemBuilder:
+              (context) => [
+                PopupMenuItem(
+                  value: 'refresh',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.refresh, color: AppColors.primaryGreen),
+                      SizedBox(width: 12.w),
+                      const Text('Refresh'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'profile',
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.person_outline,
+                        color: AppColors.primaryGreen,
+                      ),
+                      SizedBox(width: 12.w),
+                      const Text('Profil'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.logout, color: Colors.red),
+                      SizedBox(width: 12.w),
+                      const Text('Keluar'),
+                    ],
+                  ),
+                ),
+              ],
+          onSelected: (value) {
+            switch (value) {
+              case 'logout':
+                controller.logout();
+                break;
+            }
+          },
+        ),
+      ],
     );
   }
 
@@ -205,7 +254,9 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
               TextButton(
                 onPressed: () {
                   // Navigate to full schedule page
-                  Get.toNamed('/student/schedule');
+                  Get.rootDelegate.offNamed(
+                    Routes.getStudentRoute('/student/schedule'),
+                  );
                 },
                 child: Text(
                   'Lihat Semua',
@@ -347,7 +398,9 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
               TextButton(
                 onPressed: () {
                   // Navigate to attendance page
-                  Get.toNamed('/student/attendance');
+                  Get.rootDelegate.offNamed(
+                    Routes.getStudentRoute('/student/attendance'),
+                  );
                 },
                 child: Text(
                   'Detail',
@@ -466,7 +519,9 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Jadwal Lengkap',
                   Icons.calendar_today,
                   AppColors.primaryGreen,
-                  () => Get.toNamed('/student/schedule'),
+                  () => Get.rootDelegate.offNamed(
+                    Routes.getStudentRoute('/student/schedule'),
+                  ),
                 ),
               ),
               SizedBox(width: 12.w),
@@ -475,7 +530,9 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Riwayat Absensi',
                   Icons.history,
                   Colors.blue,
-                  () => Get.toNamed('/student/attendance'),
+                  () => Get.rootDelegate.offNamed(
+                    Routes.getStudentRoute('/student/attendance'),
+                  ),
                 ),
               ),
             ],
@@ -488,7 +545,9 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Pengumuman',
                   Icons.campaign,
                   Colors.orange,
-                  () => Get.toNamed('/student/announcements'),
+                  () => Get.rootDelegate.offNamed(
+                    Routes.getStudentRoute('/student/announcements'),
+                  ),
                 ),
               ),
               SizedBox(width: 12.w),
@@ -497,7 +556,9 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Raport',
                   Icons.assessment,
                   Colors.purple,
-                  () => Get.toNamed('/student/raport'),
+                  () => Get.rootDelegate.offNamed(
+                    Routes.getStudentRoute('/student/report'),
+                  ),
                 ),
               ),
             ],

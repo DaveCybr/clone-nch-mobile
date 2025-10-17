@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
+import '../../theme/app_colors.dart';
 
 class MainNavigationWrapper extends StatefulWidget {
   const MainNavigationWrapper({Key? key}) : super(key: key);
@@ -14,27 +15,29 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
 
   // Daftar route anak sesuai AppPages
   final List<String> _tabs = [
-    Routes.TEACHER_DASHBOARD,
-    Routes.TEACHER_SCHEDULE,
-    Routes.TEACHER_STUDENTS,
-    Routes.TEACHER_PROFILE,
+    Routes.getTeacherRoute(Routes.TEACHER_DASHBOARD),
+    Routes.getTeacherRoute(Routes.TEACHER_SCHEDULE),
+    Routes.getTeacherRoute(Routes.TEACHER_STUDENTS),
+    Routes.getTeacherRoute(Routes.TEACHER_PROFILE),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: GetRouterOutlet(
-        initialRoute: Routes.TEACHER_DASHBOARD,
+        initialRoute: Routes.getTeacherRoute(Routes.TEACHER_DASHBOARD),
         anchorRoute: Routes.MAIN,
+        key: Get.nestedKey(1),
       ),
       bottomNavigationBar: Obx(
         () => BottomNavigationBar(
-          currentIndex: _currentIndex.value, // wajib pakai .value
+          currentIndex: _currentIndex.value,
           type: BottomNavigationBarType.fixed,
+          selectedItemColor: AppColors.primaryGreen,
+          unselectedItemColor: Colors.grey,
           onTap: (index) {
             _currentIndex.value = index;
-            debugPrint("Navigate to: ${_tabs[index]}");
-            Get.rootDelegate.toNamed(_tabs[index]);
+            Get.rootDelegate.toNamed(_tabs[index], arguments: {});
           },
           items: const [
             BottomNavigationBarItem(

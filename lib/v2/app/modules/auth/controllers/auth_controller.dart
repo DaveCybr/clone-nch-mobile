@@ -159,12 +159,12 @@ class AuthController extends GetxController {
         'جزاك الله خيراً - Semoga Allah membalas kebaikan Anda',
       );
 
-      Get.offAllNamed(Routes.LOGIN);
+      Get.rootDelegate.offNamed(Routes.LOGIN);
     } catch (e) {
       developer.log('Logout error: $e');
       // Even if API fails, clear local data
       await _clearAuthData();
-      Get.offAllNamed(Routes.LOGIN);
+      Get.rootDelegate.offNamed(Routes.LOGIN);
     } finally {
       isLoading.value = false;
     }
@@ -187,7 +187,7 @@ class AuthController extends GetxController {
   void redirectBasedOnRole() {
     final currentUser = user.value;
     if (currentUser == null) {
-      Get.offAllNamed(Routes.LOGIN);
+      Get.rootDelegate.offNamed(Routes.LOGIN);
       return;
     }
 
@@ -208,17 +208,17 @@ class AuthController extends GetxController {
     // 1. Jika user punya role teacher, arahkan ke teacher dashboard
     if (currentUser.isTeacher) {
       developer.log('✅ Redirecting to TEACHER dashboard');
-      Get.offAllNamed('${Routes.MAIN}');
+      Get.rootDelegate.offNamed(Routes.MAIN);
     }
     // 2. Jika user punya student data (santri yang login sendiri)
     else if (currentUser.student != null || currentUser.isStudent) {
       developer.log('✅ Redirecting to STUDENT dashboard');
-      Get.offAllNamed('${Routes.STUDENT}');
+      Get.rootDelegate.offNamed(Routes.STUDENT);
     }
     // 3. Jika user adalah parent
     else if (currentUser.isParent) {
       developer.log('✅ Redirecting to PARENT dashboard');
-      Get.offAllNamed('${Routes.PARENT}');
+      Get.rootDelegate.offNamed(Routes.PARENT);
     }
     // 4. Jika tidak ada role yang dikenali
     else {
@@ -227,7 +227,7 @@ class AuthController extends GetxController {
         'Error',
         'Role tidak dikenali. Hubungi administrator.',
       );
-      Get.offAllNamed(Routes.LOGIN);
+      Get.rootDelegate.offNamed(Routes.LOGIN);
     }
   }
 

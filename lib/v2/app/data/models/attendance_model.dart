@@ -179,7 +179,6 @@ class AttendanceRecordModel {
   }
 }
 
-// ✅ FIXED: Robust parsing untuk berbagai struktur response API
 class StudentHistoryModel {
   final String studentId;
   final String name;
@@ -198,9 +197,6 @@ class StudentHistoryModel {
   });
 
   factory StudentHistoryModel.fromJson(Map<String, dynamic> json) {
-    // ✅ Handle multiple API response structures
-
-    // Try structure 1: { "student": {...}, "summary": {...}, "history": [...] }
     if (json['student'] != null && json['student'] is Map) {
       final studentData = json['student'] as Map<String, dynamic>;
       return StudentHistoryModel(
@@ -213,7 +209,6 @@ class StudentHistoryModel {
       );
     }
 
-    // Try structure 2: Flat structure
     return StudentHistoryModel(
       studentId: json['student_id'] ?? json['id'] ?? '',
       name: json['name'] ?? json['student_name'] ?? '',
@@ -244,7 +239,6 @@ class StudentHistoryModel {
   }
 }
 
-// ✅ FIXED: Added validation and default values
 class AttendanceSummaryModel {
   final int totalSessions;
   final int hadir;
@@ -261,7 +255,6 @@ class AttendanceSummaryModel {
   });
 
   factory AttendanceSummaryModel.fromJson(Map<String, dynamic> json) {
-    // ✅ Parse dengan type checking yang robust
     return AttendanceSummaryModel(
       totalSessions: _parseInt(json['total_sessions']),
       hadir: _parseInt(json['hadir']),
@@ -296,7 +289,6 @@ class AttendanceSummaryModel {
   }
 }
 
-// ✅ FIXED: Better error handling
 class AttendanceHistoryRecordModel {
   final DateTime date;
   final AttendanceStatus status;
@@ -336,32 +328,68 @@ class AttendanceHistoryRecordModel {
   }
 }
 
+// ✅ UPDATED: Model untuk data kelas dari today_schedules
 class TeacherClassModel {
-  final String subjectId;
+  final String scheduleId;
   final String subjectName;
   final String className;
+  final String timeSlot;
+  final String startTime;
+  final String endTime;
+  final String day;
+  final bool isDone;
   final int studentCount;
   final List<StudentSummaryModel> students;
 
   const TeacherClassModel({
-    required this.subjectId,
+    required this.scheduleId,
     required this.subjectName,
     required this.className,
+    required this.timeSlot,
+    required this.startTime,
+    required this.endTime,
+    required this.day,
+    required this.isDone,
     required this.studentCount,
-    required this.students,
+    this.students = const [],
   });
 
+  // ✅ Factory untuk parsing dari API response today_schedules
   factory TeacherClassModel.fromJson(Map<String, dynamic> json) {
     return TeacherClassModel(
-      subjectId: json['subject_id'] ?? '',
+      scheduleId: json['id'] ?? '',
       subjectName: json['subject_name'] ?? '',
       className: json['class_name'] ?? '',
-      studentCount: json['student_count'] ?? 0,
+      timeSlot: json['time_slot'] ?? '',
+      startTime: json['start_time'] ?? '',
+      endTime: json['end_time'] ?? '',
+      day: json['day'] ?? '',
+      isDone: json['is_done'] ?? false,
+      studentCount: json['total_students'] ?? 0,
       students:
           (json['students'] as List?)
               ?.map((e) => StudentSummaryModel.fromJson(e))
               .toList() ??
           [],
+    );
+  }
+
+  // ✅ Getter untuk compatibility dengan kode yang sudah ada
+  String get subjectId => scheduleId;
+
+  // ✅ CopyWith untuk update students setelah fetch dari API terpisah
+  TeacherClassModel copyWith({List<StudentSummaryModel>? students}) {
+    return TeacherClassModel(
+      scheduleId: scheduleId,
+      subjectName: subjectName,
+      className: className,
+      timeSlot: timeSlot,
+      startTime: startTime,
+      endTime: endTime,
+      day: day,
+      isDone: isDone,
+      studentCount: studentCount,
+      students: students ?? this.students,
     );
   }
 }

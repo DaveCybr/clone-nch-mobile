@@ -2,7 +2,7 @@
 
 abstract class Routes {
   // ===== COMMON ROUTES =====
-  static const SPLASH = '/splash';
+  static const SPLASH = '/';
   static const LOGIN = '/login';
 
   // ===== TEACHER ROUTES =====

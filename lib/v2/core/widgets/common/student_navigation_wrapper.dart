@@ -17,18 +17,19 @@ class _StudentNavigationWrapperState extends State<StudentNavigationWrapper> {
   final RxInt _currentIndex = 0.obs;
 
   final List<String> _tabs = [
-    Routes.STUDENT_DASHBOARD,
-    Routes.STUDENT_SCHEDULE,
-    Routes.STUDENT_ATTENDANCE,
-    Routes.STUDENT_PROFILE,
+    Routes.getStudentRoute(Routes.STUDENT_DASHBOARD),
+    Routes.getStudentRoute(Routes.STUDENT_SCHEDULE),
+    Routes.getStudentRoute(Routes.STUDENT_ATTENDANCE),
+    Routes.getStudentRoute(Routes.STUDENT_PROFILE),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: GetRouterOutlet(
-        initialRoute: Routes.STUDENT_DASHBOARD,
+        initialRoute: Routes.getStudentRoute(Routes.STUDENT_DASHBOARD),
         anchorRoute: Routes.STUDENT,
+        key: Get.nestedKey(1),
       ),
       bottomNavigationBar: Obx(
         () => BottomNavigationBar(
@@ -38,9 +39,9 @@ class _StudentNavigationWrapperState extends State<StudentNavigationWrapper> {
           unselectedItemColor: Colors.grey,
           onTap: (index) {
             _currentIndex.value = index;
-            debugPrint("Navigate to: ${_tabs[index]}");
-            Get.rootDelegate.toNamed(_tabs[index]);
+            Get.rootDelegate.toNamed(_tabs[index], arguments: {});
           },
+
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard_outlined),

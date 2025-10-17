@@ -618,10 +618,10 @@ class ScheduleView extends GetView<ScheduleController> {
               // Already on schedule
               break;
             case 2:
-              Get.toNamed('/teacher/announcements');
+              Get.rootDelegate.offNamed('/teacher/announcements');
               break;
             case 3:
-              Get.toNamed('/teacher/profile');
+              Get.rootDelegate.offNamed('/teacher/profile');
               break;
           }
         },

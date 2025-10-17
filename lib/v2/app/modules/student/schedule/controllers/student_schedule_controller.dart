@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nch_mobile/v2/app/data/models/student_dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../auth/controllers/auth_controller.dart';
 
 class StudentScheduleController extends GetxController {
   final ApiService _apiService = Get.find();

@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart'; // ✅ TAMBAHKAN INI
 import 'package:get/get.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/services/api_service.dart';
@@ -8,17 +9,24 @@ import '../../../../data/services/api_service.dart';
 class StudentHistoryController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
 
+  // ✅ Data langsung dari constructor (bukan Get.arguments)
+  final StudentSummaryModel? student;
+  final String? subjectId;
+  final String? subjectName;
+  final String? className;
+
   // Observables
   final isLoading = false.obs;
   final studentHistory = Rxn<StudentHistoryModel>();
   final selectedDateRange = Rxn<DateTimeRange>();
 
-  // Data from arguments
-  StudentSummaryModel? get student =>
-      Get.arguments?['student'] as StudentSummaryModel?;
-  String? get subjectId => Get.arguments?['subject_id'] as String?;
-  String? get subjectName => Get.arguments?['subject_name'] as String?;
-  String? get className => Get.arguments?['class_name'] as String?;
+  // ✅ Constructor untuk terima data
+  StudentHistoryController({
+    this.student,
+    this.subjectId,
+    this.subjectName,
+    this.className,
+  });
 
   @override
   void onInit() {
@@ -29,8 +37,9 @@ class StudentHistoryController extends GetxController {
     developer.log('  - Subject ID: $subjectId');
     developer.log('  - Subject Name: $subjectName');
     developer.log('  - Class Name: $className');
+    // developer.log('')
 
-    // ✅ FIXED: Set date range ke SEMUA DATA (6 bulan ke belakang sampai sekarang)
+    // ✅ Set date range ke SEMUA DATA (6 bulan ke belakang sampai sekarang)
     final now = DateTime.now();
     selectedDateRange.value = DateTimeRange(
       start: DateTime(now.year, now.month - 6, 1), // 6 bulan lalu
@@ -41,12 +50,34 @@ class StudentHistoryController extends GetxController {
       '📅 Default date range: ${selectedDateRange.value?.start} to ${selectedDateRange.value?.end}',
     );
 
-    if (student != null && subjectId != null) {
-      loadStudentHistory();
-    } else {
+    // ✅ CRITICAL FIX: Jangan langsung Get.back()!
+    // Gunakan WidgetsBinding untuk tunggu build selesai
+    if (student == null || subjectId == null || subjectId!.isEmpty) {
       developer.log('❌ Missing required data: student or subjectId');
-      _showErrorSnackbar('Error', 'Data siswa tidak ditemukan');
-      Get.back();
+      developer.log('  - student: ${student != null ? "exists" : "NULL"}');
+      developer.log(
+        '  - subjectId: ${subjectId ?? "NULL"} (isEmpty: ${subjectId?.isEmpty})',
+      );
+
+      // ✅ Tunggu sampai frame selesai, baru navigate back
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showErrorSnackbar(
+          'Error',
+          'Data siswa atau mata pelajaran tidak lengkap',
+        );
+
+        // ✅ Delay sedikit sebelum back
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (Get.isDialogOpen == false && Get.isBottomSheetOpen == false) {
+            Get.back();
+          }
+        });
+      });
+    } else {
+      // ✅ Load data setelah frame selesai
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        loadStudentHistory();
+      });
     }
   }
 
@@ -91,20 +122,24 @@ class StudentHistoryController extends GetxController {
         developer.log('  2. Backend API filter is too strict');
         developer.log('  3. Data exists but date range is incorrect');
 
-        // ✅ ADDED: Try loading without date filter
+        // ✅ Try loading without date filter
         developer.log('🔄 Retrying without date range filter...');
         await _loadHistoryWithoutDateFilter();
       }
     } catch (e, stackTrace) {
       developer.log('❌ Error loading student history: $e');
       developer.log('Stack trace: $stackTrace');
-      _showErrorSnackbar('Error', 'Gagal memuat riwayat kehadiran: $e');
+
+      // ✅ Delay snackbar untuk hindari conflict
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showErrorSnackbar('Error', 'Gagal memuat riwayat kehadiran: $e');
+      });
     } finally {
       isLoading.value = false;
     }
   }
 
-  /// ✅ ADDED: Load history without date filter as fallback
+  /// ✅ Load history without date filter as fallback
   Future<void> _loadHistoryWithoutDateFilter() async {
     try {
       developer.log('🔄 Loading ALL history (no date filter)...');
@@ -138,6 +173,14 @@ class StudentHistoryController extends GetxController {
         developer.log(
           '   This means no attendance has been recorded for this student+subject combination',
         );
+
+        // ✅ Show info to user
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showInfoSnackbar(
+            'Info',
+            'Belum ada data kehadiran untuk siswa ini pada mata pelajaran ${subjectName ?? "ini"}',
+          );
+        });
       }
     } catch (e) {
       developer.log('❌ Error loading history without date filter: $e');
@@ -152,21 +195,6 @@ class StudentHistoryController extends GetxController {
     selectedDateRange.value = newRange;
     await loadStudentHistory();
   }
-
-  /// Show date range picker
-  // Future<void> showDateRangePicker() async {
-  //   final now = DateTime.now();
-  //   final DateTimeRange? picked = await showDateRangePicker(
-  //     context: Get.context!,
-  //     firstDate: DateTime(now.year - 1),
-  //     lastDate: now,
-  //     initialDateRange: selectedDateRange.value,
-  //   );
-
-  //   if (picked != null && picked != selectedDateRange.value) {
-  //     await changeDateRange(picked);
-  //   }
-  // }
 
   /// Get attendance status color
   Color getStatusColor(AttendanceStatus status) {
@@ -197,6 +225,11 @@ class StudentHistoryController extends GetxController {
   }
 
   void _showErrorSnackbar(String title, String message) {
+    // ✅ Cek dulu apakah ada snackbar/dialog yang terbuka
+    if (Get.isSnackbarOpen) {
+      Get.closeCurrentSnackbar();
+    }
+
     Get.snackbar(
       title,
       message,
@@ -210,7 +243,12 @@ class StudentHistoryController extends GetxController {
     );
   }
 
-  void _showSnackbar(String title, String message) {
+  void _showInfoSnackbar(String title, String message) {
+    // ✅ Cek dulu apakah ada snackbar yang terbuka
+    if (Get.isSnackbarOpen) {
+      Get.closeCurrentSnackbar();
+    }
+
     Get.snackbar(
       title,
       message,
@@ -232,11 +270,11 @@ class StudentHistoryController extends GetxController {
         return;
       }
 
-      _showSnackbar('Info', 'Sedang memproses ekspor...');
+      _showInfoSnackbar('Info', 'Sedang memproses ekspor...');
 
       // TODO: Implement export functionality
 
-      _showSnackbar(
+      _showInfoSnackbar(
         'تبارك الله',
         'Laporan riwayat kehadiran berhasil diekspor',
       );

@@ -5,11 +5,11 @@ import 'package:get/get.dart';
 import 'package:nch_mobile/v2/app/routes/app_routes.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/services/api_service.dart';
-// import '../../../../data/services/export_servic.dart';
+import '../../student_history/bindings/student_history_binding.dart';
+import '../../student_history/views/student_history_view.dart';
 
 class StudentDataController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
-  // final ExportService _exportService = Get.find<ExportService>();
 
   // Observables
   final isLoading = false.obs;
@@ -36,18 +36,127 @@ class StudentDataController extends GetxController {
   Future<void> loadTeacherClasses() async {
     try {
       isLoading.value = true;
-      developer.log('Loading teacher classes');
 
       final classes = await _apiService.getTeacherClasses();
-      teacherClasses.value = classes;
 
-      developer.log('Loaded ${classes.length} classes');
-    } catch (e) {
-      developer.log('Error loading classes: $e');
-      _showErrorSnackbar('Error', 'Gagal memuat data kelas: $e');
-    } finally {
-      isLoading.value = false;
+      // ✅ TAMBAHKAN LOG INI
+      developer.log('📦 API Response classes count: ${classes.length}');
+      for (var i = 0; i < classes.length; i++) {
+        developer.log('Class $i:');
+        developer.log('  - scheduleId: ${classes[i].scheduleId}');
+        developer.log('  - subjectName: ${classes[i].subjectName}');
+        developer.log('  - className: ${classes[i].className}');
+      }
+
+      if (classes.isNotEmpty) {
+        teacherClasses.value = classes;
+        developer.log('✅ Loaded ${classes.length} classes with students');
+      } else {
+        await loadFromDashboard();
+      }
+    } catch (e, stackTrace) {
+      // ...
     }
+  }
+
+  /// ✅ Fallback method: Load dari dashboard API
+  Future<void> loadFromDashboard() async {
+    final dashboard = await _apiService.getTeacherDashboard();
+    final schedules = dashboard['today_schedules'] as List<dynamic>?;
+
+    if (schedules != null && schedules.isNotEmpty) {
+      // ✅ TAMBAHKAN LOG
+      developer.log('📦 Dashboard schedules: ${schedules.length}');
+      for (var schedule in schedules) {
+        developer.log('Schedule data: $schedule'); // ⭐ Cek struktur data
+      }
+
+      teacherClasses.value =
+          schedules
+              .map(
+                (schedule) => TeacherClassModel.fromJson(
+                  schedule as Map<String, dynamic>,
+                ),
+              )
+              .toList();
+
+      await loadStudentsForAllClasses();
+    } else {
+      teacherClasses.value = [];
+      developer.log('⚠️ No schedules found in dashboard');
+    }
+  }
+
+  /// ✅ Load students untuk semua kelas menggunakan API
+  Future<void> loadStudentsForAllClasses() async {
+    for (int i = 0; i < teacherClasses.length; i++) {
+      try {
+        final classData = teacherClasses[i];
+
+        // ✅ Extract class_id dari className (misal: "Kelas 8A MTS")
+        // Atau gunakan scheduleId jika backend support
+        final classId = _extractClassId(classData.className);
+
+        developer.log(
+          '🔍 Fetching students for class: ${classData.className} (id: $classId)',
+        );
+
+        // ✅ Call API getTeacherStudents
+        final studentsData = await _apiService.getTeacherStudents(
+          classId: classId,
+        );
+
+        // ✅ Parse students
+        final students =
+            studentsData
+                .map(
+                  (e) =>
+                      StudentSummaryModel.fromJson(e as Map<String, dynamic>),
+                )
+                .toList();
+
+        developer.log(
+          '✅ Loaded ${students.length} students for ${classData.className}',
+        );
+
+        // ✅ Update class dengan students
+        teacherClasses[i] = classData.copyWith(students: students);
+      } catch (e) {
+        developer.log('⚠️ Error loading students for class ${i}: $e');
+
+        // ✅ Jika gagal, buat dummy students untuk testing
+        // HAPUS BAGIAN INI SETELAH API BACKEND SIAP
+        final dummyStudents = _createDummyStudents(
+          teacherClasses[i].studentCount,
+        );
+        teacherClasses[i] = teacherClasses[i].copyWith(students: dummyStudents);
+      }
+    }
+  }
+
+  /// ✅ Extract class_id dari class_name
+  /// TODO: Sesuaikan dengan format class_id dari backend Anda
+  String _extractClassId(String className) {
+    // Contoh: "Kelas 8A MTS" -> "8a-mts"
+    // Sesuaikan dengan format yang dipakai backend
+    return className
+        .toLowerCase()
+        .replaceAll('kelas ', '')
+        .replaceAll(' ', '-');
+  }
+
+  /// ✅ TEMPORARY: Buat dummy students untuk testing
+  /// HAPUS METHOD INI SETELAH API BACKEND SIAP
+  List<StudentSummaryModel> _createDummyStudents(int count) {
+    return List.generate(
+      count,
+      (index) => StudentSummaryModel(
+        studentId: 'student_${index + 1}',
+        name: 'Santri ${index + 1}',
+        nisn: '${202400000 + index + 1}',
+        attendancePercentage: 85.0 + (index % 15),
+      ),
+    );
   }
 
   /// Get current selected class
@@ -92,18 +201,39 @@ class StudentDataController extends GetxController {
   }
 
   /// Navigate to student attendance history
-  void viewStudentHistory(StudentSummaryModel student) {
+  void viewStudentHistory(StudentSummaryModel student) async {
     final currentClass = selectedClass;
     if (currentClass != null) {
-      Get.toNamed(
-        Routes.STUDENT_ATTENDANCE_HISTORY,
-        arguments: {
-          'student': student,
-          'subject_id': currentClass.subjectId,
-          'subject_name': currentClass.subjectName,
-          'class_name': currentClass.className,
-        },
-      );
+      developer.log('🔄 Navigating to student history:');
+      developer.log('  - Student: ${student.name} (${student.studentId})');
+      developer.log('  - Subject: ${currentClass.subjectName}');
+      developer.log('  - Subject ID: ${currentClass.scheduleId}');
+      developer.log('  - Class: ${currentClass.className}');
+
+      try {
+        // ✅ Kirim data lewat arguments, bukan Get.put(tag)
+        await Get.to(
+          () => const StudentHistoryView(),
+          binding: StudentHistoryBinding(),
+          arguments: {
+            'student': student,
+            'subject_id': currentClass.scheduleId,
+            'subject_name': currentClass.subjectName,
+            'class_name': currentClass.className,
+          },
+          transition: Transition.rightToLeft,
+          duration: const Duration(milliseconds: 300),
+        );
+
+        developer.log('✅ Navigation initiated successfully');
+      } catch (e, stackTrace) {
+        developer.log('❌ Navigation error: $e');
+        developer.log('Stack trace: $stackTrace');
+        _showErrorSnackbar('Error', 'Gagal membuka halaman riwayat: $e');
+      }
+    } else {
+      developer.log('⚠️ Cannot navigate: selectedClass is null');
+      _showErrorSnackbar('Error', 'Data kelas tidak ditemukan');
     }
   }
 
@@ -165,7 +295,10 @@ class StudentDataController extends GetxController {
 
               Text(
                 student.name,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               Text(
                 'NIS: ${student.nisn}',
@@ -175,7 +308,10 @@ class StudentDataController extends GetxController {
               const SizedBox(height: 8),
 
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: getAttendanceStatusColor(
                     student.attendancePercentage,
@@ -200,8 +336,11 @@ class StudentDataController extends GetxController {
                 leading: const Icon(Icons.history, color: Colors.blue),
                 title: const Text('Lihat Riwayat Kehadiran'),
                 onTap: () {
+                  // ✅ FIX: Close bottom sheet dulu, tunggu, baru navigate
                   Get.back();
-                  viewStudentHistory(student);
+                  Future.delayed(const Duration(milliseconds: 200), () {
+                    viewStudentHistory(student);
+                  });
                 },
               ),
 
@@ -210,10 +349,12 @@ class StudentDataController extends GetxController {
                 title: const Text('Detail Profil Siswa'),
                 onTap: () {
                   Get.back();
-                  _showSnackbar(
-                    'Info',
-                    'Fitur detail profil akan segera tersedia',
-                  );
+                  Future.delayed(const Duration(milliseconds: 200), () {
+                    _showSnackbar(
+                      'Info',
+                      'Fitur detail profil akan segera tersedia',
+                    );
+                  });
                 },
               ),
             ],
@@ -262,6 +403,7 @@ class StudentDataController extends GetxController {
 
       _showSnackbar('Info', 'Sedang memproses ekspor...');
 
+      // TODO: Uncomment when ExportService is ready
       // await _exportService.exportClassSummaryToExcel(
       //   teacherClass: selectedClass,
       //   period:

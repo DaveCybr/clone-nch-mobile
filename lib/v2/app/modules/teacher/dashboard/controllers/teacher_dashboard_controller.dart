@@ -182,8 +182,8 @@ class TeacherDashboardController extends GetxController {
 
     // Navigate with proper error handling
     try {
-      Get.toNamed(
-        Routes.TEACHER_ATTENDANCE,
+      Get.rootDelegate.offNamed(
+        Routes.getTeacherRoute(Routes.TEACHER_ATTENDANCE),
         arguments: {'schedule': schedule, 'schedule_id': schedule.id},
       );
       print('✅ Navigation successful');
@@ -196,7 +196,9 @@ class TeacherDashboardController extends GetxController {
   /// Navigate to announcements
   void navigateToAnnouncements() {
     try {
-      Get.toNamed(Routes.TEACHER_ANNOUNCEMENTS);
+      Get.rootDelegate.offNamed(
+        Routes.getTeacherRoute(Routes.TEACHER_ANNOUNCEMENTS),
+      );
     } catch (e) {
       _showErrorSnackbar('Info', 'Halaman pengumuman belum tersedia');
     }
@@ -205,7 +207,9 @@ class TeacherDashboardController extends GetxController {
   /// Navigate to students
   void navigateToStudents() {
     try {
-      Get.toNamed(Routes.TEACHER_STUDENTS);
+      Get.rootDelegate.offNamed(
+        Routes.getTeacherRoute(Routes.TEACHER_STUDENTS),
+      );
     } catch (e) {
       _showErrorSnackbar('Error', 'Tidak dapat membuka halaman siswa: $e');
     }
@@ -214,7 +218,9 @@ class TeacherDashboardController extends GetxController {
   /// Navigate to schedule
   void navigateToSchedule() {
     try {
-      Get.toNamed(Routes.TEACHER_SCHEDULE);
+      Get.rootDelegate.offNamed(
+        Routes.getTeacherRoute(Routes.TEACHER_SCHEDULE),
+      );
     } catch (e) {
       _showErrorSnackbar('Info', 'Halaman jadwal belum tersedia');
     }
@@ -223,7 +229,7 @@ class TeacherDashboardController extends GetxController {
   /// Navigate to profile
   void navigateToProfile() {
     try {
-      Get.toNamed(Routes.TEACHER_PROFILE);
+      Get.rootDelegate.offNamed(Routes.getTeacherRoute(Routes.TEACHER_PROFILE));
     } catch (e) {
       _showErrorSnackbar('Info', 'Halaman profil belum tersedia');
     }

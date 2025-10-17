@@ -1,11 +1,14 @@
 // lib/v2/app/modules/student/dashboard/controllers/student_dashboard_controller.dart
 
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nch_mobile/v2/app/data/models/student_dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../auth/controllers/auth_controller.dart';
 
 class StudentDashboardController extends GetxController {
   final ApiService _apiService = Get.find();
+  final AuthController _authController = Get.find<AuthController>();
 
   // Dashboard data
   final isLoading = true.obs;
@@ -20,6 +23,28 @@ class StudentDashboardController extends GetxController {
   void onInit() {
     super.onInit();
     loadDashboard();
+  }
+
+  void logout() {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('تسجيل الخروج'),
+        content: const Text(
+          'هل أنت متأكد من تسجيل الخروج؟\nApakah Anda yakin ingin keluar?',
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              Get.back();
+              _authController.logout();
+            },
+            child: const Text('خروج', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Load dashboard data

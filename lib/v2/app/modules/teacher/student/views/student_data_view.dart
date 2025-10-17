@@ -185,7 +185,7 @@ class StudentDataView extends GetView<StudentDataController> {
           itemBuilder: (context, index) {
             final classData = controller.teacherClasses[index];
             final isSelected = controller.selectedClassIndex.value == index;
-
+            
             return GestureDetector(
               onTap: () => controller.selectClass(index),
               child: Container(

@@ -6,6 +6,8 @@ import 'package:get_storage/get_storage.dart';
 
 import 'v2/app/data/services/api_service.dart';
 import 'v2/app/data/services/storage_service.dart';
+import 'v2/app/data/services/version_service.dart';
+import 'v2/app/data/widgets/update_dialog.dart'; // ✅ TAMBAHKAN INI
 import 'v2/app/modules/auth/controllers/auth_controller.dart';
 import 'v2/app/routes/app_pages.dart';
 import 'v2/app/routes/app_routes.dart';
@@ -61,16 +63,32 @@ Future<void> _initializeServices() async {
     // Wait for API service to be initialized
     Get.find<ApiService>().onInit();
 
+    // TAMBAHKAN: Initialize VersionService
+    Get.put(VersionService(), permanent: true);
+    Get.find<VersionService>().onInit();
+
     // Initialize auth controller last
     Get.put(AuthController(), permanent: true);
 
     print('All services initialized successfully');
+
+    // ✅ CEK UPDATE SETELAH SEMUA SERVICE SIAP
+    Future.delayed(Duration(seconds: 3), () {
+      try {
+        print('🔍 Starting automatic update check...');
+        final updateService = UpdateDialogService();
+        updateService.checkAndShowUpdateDialog();
+      } catch (e) {
+        print('❌ Error in automatic update check: $e');
+      }
+    });
   } catch (e) {
     print('Error initializing services: $e');
     // Still try to initialize basic services
     try {
       Get.put(StorageService(), permanent: true);
       Get.put(ApiService(), permanent: true);
+      Get.put(VersionService(), permanent: true); // TAMBAHKAN INI
       Get.put(AuthController(), permanent: true);
     } catch (fallbackError) {
       print('Fallback initialization also failed: $fallbackError');
@@ -84,27 +102,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: const Size(375, 812), // iPhone 11 Pro size
+      designSize: const Size(375, 812),
       minTextAdapt: true,
       splitScreenMode: true,
       builder: (context, child) {
-        return GetMaterialApp(
+        return GetMaterialApp.router(
           title: 'My NCH',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.lightTheme,
-          initialRoute: Routes.SPLASH,
           getPages: AppPages.routes,
+          routeInformationParser: GetInformationParser(),
+          routerDelegate: Get.rootDelegate,
           locale: Get.deviceLocale ?? const Locale('id', 'ID'),
           fallbackLocale: const Locale('id', 'ID'),
-
-          // Global translations
           translations: AppTranslations(),
-
-          // Default transition
           defaultTransition: Transition.fadeIn,
           transitionDuration: const Duration(milliseconds: 300),
-
-          // Error handling
           unknownRoute: GetPage(
             name: '/notfound',
             page:
@@ -137,7 +150,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Enhanced translations
 class AppTranslations extends Translations {
   @override
   Map<String, Map<String, String>> get keys => {
