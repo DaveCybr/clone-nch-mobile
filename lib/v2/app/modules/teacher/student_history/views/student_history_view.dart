@@ -6,7 +6,6 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../controllers/student_history_controller.dart';
-// import '../controllers/student_history_controller.dart';
 
 class StudentHistoryView extends GetView<StudentHistoryController> {
   const StudentHistoryView({Key? key}) : super(key: key);
@@ -14,64 +13,63 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
       appBar: _buildAppBar(),
-      body: SafeArea(
-        child: Obx(() {
-          if (controller.isLoading.value) {
-            return _buildLoadingState();
-          }
+      body: Obx(() {
+        // ✅ Handle missing data
+        if (controller.student == null ||
+            controller.subjectId == null ||
+            controller.subjectId!.isEmpty) {
+          return _buildMissingDataState();
+        }
 
-          final history = controller.studentHistory.value;
-          if (history == null) {
-            return _buildErrorState();
-          }
+        // ✅ Loading state
+        if (controller.isLoading.value) {
+          return _buildLoadingState();
+        }
 
-          return SingleChildScrollView(
+        // ✅ Check if data is loaded
+        final history = controller.studentHistory.value;
+        if (history == null) {
+          return _buildErrorState();
+        }
+
+        // ✅ SUCCESS: Show data
+        return SingleChildScrollView(
+          child: Padding(
             padding: EdgeInsets.all(16.w),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Student Info Card
                 _buildStudentInfoCard(history),
-
                 SizedBox(height: 16.h),
-
-                // Date Range Selector
                 _buildDateRangeSelector(),
-
                 SizedBox(height: 16.h),
-
-                // Attendance Summary
                 _buildAttendanceSummaryCard(history.summary),
-
                 SizedBox(height: 16.h),
-
-                // History List
                 _buildHistorySection(history.history),
               ],
             ),
-          );
-        }),
-      ),
+          ),
+        );
+      }),
     );
   }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      title: const Text('Data Santri'),
+      title: const Text('Riwayat Kehadiran'),
       centerTitle: true,
       actions: [
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
           onSelected: (String value) {
             switch (value) {
-              // case 'export':
-              //   controller.exportAttendanceReport();
-              //   break;
-              // case 'refresh':
-              //   controller.loadTeacherClasses();
-              //   break;
+              case 'export':
+                controller.exportReport();
+                break;
+              case 'refresh':
+                controller.loadStudentHistory();
+                break;
               case 'filter':
                 _showFilterDialog();
                 break;
@@ -85,7 +83,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
                     children: [
                       Icon(Icons.file_download, color: Colors.green),
                       SizedBox(width: 8),
-                      Text('Ekspor Rekap Kelas'),
+                      Text('Ekspor Laporan'),
                     ],
                   ),
                 ),
@@ -95,7 +93,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
                     children: [
                       Icon(Icons.filter_list, color: Colors.blue),
                       SizedBox(width: 8),
-                      Text('Filter Data'),
+                      Text('Filter Periode'),
                     ],
                   ),
                 ),
@@ -115,6 +113,105 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
     );
   }
 
+  Widget _buildMissingDataState() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 80.sp, color: Colors.red),
+            SizedBox(height: 24.h),
+            Text(
+              'Data Tidak Lengkap',
+              style: AppTextStyles.heading2.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              'Data siswa atau mata pelajaran tidak ditemukan',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            SizedBox(height: 32.h),
+            ElevatedButton.icon(
+              onPressed: () => Get.back(),
+              icon: const Icon(Icons.arrow_back),
+              label: const Text('Kembali'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
+          ),
+          SizedBox(height: 16.h),
+          Text(
+            'Memuat riwayat kehadiran...',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.all(24.w),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 80.sp, color: Colors.red),
+            SizedBox(height: 24.h),
+            Text(
+              'Gagal Memuat Data',
+              style: AppTextStyles.heading2.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
+              ),
+            ),
+            SizedBox(height: 12.h),
+            Text(
+              'Terjadi kesalahan saat memuat riwayat kehadiran',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            SizedBox(height: 32.h),
+            ElevatedButton.icon(
+              onPressed: controller.loadStudentHistory,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Coba Lagi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primaryGreen,
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showFilterDialog() {
     Get.dialog(
       Dialog(
@@ -126,59 +223,21 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Filter Data Siswa',
+                'Filter Periode',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
-
               const Text(
-                'Status Kehadiran:',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                'Fitur filter periode akan segera tersedia',
+                style: TextStyle(color: Colors.grey),
               ),
-              const SizedBox(height: 8),
-
-              Wrap(
-                spacing: 8,
-                children: [
-                  FilterChip(
-                    label: const Text('Semua'),
-                    selected: true,
-                    onSelected: (selected) {},
-                  ),
-                  FilterChip(
-                    label: const Text('Kehadiran > 90%'),
-                    selected: false,
-                    onSelected: (selected) {},
-                  ),
-                  FilterChip(
-                    label: const Text('Kehadiran 75-90%'),
-                    selected: false,
-                    onSelected: (selected) {},
-                  ),
-                  FilterChip(
-                    label: const Text('Kehadiran < 75%'),
-                    selected: false,
-                    onSelected: (selected) {},
-                  ),
-                ],
-              ),
-
               const SizedBox(height: 16),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
                     onPressed: () => Get.back(),
-                    child: const Text('Batal'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      Get.back();
-                      // Apply filter logic here
-                    },
-                    child: const Text('Terapkan'),
+                    child: const Text('Tutup'),
                   ),
                 ],
               ),
@@ -197,6 +256,13 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
           colors: [AppColors.primaryGreen, AppColors.primaryGreenDark],
         ),
         borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,13 +270,14 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
           Row(
             children: [
               CircleAvatar(
-                radius: 25.r,
+                radius: 30.r,
                 backgroundColor: Colors.white.withOpacity(0.2),
                 child: Text(
                   history.name.isNotEmpty ? history.name[0].toUpperCase() : 'S',
                   style: AppTextStyles.heading2.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
+                    fontSize: 24.sp,
                   ),
                 ),
               ),
@@ -226,6 +293,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    SizedBox(height: 4.h),
                     Text(
                       'NIS: ${history.nisn}',
                       style: AppTextStyles.bodyMedium.copyWith(
@@ -243,13 +311,11 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               ),
             ],
           ),
-
           SizedBox(height: 16.h),
-
           Container(
             padding: EdgeInsets.all(12.w),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: Colors.white.withOpacity(0.15),
               borderRadius: BorderRadius.circular(8.r),
             ),
             child: Row(
@@ -289,7 +355,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.date_range, color: AppColors.primaryGreen),
+          Icon(Icons.date_range, color: AppColors.primaryGreen, size: 24.sp),
           SizedBox(width: 12.w),
           Expanded(
             child: Column(
@@ -301,6 +367,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
                     color: AppColors.textSecondary,
                   ),
                 ),
+                SizedBox(height: 4.h),
                 Obx(() {
                   final range = controller.selectedDateRange.value;
                   if (range == null) return const Text('Pilih periode');
@@ -339,17 +406,16 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
         children: [
           Row(
             children: [
-              const Icon(Icons.analytics, color: AppColors.primaryGreen),
+              Icon(Icons.analytics, color: AppColors.primaryGreen, size: 24.sp),
               SizedBox(width: 8.w),
               Text('Ringkasan Kehadiran', style: AppTextStyles.cardTitle),
             ],
           ),
-
           SizedBox(height: 16.h),
 
           // Attendance percentage
           Container(
-            padding: EdgeInsets.all(12.w),
+            padding: EdgeInsets.all(16.w),
             decoration: BoxDecoration(
               color: AppColors.lightGreenBg,
               borderRadius: BorderRadius.circular(8.r),
@@ -368,7 +434,6 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               ],
             ),
           ),
-
           SizedBox(height: 16.h),
 
           // Summary grid
@@ -379,9 +444,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               _buildSummaryItem('Sakit', summary.sakit, Colors.blue),
             ],
           ),
-
           SizedBox(height: 8.h),
-
           Row(
             children: [
               _buildSummaryItem('Izin', summary.izin, Colors.orange),
@@ -389,17 +452,22 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
               _buildSummaryItem('Alpha', summary.alpha, Colors.red),
             ],
           ),
-
-          SizedBox(height: 12.h),
+          SizedBox(height: 16.h),
 
           Container(
-            padding: EdgeInsets.symmetric(vertical: 8.h),
+            padding: EdgeInsets.symmetric(vertical: 12.h),
             decoration: const BoxDecoration(
               border: Border(top: BorderSide(color: AppColors.dividerColor)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Icon(
+                  Icons.event_note,
+                  size: 18.sp,
+                  color: AppColors.textSecondary,
+                ),
+                SizedBox(width: 8.w),
                 Text(
                   'Total Pertemuan: ${summary.totalSessions}',
                   style: AppTextStyles.bodyMedium.copyWith(
@@ -466,12 +534,18 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
         children: [
           Row(
             children: [
-              const Icon(Icons.history, color: AppColors.primaryGreen),
+              Icon(Icons.history, color: AppColors.primaryGreen, size: 24.sp),
               SizedBox(width: 8.w),
               Text('Riwayat Detail', style: AppTextStyles.cardTitle),
+              const Spacer(),
+              Text(
+                '${history.length} Record',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
-
           SizedBox(height: 16.h),
 
           if (history.isEmpty)
@@ -491,22 +565,21 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
       margin: EdgeInsets.only(bottom: 8.h),
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
+        color: statusColor.withOpacity(0.05),
         border: Border.all(color: statusColor.withOpacity(0.2)),
         borderRadius: BorderRadius.circular(8.r),
       ),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(8.w),
+            padding: EdgeInsets.all(10.w),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
+              color: statusColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8.r),
             ),
-            child: Icon(statusIcon, color: statusColor, size: 20.sp),
+            child: Icon(statusIcon, color: statusColor, size: 22.sp),
           ),
-
           SizedBox(width: 12.w),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -517,16 +590,23 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(height: 2.h),
-                Text(
-                  record.status.displayName,
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: statusColor,
-                    fontWeight: FontWeight.w600,
+                SizedBox(height: 4.h),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(4.r),
+                  ),
+                  child: Text(
+                    record.status.displayName,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: statusColor,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 if (record.notes != null && record.notes!.isNotEmpty) ...[
-                  SizedBox(height: 4.h),
+                  SizedBox(height: 6.h),
                   Text(
                     record.notes!,
                     style: AppTextStyles.bodySmall.copyWith(
@@ -546,21 +626,19 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
   Widget _buildEmptyHistory() {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(20.w),
+        padding: EdgeInsets.symmetric(vertical: 32.h),
         child: Column(
           children: [
-            Icon(
-              Icons.history_outlined,
-              size: 48.sp,
-              color: AppColors.textHint,
-            ),
-            SizedBox(height: 12.h),
+            Icon(Icons.inbox_outlined, size: 64.sp, color: AppColors.textHint),
+            SizedBox(height: 16.h),
             Text(
               'Tidak ada riwayat kehadiran',
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
               ),
             ),
+            SizedBox(height: 4.h),
             Text(
               'untuk periode yang dipilih',
               style: AppTextStyles.bodySmall.copyWith(
@@ -569,47 +647,6 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'Memuat riwayat kehadiran...',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64.sp, color: Colors.red),
-          SizedBox(height: 16.h),
-          Text(
-            'Gagal memuat riwayat',
-            style: AppTextStyles.bodyMedium.copyWith(color: Colors.red),
-          ),
-          SizedBox(height: 16.h),
-          ElevatedButton(
-            onPressed: controller.loadStudentHistory,
-            child: const Text('Coba Lagi'),
-          ),
-        ],
       ),
     );
   }

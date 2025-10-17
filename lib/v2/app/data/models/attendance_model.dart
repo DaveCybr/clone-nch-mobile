@@ -356,16 +356,32 @@ class TeacherClassModel {
 
   // ✅ Factory untuk parsing dari API response today_schedules
   factory TeacherClassModel.fromJson(Map<String, dynamic> json) {
+    // ✅ FIX: Tambahkan 'subject_id' sebagai opsi pertama!
+    final scheduleId =
+        json['subject_id']?.toString() ?? // ⭐ TAMBAH INI!
+        json['schedule_id']?.toString() ??
+        json['id']?.toString() ??
+        json['_id']?.toString() ??
+        json['scheduleId']?.toString() ??
+        '';
+
+    // ✅ Log warning jika ID tidak ditemukan
+    if (scheduleId.isEmpty) {
+      print('⚠️ WARNING: No valid schedule ID found in JSON: $json');
+    }
+
     return TeacherClassModel(
-      scheduleId: json['id'] ?? '',
-      subjectName: json['subject_name'] ?? '',
-      className: json['class_name'] ?? '',
-      timeSlot: json['time_slot'] ?? '',
-      startTime: json['start_time'] ?? '',
-      endTime: json['end_time'] ?? '',
-      day: json['day'] ?? '',
-      isDone: json['is_done'] ?? false,
-      studentCount: json['total_students'] ?? 0,
+      scheduleId: scheduleId,
+      subjectName: json['subject_name']?.toString() ?? '',
+      className: json['class_name']?.toString() ?? '',
+      timeSlot: json['time_slot']?.toString() ?? '',
+      startTime: json['start_time']?.toString() ?? '',
+      endTime: json['end_time']?.toString() ?? '',
+      day: json['day']?.toString() ?? '',
+      isDone: json['is_done'] == true || json['is_done'] == 1,
+      studentCount:
+          int.tryParse(json['student_count']?.toString() ?? '0') ??
+          0, // ✅ Fix: gunakan 'student_count'
       students:
           (json['students'] as List?)
               ?.map((e) => StudentSummaryModel.fromJson(e))

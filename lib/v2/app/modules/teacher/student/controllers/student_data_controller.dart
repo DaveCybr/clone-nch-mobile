@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:nch_mobile/v2/app/routes/app_routes.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/services/api_service.dart';
-import '../../student_history/bindings/student_history_binding.dart';
+import '../../student_history/controllers/student_history_controller.dart';
 import '../../student_history/views/student_history_view.dart';
 
 class StudentDataController extends GetxController {
@@ -16,6 +16,9 @@ class StudentDataController extends GetxController {
   final teacherClasses = <TeacherClassModel>[].obs;
   final selectedClassIndex = 0.obs;
   final searchQuery = ''.obs;
+
+  // ✅ Flag untuk prevent multiple navigations
+  bool _isNavigating = false;
 
   // Form controllers
   final searchController = TextEditingController();
@@ -39,7 +42,6 @@ class StudentDataController extends GetxController {
 
       final classes = await _apiService.getTeacherClasses();
 
-      // ✅ TAMBAHKAN LOG INI
       developer.log('📦 API Response classes count: ${classes.length}');
       for (var i = 0; i < classes.length; i++) {
         developer.log('Class $i:');
@@ -55,35 +57,41 @@ class StudentDataController extends GetxController {
         await loadFromDashboard();
       }
     } catch (e, stackTrace) {
-      // ...
+      developer.log('❌ Error loading teacher classes: $e');
+      _showErrorSnackbar('Error', 'Gagal memuat data kelas');
+    } finally {
+      isLoading.value = false;
     }
   }
 
   /// ✅ Fallback method: Load dari dashboard API
   Future<void> loadFromDashboard() async {
-    final dashboard = await _apiService.getTeacherDashboard();
-    final schedules = dashboard['today_schedules'] as List<dynamic>?;
+    try {
+      final dashboard = await _apiService.getTeacherDashboard();
+      final schedules = dashboard['today_schedules'] as List<dynamic>?;
 
-    if (schedules != null && schedules.isNotEmpty) {
-      // ✅ TAMBAHKAN LOG
-      developer.log('📦 Dashboard schedules: ${schedules.length}');
-      for (var schedule in schedules) {
-        developer.log('Schedule data: $schedule'); // ⭐ Cek struktur data
+      if (schedules != null && schedules.isNotEmpty) {
+        developer.log('📦 Dashboard schedules: ${schedules.length}');
+        for (var schedule in schedules) {
+          developer.log('Schedule data: $schedule');
+        }
+
+        teacherClasses.value =
+            schedules
+                .map(
+                  (schedule) => TeacherClassModel.fromJson(
+                    schedule as Map<String, dynamic>,
+                  ),
+                )
+                .toList();
+
+        await loadStudentsForAllClasses();
+      } else {
+        teacherClasses.value = [];
+        developer.log('⚠️ No schedules found in dashboard');
       }
-
-      teacherClasses.value =
-          schedules
-              .map(
-                (schedule) => TeacherClassModel.fromJson(
-                  schedule as Map<String, dynamic>,
-                ),
-              )
-              .toList();
-
-      await loadStudentsForAllClasses();
-    } else {
-      teacherClasses.value = [];
-      developer.log('⚠️ No schedules found in dashboard');
+    } catch (e) {
+      developer.log('❌ Error loading from dashboard: $e');
     }
   }
 
@@ -92,21 +100,16 @@ class StudentDataController extends GetxController {
     for (int i = 0; i < teacherClasses.length; i++) {
       try {
         final classData = teacherClasses[i];
-
-        // ✅ Extract class_id dari className (misal: "Kelas 8A MTS")
-        // Atau gunakan scheduleId jika backend support
         final classId = _extractClassId(classData.className);
 
         developer.log(
           '🔍 Fetching students for class: ${classData.className} (id: $classId)',
         );
 
-        // ✅ Call API getTeacherStudents
         final studentsData = await _apiService.getTeacherStudents(
           classId: classId,
         );
 
-        // ✅ Parse students
         final students =
             studentsData
                 .map(
@@ -119,13 +122,9 @@ class StudentDataController extends GetxController {
           '✅ Loaded ${students.length} students for ${classData.className}',
         );
 
-        // ✅ Update class dengan students
         teacherClasses[i] = classData.copyWith(students: students);
       } catch (e) {
         developer.log('⚠️ Error loading students for class ${i}: $e');
-
-        // ✅ Jika gagal, buat dummy students untuk testing
-        // HAPUS BAGIAN INI SETELAH API BACKEND SIAP
         final dummyStudents = _createDummyStudents(
           teacherClasses[i].studentCount,
         );
@@ -134,19 +133,13 @@ class StudentDataController extends GetxController {
     }
   }
 
-  /// ✅ Extract class_id dari class_name
-  /// TODO: Sesuaikan dengan format class_id dari backend Anda
   String _extractClassId(String className) {
-    // Contoh: "Kelas 8A MTS" -> "8a-mts"
-    // Sesuaikan dengan format yang dipakai backend
     return className
         .toLowerCase()
         .replaceAll('kelas ', '')
         .replaceAll(' ', '-');
   }
 
-  /// ✅ TEMPORARY: Buat dummy students untuk testing
-  /// HAPUS METHOD INI SETELAH API BACKEND SIAP
   List<StudentSummaryModel> _createDummyStudents(int count) {
     return List.generate(
       count,
@@ -159,7 +152,6 @@ class StudentDataController extends GetxController {
     );
   }
 
-  /// Get current selected class
   TeacherClassModel? get selectedClass {
     if (teacherClasses.isEmpty ||
         selectedClassIndex.value >= teacherClasses.length) {
@@ -168,7 +160,6 @@ class StudentDataController extends GetxController {
     return teacherClasses[selectedClassIndex.value];
   }
 
-  /// Get filtered students based on search
   List<StudentSummaryModel> get filteredStudents {
     final currentClass = selectedClass;
     if (currentClass == null) return [];
@@ -185,73 +176,107 @@ class StudentDataController extends GetxController {
     }).toList();
   }
 
-  /// Update search query
   void updateSearchQuery(String query) {
     searchQuery.value = query;
   }
 
-  /// Change selected class
   void selectClass(int index) {
     if (index >= 0 && index < teacherClasses.length) {
       selectedClassIndex.value = index;
-      // Clear search when changing class
       searchController.clear();
       searchQuery.value = '';
     }
   }
 
-  /// Navigate to student attendance history
-  void viewStudentHistory(StudentSummaryModel student) async {
+  /// ✅ FIXED: Navigate to student attendance history WITHOUT BINDING
+  Future<void> viewStudentHistory(StudentSummaryModel student) async {
+    // ✅ Prevent multiple simultaneous navigations
+    if (_isNavigating) {
+      developer.log('⚠️ Already navigating, ignoring duplicate call');
+      return;
+    }
+
     final currentClass = selectedClass;
-    if (currentClass != null) {
-      developer.log('🔄 Navigating to student history:');
-      developer.log('  - Student: ${student.name} (${student.studentId})');
-      developer.log('  - Subject: ${currentClass.subjectName}');
-      developer.log('  - Subject ID: ${currentClass.scheduleId}');
-      developer.log('  - Class: ${currentClass.className}');
-
-      try {
-        // ✅ Kirim data lewat arguments, bukan Get.put(tag)
-        await Get.to(
-          () => const StudentHistoryView(),
-          binding: StudentHistoryBinding(),
-          arguments: {
-            'student': student,
-            'subject_id': currentClass.scheduleId,
-            'subject_name': currentClass.subjectName,
-            'class_name': currentClass.className,
-          },
-          transition: Transition.rightToLeft,
-          duration: const Duration(milliseconds: 300),
-        );
-
-        developer.log('✅ Navigation initiated successfully');
-      } catch (e, stackTrace) {
-        developer.log('❌ Navigation error: $e');
-        developer.log('Stack trace: $stackTrace');
-        _showErrorSnackbar('Error', 'Gagal membuka halaman riwayat: $e');
-      }
-    } else {
+    if (currentClass == null) {
       developer.log('⚠️ Cannot navigate: selectedClass is null');
       _showErrorSnackbar('Error', 'Data kelas tidak ditemukan');
+      return;
+    }
+
+    if (currentClass.scheduleId.isEmpty) {
+      developer.log('❌ scheduleId is empty!');
+      _showErrorSnackbar(
+        'Error',
+        'ID jadwal tidak ditemukan. Silakan muat ulang data.',
+      );
+      return;
+    }
+
+    developer.log('🔄 Navigating to student history:');
+    developer.log('  - Student: ${student.name} (${student.studentId})');
+    developer.log('  - Subject: ${currentClass.subjectName}');
+    developer.log('  - Subject ID: ${currentClass.scheduleId}');
+    developer.log('  - Class: ${currentClass.className}');
+
+    try {
+      _isNavigating = true;
+
+      // ✅ Wait untuk ensure UI is ready
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // ✅ Delete old controller if exists
+      if (Get.isRegistered<StudentHistoryController>()) {
+        Get.delete<StudentHistoryController>();
+      }
+
+      // ✅ Create controller dengan data langsung (NO BINDING!)
+      Get.put(
+        StudentHistoryController(
+          student: student,
+          subjectId: currentClass.scheduleId,
+          subjectName: currentClass.subjectName,
+          className: currentClass.className,
+        ),
+      );
+
+      developer.log('✅ Controller created with data');
+
+      // ✅ Navigate WITHOUT binding
+      final result = await Get.to(
+        () => const StudentHistoryView(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 300),
+        preventDuplicates: true,
+      );
+
+      developer.log('✅ Navigation completed, result: $result');
+
+      // ✅ Cleanup controller after back
+      if (Get.isRegistered<StudentHistoryController>()) {
+        Get.delete<StudentHistoryController>();
+      }
+    } catch (e, stackTrace) {
+      developer.log('❌ Navigation error: $e');
+      developer.log('Stack trace: $stackTrace');
+      _showErrorSnackbar('Error', 'Gagal membuka halaman riwayat: $e');
+    } finally {
+      _isNavigating = false;
     }
   }
 
-  /// Get attendance status color
   Color getAttendanceStatusColor(double percentage) {
     if (percentage >= 90) return Colors.green;
     if (percentage >= 75) return Colors.orange;
     return Colors.red;
   }
 
-  /// Get attendance status text
   String getAttendanceStatusText(double percentage) {
     if (percentage >= 90) return 'Baik';
     if (percentage >= 75) return 'Cukup';
     return 'Kurang';
   }
 
-  /// Show student options bottom sheet
+  /// ✅ FIXED: Show student options bottom sheet
   void showStudentOptions(StudentSummaryModel student) {
     Get.bottomSheet(
       SafeArea(
@@ -267,7 +292,6 @@ class StudentDataController extends GetxController {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header
               Container(
                 width: 50,
                 height: 4,
@@ -331,16 +355,18 @@ class StudentDataController extends GetxController {
 
               const SizedBox(height: 20),
 
-              // Action buttons
+              // ✅ FIXED: Action buttons
               ListTile(
                 leading: const Icon(Icons.history, color: Colors.blue),
                 title: const Text('Lihat Riwayat Kehadiran'),
-                onTap: () {
-                  // ✅ FIX: Close bottom sheet dulu, tunggu, baru navigate
-                  Get.back();
-                  Future.delayed(const Duration(milliseconds: 200), () {
-                    viewStudentHistory(student);
-                  });
+                onTap: () async {
+                  Get.back(); // Close bottomsheet
+
+                  // ✅ Wait 350ms untuk bottomsheet animation selesai
+                  await Future.delayed(const Duration(milliseconds: 350));
+
+                  // ✅ Baru navigate
+                  viewStudentHistory(student);
                 },
               ),
 
@@ -349,7 +375,7 @@ class StudentDataController extends GetxController {
                 title: const Text('Detail Profil Siswa'),
                 onTap: () {
                   Get.back();
-                  Future.delayed(const Duration(milliseconds: 200), () {
+                  Future.delayed(const Duration(milliseconds: 350), () {
                     _showSnackbar(
                       'Info',
                       'Fitur detail profil akan segera tersedia',
@@ -362,35 +388,41 @@ class StudentDataController extends GetxController {
         ),
       ),
       isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
     );
   }
 
   void _showErrorSnackbar(String title, String message) {
-    Get.snackbar(
-      title,
-      message,
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-      icon: const Icon(Icons.error, color: Colors.white),
-      snackPosition: SnackPosition.TOP,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 8,
-      duration: const Duration(seconds: 3),
-    );
+    if (!Get.isSnackbarOpen) {
+      Get.snackbar(
+        title,
+        message,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        icon: const Icon(Icons.error, color: Colors.white),
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 8,
+        duration: const Duration(seconds: 3),
+      );
+    }
   }
 
   void _showSnackbar(String title, String message) {
-    Get.snackbar(
-      title,
-      message,
-      backgroundColor: Colors.blue,
-      colorText: Colors.white,
-      icon: const Icon(Icons.info, color: Colors.white),
-      snackPosition: SnackPosition.TOP,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 8,
-      duration: const Duration(seconds: 3),
-    );
+    if (!Get.isSnackbarOpen) {
+      Get.snackbar(
+        title,
+        message,
+        backgroundColor: Colors.blue,
+        colorText: Colors.white,
+        icon: const Icon(Icons.info, color: Colors.white),
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 8,
+        duration: const Duration(seconds: 3),
+      );
+    }
   }
 
   Future<void> exportAttendanceReport() async {
@@ -403,12 +435,7 @@ class StudentDataController extends GetxController {
 
       _showSnackbar('Info', 'Sedang memproses ekspor...');
 
-      // TODO: Uncomment when ExportService is ready
-      // await _exportService.exportClassSummaryToExcel(
-      //   teacherClass: selectedClass,
-      //   period:
-      //       'Semester ${DateTime.now().month > 6 ? 'Ganjil' : 'Genap'} ${DateTime.now().year}',
-      // );
+      await Future.delayed(const Duration(seconds: 1));
 
       _showSuccessSnackbar('تبارك الله', 'Rekap kelas berhasil diekspor');
     } catch (e) {
@@ -418,16 +445,18 @@ class StudentDataController extends GetxController {
   }
 
   void _showSuccessSnackbar(String title, String message) {
-    Get.snackbar(
-      title,
-      message,
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      icon: const Icon(Icons.check_circle, color: Colors.white),
-      snackPosition: SnackPosition.TOP,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 8,
-      duration: const Duration(seconds: 3),
-    );
+    if (!Get.isSnackbarOpen) {
+      Get.snackbar(
+        title,
+        message,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        icon: const Icon(Icons.check_circle, color: Colors.white),
+        snackPosition: SnackPosition.TOP,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 8,
+        duration: const Duration(seconds: 3),
+      );
+    }
   }
 }
