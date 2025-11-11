@@ -1,4 +1,6 @@
 // lib/v2/app/modules/auth/controllers/auth_controller.dart
+// FIXED VERSION - Better Logout Handling
+
 import 'dart:developer' as developer show log;
 
 import 'package:flutter/material.dart';
@@ -6,9 +8,9 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/api_service.dart';
+import '../../../data/services/navigations_services.dart';
 import '../../../data/services/storage_service.dart';
 import '../../../data/services/firebase_service.dart';
-import '../../../routes/app_routes.dart';
 
 class AuthController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
@@ -158,7 +160,6 @@ class AuthController extends GetxController {
         redirectBasedOnRole();
 
         // ✅ CRITICAL FIX: Setup notifications AFTER navigation
-        // This ensures the async operation doesn't get interrupted
         developer.log('');
         developer.log('╔═══════════════════════════════════════════╗');
         developer.log('║  🔔 SETTING UP NOTIFICATIONS (ASYNC)     ║');
@@ -192,9 +193,8 @@ class AuthController extends GetxController {
     }
   }
 
-  /// ✅ NEW: Setup notifications in background (won't block UI)
+  /// ✅ Setup notifications in background (won't block UI)
   void _setupNotificationsInBackground(UserModel currentUser) {
-    // Use Future.microtask to ensure this runs AFTER current frame
     Future.microtask(() async {
       developer.log('');
       developer.log('╔═══════════════════════════════════════════╗');
@@ -204,7 +204,6 @@ class AuthController extends GetxController {
       developer.log('║ Role: ${currentUser.currentRole}');
 
       try {
-        // Delay to ensure navigation is complete
         await Future.delayed(const Duration(milliseconds: 500));
 
         developer.log('║ 🚀 Starting subscription...');
@@ -270,42 +269,95 @@ class AuthController extends GetxController {
     } catch (e, stack) {
       developer.log('❌ Error in _sendFCMToken: $e');
       developer.log('Stack: $stack');
-      rethrow; // Re-throw to let caller handle
+      rethrow;
     }
   }
 
-  /// Logout function
+  /// ✅ FIXED: Logout function with better error handling
   Future<void> logout() async {
     try {
+      developer.log('');
+      developer.log('╔═══════════════════════════════════════════╗');
+      developer.log('║          🚪 LOGOUT STARTED               ║');
+      developer.log('╚═══════════════════════════════════════════╝');
+
       isLoading.value = true;
 
-      // Unsubscribe from topics
+      // 1. Unsubscribe from topics (non-blocking)
       if (user.value != null) {
-        await _unsubscribeFromTopics(user.value!);
+        developer.log('🔕 Unsubscribing from topics...');
+        try {
+          await _unsubscribeFromTopics(user.value!);
+          developer.log('✅ Unsubscribed from topics');
+        } catch (e) {
+          developer.log('⚠️ Unsubscribe failed: $e (continuing logout)');
+        }
       }
 
-      // Delete FCM token
-      await _firebaseService.deleteToken();
-      developer.log('✅ FCM token deleted on logout');
+      // 2. Delete FCM token (non-blocking)
+      try {
+        developer.log('🗑️ Deleting FCM token...');
+        await _firebaseService.deleteToken();
+        developer.log('✅ FCM token deleted');
+      } catch (e) {
+        developer.log('⚠️ Delete token failed: $e (continuing logout)');
+      }
 
-      // Call logout API
-      await _apiService.logout();
+      // 3. Call logout API (non-blocking if fails)
+      try {
+        developer.log('📡 Calling logout API...');
+        await _apiService.logout();
+        developer.log('✅ Logout API successful');
+      } catch (e) {
+        developer.log('⚠️ Logout API failed: $e');
+        developer.log('   (This is OK, continuing with local logout)');
+        // Don't throw, continue with local logout
+      }
 
-      // Clear all local data
+      // 4. Clear all local data (CRITICAL - must succeed)
+      developer.log('🧹 Clearing local auth data...');
       await _clearAuthData();
+      developer.log('✅ Local data cleared');
 
+      developer.log('');
+      developer.log('╔═══════════════════════════════════════════╗');
+      developer.log('║       ✅ LOGOUT COMPLETED                ║');
+      developer.log('╚═══════════════════════════════════════════╝');
+      developer.log('');
+
+      // Show success message
       _showSuccessSnackbar(
         'وداعاً',
         'جزاك الله خيراً - Semoga Allah membalas kebaikan Anda',
       );
 
-      Get.rootDelegate.offNamed(Routes.LOGIN);
-    } catch (e) {
-      developer.log('Logout error: $e');
-      await _clearAuthData();
-      Get.rootDelegate.offNamed(Routes.LOGIN);
+      // Small delay to show snackbar
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      // ✅ Navigate to login (clean navigation)
+      developer.log('🔐 Navigating to login...');
+      await NavigationService.to.toLogin();
+
+      developer.log('✅ Navigation completed');
+    } catch (e, stackTrace) {
+      developer.log('');
+      developer.log('╔═══════════════════════════════════════════╗');
+      developer.log('║       ❌ LOGOUT ERROR                    ║');
+      developer.log('╚═══════════════════════════════════════════╝');
+      developer.log('Error: $e');
+      developer.log('Stack: $stackTrace');
+
+      // Force clear and navigate even on error
+      try {
+        await _clearAuthData();
+      } catch (clearError) {
+        developer.log('❌ Clear data also failed: $clearError');
+      }
+
+      await NavigationService.to.toLogin();
     } finally {
       isLoading.value = false;
+      developer.log('🏁 Logout process finished');
     }
   }
 
@@ -321,6 +373,8 @@ class AuthController extends GetxController {
         role = 'student';
       } else if (currentUser.isParent) {
         role = 'parent';
+      } else if (currentUser.isSecurity) {
+        role = 'security'; // ✅ Added security role
       }
 
       await _firebaseService.unsubscribeFromAllTopics(role);
@@ -328,6 +382,7 @@ class AuthController extends GetxController {
       developer.log('✅ Successfully unsubscribed from all topics');
     } catch (e) {
       developer.log('❌ Error unsubscribing from topics: $e');
+      rethrow;
     }
   }
 
@@ -344,11 +399,11 @@ class AuthController extends GetxController {
     _storageService.setRememberMe(rememberMe.value);
   }
 
-  /// Redirect user based on role
+  /// ✅ FIXED: Redirect user based on role
   void redirectBasedOnRole() {
     final currentUser = user.value;
     if (currentUser == null) {
-      Get.rootDelegate.offNamed(Routes.LOGIN);
+      NavigationService.to.toLogin();
       return;
     }
 
@@ -368,34 +423,34 @@ class AuthController extends GetxController {
 
     // Priority: Teacher > Security > Student > Parent
 
-    // 1. Jika user punya role teacher, arahkan ke teacher dashboard
+    // 1. Teacher
     if (currentUser.isTeacher) {
-      developer.log('  → TEACHER dashboard');
-      Get.rootDelegate.offNamed(Routes.MAIN);
+      developer.log('→ TEACHER dashboard');
+      NavigationService.to.toRoleDashboard('teacher');
     }
-    // 2. Jika user punya role security, arahkan ke security dashboard
+    // 2. Security
     else if (currentUser.isSecurity) {
       developer.log('✅ Redirecting to SECURITY dashboard');
-      Get.rootDelegate.offNamed(Routes.SECURITY);
+      NavigationService.to.toRoleDashboard('security');
     }
-    // 3. Jika user punya student data (santri yang login sendiri)
+    // 3. Student
     else if (currentUser.student != null || currentUser.isStudent) {
       developer.log('✅ Redirecting to STUDENT dashboard');
-      Get.rootDelegate.offNamed(Routes.STUDENT);
+      NavigationService.to.toRoleDashboard('student');
     }
-    // 4. Jika user adalah parent
+    // 4. Parent
     else if (currentUser.isParent) {
       developer.log('✅ Redirecting to PARENT dashboard');
-      Get.rootDelegate.offNamed(Routes.PARENT);
+      NavigationService.to.toRoleDashboard('parent');
     }
-    // 5. Jika tidak ada role yang dikenali
+    // 5. Unknown role
     else {
       developer.log('❌ Unknown role, redirecting to login');
       _showErrorSnackbar(
         'Error',
         'Role tidak dikenali. Hubungi administrator.',
       );
-      Get.rootDelegate.offNamed(Routes.LOGIN);
+      NavigationService.to.toLogin();
     }
   }
 
@@ -505,7 +560,7 @@ class AuthController extends GetxController {
     }
   }
 
-  /// ✅ NEW: Manual subscribe (untuk button test atau retry)
+  /// ✅ Manual subscribe (untuk button test atau retry)
   Future<void> manualSubscribe() async {
     try {
       final currentUser = user.value;

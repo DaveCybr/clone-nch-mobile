@@ -1,10 +1,13 @@
 // lib/v2/app/modules/security/dashboard/controllers/security_dashboard_controller.dart
+// FIXED VERSION - Using NavigationService
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import '../../../../data/services/api_service.dart';
 import '../../../../data/models/security_dashboard_model.dart';
+import '../../../../data/services/navigations_services.dart';
+import '../../../../routes/app_routes.dart'; // ✅ ADDED
 import 'dart:developer' as developer;
 
 class SecurityDashboardController extends GetxController {
@@ -35,7 +38,7 @@ class SecurityDashboardController extends GetxController {
   @override
   void onClose() {
     refreshController.dispose();
-    super.onClose();
+    super.dispose();
   }
 
   /// Load dashboard data
@@ -142,28 +145,45 @@ class SecurityDashboardController extends GetxController {
     }
   }
 
-  /// Auto refresh every 30 seconds
-  void _startAutoRefresh() {
-    Future.delayed(const Duration(seconds: 30), () {
-      if (!isClosed) {
-        loadDashboard();
-        _startAutoRefresh();
-      }
-    });
-  }
-
-  /// Navigate to scan screen
+  /// ✅ FIXED: Navigate to scan screen (Tab)
   void goToScanScreen() {
-    Get.rootDelegate.toNamed('/security/security-scan');
+    // ✅ Security Scan is a bottom nav tab
+    NavigationService.to.toBottomNavTab(Routes.SECURITY_SCAN);
   }
 
-  /// Navigate to visit logs
+  /// ✅ FIXED: Navigate to visit logs (Fullscreen)
   void goToVisitLogs() {
-    Get.rootDelegate.toNamed('/security-visit-logs');
+    // ✅ Visit logs is fullscreen
+    NavigationService.to.toFullscreen(Routes.SECURITY_LOGS);
   }
 
-  /// Navigate to history
+  /// ✅ FIXED: Navigate to history (if exists)
   void goToHistory() {
-    Get.rootDelegate.toNamed('/security-history');
+    // ✅ TODO: Confirm if this is fullscreen or tab
+    // Assuming fullscreen based on naming convention
+    NavigationService.to.toFullscreen('/security-history');
+  }
+
+  /// ✅ NEW: Navigate to visitors list (Tab)
+  void goToVisitorsList() {
+    NavigationService.to.toBottomNavTab(Routes.SECURITY_VISITORS);
+  }
+
+  /// ✅ NEW: Navigate to profile (Tab)
+  void goToProfile() {
+    NavigationService.to.toBottomNavTab(Routes.SECURITY_PROFILE);
+  }
+
+  /// ✅ NEW: Navigate to checkout page (Fullscreen)
+  void goToCheckout(String visitId) {
+    NavigationService.to.toFullscreen(
+      Routes.SECURITY_CHECKOUT,
+      arguments: {'visit_id': visitId},
+    );
+  }
+
+  /// ✅ NEW: Navigate to checkin page (Fullscreen)
+  void goToCheckin() {
+    NavigationService.to.toFullscreen(Routes.SECURITY_CHECKIN);
   }
 }

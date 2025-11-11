@@ -409,6 +409,8 @@ class EmployeeModel {
   final String position;
   final String? nuptk;
   final String? nik;
+  final String? noTelp; // ✅ TAMBAHKAN FIELD INI
+  final String? email; // ✅ TAMBAHKAN FIELD INI
   final String? pendidikanTerakhir;
   final String? jurusan;
   final String? universitas;
@@ -435,6 +437,8 @@ class EmployeeModel {
     required this.position,
     this.nuptk,
     this.nik,
+    this.noTelp, // ✅ TAMBAHKAN INI
+    this.email, // ✅ TAMBAHKAN INI
     this.pendidikanTerakhir,
     this.jurusan,
     this.universitas,
@@ -463,6 +467,8 @@ class EmployeeModel {
       position: json['position'] as String,
       nuptk: json['nuptk'],
       nik: json['nik'],
+      noTelp: json['no_telp'] ?? json['phone'], // ✅ TAMBAHKAN INI
+      email: json['email'], // ✅ TAMBAHKAN INI
       pendidikanTerakhir: json['pendidikan_terakhir'],
       jurusan: json['jurusan'],
       universitas: json['universitas'],
@@ -492,6 +498,8 @@ class EmployeeModel {
       'position': position,
       'nuptk': nuptk,
       'nik': nik,
+      'no_telp': noTelp, // ✅ TAMBAHKAN INI
+      'email': email, // ✅ TAMBAHKAN INI
       'pendidikan_terakhir': pendidikanTerakhir,
       'jurusan': jurusan,
       'universitas': universitas,
@@ -515,8 +523,6 @@ class EmployeeModel {
 
   bool get isTeacher => position.toLowerCase() == 'teacher';
   bool get isAdmin => position.toLowerCase() == 'administrator';
-
-  // ✅ ADD THIS
   bool get isSecurity => position.toLowerCase() == 'security';
   bool get isOperator => position.toLowerCase() == 'operator';
   bool get isKepalaMadrasah => position.toLowerCase() == 'kepala_sekolah';

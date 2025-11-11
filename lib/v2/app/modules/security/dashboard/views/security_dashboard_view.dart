@@ -424,9 +424,7 @@ class SecurityDashboardView extends GetView<SecurityDashboardController> {
               if (visitors.isNotEmpty)
                 TextButton(
                   onPressed: () {
-                    Get.rootDelegate.toNamed(
-                      '/security/security-today-visitors',
-                    );
+                    controller.goToVisitorsList();
                   },
                   style: TextButton.styleFrom(
                     foregroundColor: AppColors.primaryGreen,

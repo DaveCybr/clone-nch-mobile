@@ -3,7 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:nch_mobile/v2/app/routes/app_routes.dart';
+import 'package:nch_mobile/v2/app/data/services/navigations_services.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -79,14 +79,14 @@ class _SplashViewState extends State<SplashView>
       } else {
         developer.log('SplashView: User not authenticated, going to login');
         _statusMessage.value = 'Menuju halaman login...';
-        Get.rootDelegate.offNamed(Routes.LOGIN);
+        NavigationService.to.toLogin();
       }
     } catch (e) {
       developer.log('SplashView: Error during initialization: $e');
       _statusMessage.value = 'Error: $e';
       // If any error occurs during auth check, go to login
       await Future.delayed(const Duration(seconds: 1));
-      Get.rootDelegate.offNamed(Routes.LOGIN);
+      NavigationService.to.toLogin();
     }
   }
 
@@ -94,7 +94,7 @@ class _SplashViewState extends State<SplashView>
     final user = authController.user.value;
     if (user == null) {
       developer.log('SplashView: No user data, going to login');
-      Get.rootDelegate.offNamed(Routes.LOGIN);
+      NavigationService.to.toLogin();
       return;
     }
 

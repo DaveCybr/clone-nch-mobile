@@ -1,8 +1,10 @@
 // lib/v2/app/modules/student/dashboard/views/student_dashboard_view.dart
+// FIXED VERSION - Consistent Navigation
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:nch_mobile/v2/app/data/services/navigations_services.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../routes/app_routes.dart';
@@ -49,12 +51,11 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
       title: const Text('Dashboard'),
       centerTitle: true,
       actions: [
+        // ✅ FIXED: Navigate to announcements
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
           onPressed: () {
-            Get.rootDelegate.toNamed(
-              Routes.getStudentRoute(Routes.STUDENT_ANNOUNCEMENTS),
-            );
+            NavigationService.to.toBottomNavTab(Routes.STUDENT_ANNOUNCEMENTS);
           },
         ),
         PopupMenuButton(
@@ -104,9 +105,8 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                 controller.refreshDashboard();
                 break;
               case 'profile':
-                Get.rootDelegate.toNamed(
-                  Routes.getStudentRoute(Routes.STUDENT_PROFILE),
-                );
+                // ✅ FIXED: Navigate to student profile, not teacher!
+                NavigationService.to.toBottomNavTab(Routes.STUDENT_PROFILE);
                 break;
             }
           },
@@ -265,9 +265,8 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
               Text('Jadwal Hari Ini', style: AppTextStyles.heading3),
               TextButton(
                 onPressed: () {
-                  Get.rootDelegate.toNamed(
-                    Routes.getStudentRoute(Routes.STUDENT_SCHEDULE),
-                  );
+                  // ✅ FIXED: Navigate to student schedule, not teacher students!
+                  NavigationService.to.toBottomNavTab(Routes.STUDENT_SCHEDULE);
                 },
                 child: Text(
                   'Lihat Semua',
@@ -408,8 +407,8 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
               Text('Kehadiran Hari Ini', style: AppTextStyles.heading3),
               TextButton(
                 onPressed: () {
-                  Get.rootDelegate.toNamed(
-                    Routes.getStudentRoute(Routes.STUDENT_ATTENDANCE),
+                  NavigationService.to.toBottomNavTab(
+                    Routes.STUDENT_ATTENDANCE,
                   );
                 },
                 child: Text(
@@ -529,9 +528,12 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Jadwal Lengkap',
                   Icons.calendar_today,
                   AppColors.primaryGreen,
-                  () => Get.rootDelegate.toNamed(
-                    Routes.getStudentRoute(Routes.STUDENT_SCHEDULE),
-                  ),
+                  () {
+                    // ✅ FIXED: Use NavigationService.toBottomNavTab
+                    NavigationService.to.toBottomNavTab(
+                      Routes.STUDENT_SCHEDULE,
+                    );
+                  },
                 ),
               ),
               SizedBox(width: 12.w),
@@ -540,9 +542,12 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Riwayat Absensi',
                   Icons.history,
                   Colors.blue,
-                  () => Get.rootDelegate.toNamed(
-                    Routes.getStudentRoute(Routes.STUDENT_ATTENDANCE),
-                  ),
+                  () {
+                    // ✅ FIXED: Use NavigationService.toBottomNavTab
+                    NavigationService.to.toBottomNavTab(
+                      Routes.STUDENT_ATTENDANCE,
+                    );
+                  },
                 ),
               ),
             ],
@@ -555,9 +560,12 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Pengumuman',
                   Icons.campaign,
                   Colors.orange,
-                  () => Get.rootDelegate.toNamed(
-                    Routes.getStudentRoute(Routes.STUDENT_ANNOUNCEMENTS),
-                  ),
+                  () {
+                    // ✅ FIXED: Navigate to student announcements tab
+                    NavigationService.to.toBottomNavTab(
+                      Routes.STUDENT_ANNOUNCEMENTS,
+                    );
+                  },
                 ),
               ),
               SizedBox(width: 12.w),
@@ -585,13 +593,16 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Jadwal Kunjungan',
                   Icons.family_restroom,
                   Colors.teal,
-                  () => Get.rootDelegate.toNamed(
-                    Routes.getStudentRoute(Routes.STUDENT_VISIT_SCHEDULE),
-                  ),
+                  () {
+                    // ✅ FIXED: Use NavigationService.toBottomNavTab
+                    NavigationService.to.toBottomNavTab(Routes.STUDENT_VISIT);
+                  },
                 ),
               ),
               SizedBox(width: 12.w),
-              Expanded(child: SizedBox()),
+              const Expanded(
+                child: SizedBox(),
+              ), // ✅ FIXED: Remove unnecessary SizedBox()
             ],
           ),
         ],

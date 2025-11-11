@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:nch_mobile/v2/app/data/services/navigations_services.dart';
+import 'package:nch_mobile/v2/app/routes/app_routes.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../controllers/schedule_controller.dart';
@@ -576,10 +578,10 @@ class ScheduleView extends GetView<ScheduleController> {
               // Already on schedule
               break;
             case 2:
-              Get.rootDelegate.offNamed('/teacher/announcements');
+              NavigationService.to.toFullscreen(Routes.TEACHER_ANNOUNCEMENTS);
               break;
             case 3:
-              Get.rootDelegate.offNamed('/teacher/profile');
+              NavigationService.to.toBottomNavTab(Routes.TEACHER_PROFILE);
               break;
           }
         },

@@ -43,33 +43,47 @@ class ProfileController extends GetxController {
           developer.log('=== TEACHER PROFILE API RESPONSE ===');
           developer.log('Full Response: $profileData');
 
+          UserModel? parsedUser;
+
           if (profileData['data'] != null) {
             developer.log('📦 Data found in "data" key');
-            currentUser.value = UserModel.fromJson(profileData['data']);
+            parsedUser = UserModel.fromJson(profileData['data']);
           } else if (profileData['user'] != null) {
             developer.log('📦 Data found in "user" key');
-            currentUser.value = UserModel.fromJson(profileData['user']);
+            parsedUser = UserModel.fromJson(profileData['user']);
           } else {
             developer.log('📦 Using direct response');
-            currentUser.value = UserModel.fromJson(profileData);
+            parsedUser = UserModel.fromJson(profileData);
           }
 
-          // 🔍 DEBUG: Log parsed user data
+          currentUser.value = parsedUser;
+
+          // 🔍 DEBUG: Log parsed user data dengan detail lengkap
           developer.log('=== PARSED USER DATA ===');
           developer.log('Name: ${currentUser.value?.name}');
           developer.log('Email: ${currentUser.value?.email}');
-          developer.log('Phone: ${currentUser.value?.phoneNumber}');
-          developer.log('NIP: ${currentUser.value?.nip}');
-          developer.log('Employee: ${currentUser.value?.employee}');
+          developer.log('Phone Number: ${currentUser.value?.phoneNumber}');
+          developer.log('NIP from User: ${currentUser.value?.nip}');
 
-          // Try to get NIP from employee if not in user
-          if (currentUser.value?.nip == null || currentUser.value?.nip == '-') {
-            developer.log('⚠️ NIP not found in user, checking employee...');
-            final employee = currentUser.value?.employee;
-            if (employee != null) {
-              developer.log('Employee NIP: ${employee.nip}');
-            }
+          // Check employee data
+          final employee = currentUser.value?.employee;
+          developer.log('=== EMPLOYEE DATA ===');
+          developer.log('Has Employee: ${employee != null}');
+          if (employee != null) {
+            developer.log('Employee NIP: ${employee.nip}');
+            developer.log('Employee Phone: ${employee.noTelp}');
+            developer.log('Employee Alamat Jalan: ${employee.alamatJalan}');
+            developer.log('Employee RT: ${employee.rt}');
+            developer.log('Employee RW: ${employee.rw}');
+            developer.log('Employee Desa/Kelurahan: ${employee.desaKelurahan}');
+            developer.log('Employee Kecamatan: ${employee.kecamatan}');
           }
+
+          // 🔍 Log computed display values
+          developer.log('=== COMPUTED DISPLAY VALUES ===');
+          developer.log('Display NIP: ${displayNIP}');
+          developer.log('Display Phone: ${displayPhone}');
+          developer.log('Display Address: ${displayAddress}');
 
           _authController.user.value = currentUser.value;
           await _storageService.saveUser(currentUser.value!);
@@ -421,39 +435,80 @@ class ProfileController extends GetxController {
     return role ?? 'Guru';
   }
 
-  /// Get NIP - Check both user.nip and employee.nip
+  /// Get NIP - IMPROVED VERSION dengan multiple fallback
   String get displayNIP {
     try {
-      // Try user.nip first
-      if (currentUser.value?.nip != null &&
-          currentUser.value!.nip!.isNotEmpty &&
-          currentUser.value!.nip != '-') {
-        return currentUser.value!.nip!;
+      developer.log('🔍 Getting NIP...');
+
+      // Priority 1: Try user.nip first
+      final userNip = currentUser.value?.nip;
+      developer.log('  User NIP: $userNip (${userNip.runtimeType})');
+
+      if (userNip != null && userNip.isNotEmpty && userNip != '-') {
+        developer.log('✅ Using User NIP: $userNip');
+        return userNip;
       }
 
-      // Fallback to employee.nip
+      // Priority 2: Try employee.nip
       final employee = currentUser.value?.employee;
-      if (employee?.nip != null && employee!.nip!.isNotEmpty) {
-        return employee.nip!;
+      developer.log('  Has Employee: ${employee != null}');
+
+      if (employee != null) {
+        final employeeNip = employee.nip;
+        developer.log(
+          '  Employee NIP: $employeeNip (${employeeNip.runtimeType})',
+        );
+
+        if (employeeNip != null &&
+            employeeNip.isNotEmpty &&
+            employeeNip != '-') {
+          developer.log('✅ Using Employee NIP: $employeeNip');
+          return employeeNip;
+        }
       }
 
+      developer.log('⚠️ NIP not found, returning default');
       return '-';
-    } catch (e) {
-      developer.log('Error getting NIP: $e');
+    } catch (e, stackTrace) {
+      developer.log('❌ Error getting NIP: $e');
+      developer.log('Stack trace: $stackTrace');
       return '-';
     }
   }
 
-  /// Get phone number
+  /// Get phone number - IMPROVED VERSION dengan multiple fallback
   String get displayPhone {
     try {
-      final phone = currentUser.value?.phoneNumber;
-      if (phone != null && phone.isNotEmpty) {
-        return phone;
+      developer.log('🔍 Getting Phone Number...');
+      
+      // Priority 1: Try user.phoneNumber
+      final userPhone = currentUser.value?.phoneNumber;
+      developer.log('  User phoneNumber: $userPhone (${userPhone.runtimeType})');
+      
+      if (userPhone != null && userPhone.isNotEmpty && userPhone != '-') {
+        developer.log('✅ Using User phoneNumber: $userPhone');
+        return userPhone;
       }
+
+      // Priority 2: Try employee.noTelp (setelah EmployeeModel diupdate)
+      final employee = currentUser.value?.employee;
+      developer.log('  Has Employee: ${employee != null}');
+      
+      if (employee != null) {
+        final employeePhone = employee.noTelp;
+        developer.log('  Employee noTelp: $employeePhone');
+        
+        if (employeePhone != null && employeePhone.isNotEmpty && employeePhone != '-') {
+          developer.log('✅ Using Employee noTelp: $employeePhone');
+          return employeePhone;
+        }
+      }
+
+      developer.log('⚠️ Phone not found, returning default');
       return '-';
-    } catch (e) {
-      developer.log('Error getting phone: $e');
+    } catch (e, stackTrace) {
+      developer.log('❌ Error getting phone: $e');
+      developer.log('Stack trace: $stackTrace');
       return '-';
     }
   }
@@ -461,31 +516,44 @@ class ProfileController extends GetxController {
   /// Get Address from employee data
   String get displayAddress {
     try {
+      developer.log('🔍 Getting Address...');
       final employee = currentUser.value?.employee;
-      if (employee == null) return '-';
+
+      if (employee == null) {
+        developer.log('⚠️ No employee data, returning default');
+        return '-';
+      }
 
       List<String> addressParts = [];
 
       if (employee.alamatJalan != null && employee.alamatJalan!.isNotEmpty) {
         addressParts.add(employee.alamatJalan!);
+        developer.log('  + Alamat Jalan: ${employee.alamatJalan}');
       }
       if (employee.rt != null && employee.rt!.isNotEmpty) {
         addressParts.add('RT ${employee.rt}');
+        developer.log('  + RT: ${employee.rt}');
       }
       if (employee.rw != null && employee.rw!.isNotEmpty) {
         addressParts.add('RW ${employee.rw}');
+        developer.log('  + RW: ${employee.rw}');
       }
       if (employee.desaKelurahan != null &&
           employee.desaKelurahan!.isNotEmpty) {
         addressParts.add(employee.desaKelurahan!);
+        developer.log('  + Desa/Kelurahan: ${employee.desaKelurahan}');
       }
       if (employee.kecamatan != null && employee.kecamatan!.isNotEmpty) {
         addressParts.add(employee.kecamatan!);
+        developer.log('  + Kecamatan: ${employee.kecamatan}');
       }
 
-      return addressParts.isNotEmpty ? addressParts.join(', ') : '-';
-    } catch (e) {
-      developer.log('Error building address: $e');
+      final address = addressParts.isNotEmpty ? addressParts.join(', ') : '-';
+      developer.log('✅ Final Address: $address');
+      return address;
+    } catch (e, stackTrace) {
+      developer.log('❌ Error building address: $e');
+      developer.log('Stack trace: $stackTrace');
       return '-';
     }
   }

@@ -13,7 +13,7 @@ class ApiService extends GetxService {
   late Dio _dio;
   final StorageService _storageService = Get.find<StorageService>();
 
-  static String baseUrl = 'https://nch-be-staging.jtinova.com/api';
+  static String baseUrl = 'https://be.nurulchotib.com/api';
 
   @override
   void onInit() {

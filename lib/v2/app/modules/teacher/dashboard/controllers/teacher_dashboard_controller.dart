@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../../data/services/navigations_services.dart';
 import '../../../../data/services/storage_service.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../auth/controllers/auth_controller.dart';
@@ -352,9 +353,7 @@ class TeacherDashboardController extends GetxController {
   /// Navigate to students
   void navigateToStudents() {
     try {
-      Get.rootDelegate.offNamed(
-        Routes.getTeacherRoute(Routes.TEACHER_STUDENTS),
-      );
+      NavigationService.to.toBottomNavTab(Routes.TEACHER_STUDENTS);
     } catch (e) {
       _showErrorSnackbar('Error', 'Tidak dapat membuka halaman siswa: $e');
     }
@@ -363,9 +362,7 @@ class TeacherDashboardController extends GetxController {
   /// Navigate to schedule
   void navigateToSchedule() {
     try {
-      Get.rootDelegate.offNamed(
-        Routes.getTeacherRoute(Routes.TEACHER_SCHEDULE),
-      );
+      NavigationService.to.toBottomNavTab(Routes.TEACHER_SCHEDULE);
     } catch (e) {
       _showErrorSnackbar('Info', 'Halaman jadwal belum tersedia');
     }
@@ -374,7 +371,7 @@ class TeacherDashboardController extends GetxController {
   /// Navigate to profile
   void navigateToProfile() {
     try {
-      Get.rootDelegate.offNamed(Routes.getTeacherRoute(Routes.TEACHER_PROFILE));
+      NavigationService.to.toBottomNavTab(Routes.TEACHER_PROFILE);
     } catch (e) {
       _showErrorSnackbar('Info', 'Halaman profil belum tersedia');
     }

@@ -1,101 +1,58 @@
-// lib/v2/core/widgets/common/main_navigation_wrapper.dart
+// ═══════════════════════════════════════════════════════════════
+// TEACHER NAVIGATION WRAPPER
+// ═══════════════════════════════════════════════════════════════
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../app/routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import 'package:nch_mobile/v2/core/widgets/common/base_navigation_wrapper.dart';
 
-class MainNavigationWrapper extends StatefulWidget {
-  const MainNavigationWrapper({Key? key}) : super(key: key);
+import '../../../app/routes/app_routes.dart';
+import '../../../app/modules/teacher/dashboard/views/teacher_dashboard_view.dart';
+import '../../../app/modules/teacher/schedule/views/schedule_view.dart';
+import '../../../app/modules/teacher/student/views/student_data_view.dart';
+import '../../../app/modules/teacher/profile/views/profile_view.dart';
+
+class TeacherNavigationWrapper extends BaseNavigationWrapper {
+  const TeacherNavigationWrapper({Key? key}) : super(key: key);
 
   @override
-  State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
+  State<TeacherNavigationWrapper> createState() =>
+      _TeacherNavigationWrapperState();
 }
 
-class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
-  int _currentIndex = 0;
-
-  final List<String> _tabs = [
-    Routes.getTeacherRoute(Routes.TEACHER_DASHBOARD),
-    Routes.getTeacherRoute(Routes.TEACHER_SCHEDULE),
-    Routes.getTeacherRoute(Routes.TEACHER_STUDENTS),
-    Routes.getTeacherRoute(Routes.TEACHER_PROFILE),
+class _TeacherNavigationWrapperState
+    extends BaseNavigationWrapperState<TeacherNavigationWrapper> {
+  @override
+  List<NavTab> get navTabs => [
+    NavTab(
+      route: Routes.TEACHER_DASHBOARD,
+      icon: Icons.dashboard_outlined,
+      activeIcon: Icons.dashboard,
+      label: 'Dashboard',
+      page: const TeacherDashboardView(),
+    ),
+    NavTab(
+      route: Routes.TEACHER_SCHEDULE,
+      icon: Icons.schedule_outlined,
+      activeIcon: Icons.schedule,
+      label: 'Jadwal',
+      page: const ScheduleView(),
+    ),
+    NavTab(
+      route: Routes.TEACHER_STUDENTS,
+      icon: Icons.people_outline,
+      activeIcon: Icons.people,
+      label: 'Siswa',
+      page: const StudentDataView(),
+    ),
+    NavTab(
+      route: Routes.TEACHER_PROFILE,
+      icon: Icons.person_outline,
+      activeIcon: Icons.person,
+      label: 'Profil',
+      page: const ProfileView(),
+    ),
   ];
 
   @override
-  void initState() {
-    super.initState();
-
-    // Update navbar setiap kali ada perubahan route
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.rootDelegate.addListener(_updateNavBar);
-    });
-  }
-
-  @override
-  void dispose() {
-    Get.rootDelegate.removeListener(_updateNavBar);
-    super.dispose();
-  }
-
-  void _updateNavBar() {
-    final currentRoute = Get.rootDelegate.currentConfiguration?.location ?? '';
-
-    for (int i = 0; i < _tabs.length; i++) {
-      if (currentRoute.contains(_tabs[i])) {
-        if (_currentIndex != i) {
-          setState(() {
-            _currentIndex = i;
-          });
-        }
-        break;
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: GetRouterOutlet(
-        initialRoute: Routes.getTeacherRoute(Routes.TEACHER_DASHBOARD),
-        anchorRoute: Routes.MAIN,
-        key: Get.nestedKey(1),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primaryGreen,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-          Get.rootDelegate.toNamed(_tabs[index], arguments: {});
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: "Dashboard",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.schedule_outlined),
-            activeIcon: Icon(Icons.schedule),
-            label: "Jadwal",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            activeIcon: Icon(Icons.people),
-            label: "Siswa",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: "Profil",
-          ),
-        ],
-      ),
-    );
-  }
+  String get dashboardRoute => Routes.TEACHER_DASHBOARD;
 }
-  

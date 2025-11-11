@@ -1,11 +1,17 @@
-// lib/v2/core/widgets/common/student_navigation_wrapper.dart
+// lib/v2/core/widgets/student/student_navigation_wrapper.dart
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../app/routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import 'package:nch_mobile/v2/core/widgets/common/base_navigation_wrapper.dart';
 
-class StudentNavigationWrapper extends StatefulWidget {
+import '../../../app/routes/app_routes.dart';
+import '../../../app/modules/student/dashboard/views/student_dashboard_view.dart';
+import '../../../app/modules/student/schedule/views/student_schedule_view.dart';
+import '../../../app/modules/student/attendance/views/student_attendance_view.dart';
+import '../../../app/modules/student/announcements/views/student_announcements_view.dart';
+import '../../../app/modules/student/visit_schedule/views/visit_schedule_view.dart';
+import '../../../app/modules/student/profile/views/profile_view.dart';
+
+class StudentNavigationWrapper extends BaseNavigationWrapper {
   const StudentNavigationWrapper({Key? key}) : super(key: key);
 
   @override
@@ -13,89 +19,54 @@ class StudentNavigationWrapper extends StatefulWidget {
       _StudentNavigationWrapperState();
 }
 
-class _StudentNavigationWrapperState extends State<StudentNavigationWrapper> {
-  int _currentIndex = 0;
-
-  final List<String> _tabs = [
-    Routes.getStudentRoute(Routes.STUDENT_DASHBOARD),
-    Routes.getStudentRoute(Routes.STUDENT_SCHEDULE),
-    Routes.getStudentRoute(Routes.STUDENT_ATTENDANCE),
-    Routes.getStudentRoute(Routes.STUDENT_PROFILE),
+class _StudentNavigationWrapperState
+    extends BaseNavigationWrapperState<StudentNavigationWrapper> {
+  @override
+  List<NavTab> get navTabs => [
+    NavTab(
+      route: Routes.STUDENT_DASHBOARD,
+      icon: Icons.dashboard_outlined,
+      activeIcon: Icons.dashboard,
+      label: 'Dashboard',
+      page: const StudentDashboardView(),
+    ),
+    NavTab(
+      route: Routes.STUDENT_SCHEDULE,
+      icon: Icons.schedule_outlined,
+      activeIcon: Icons.schedule,
+      label: 'Jadwal',
+      page: const StudentScheduleView(),
+    ),
+    NavTab(
+      route: Routes.STUDENT_ATTENDANCE,
+      icon: Icons.fact_check_outlined,
+      activeIcon: Icons.fact_check,
+      label: 'Presensi',
+      page: const StudentAttendanceView(),
+    ),
+    NavTab(
+      route: Routes.STUDENT_ANNOUNCEMENTS,
+      icon: Icons.notifications_outlined,
+      activeIcon: Icons.notifications,
+      label: 'Pengumuman',
+      page: const StudentAnnouncementsView(),
+    ),
+    NavTab(
+      route: Routes.STUDENT_VISIT,
+      icon: Icons.qr_code_outlined,
+      activeIcon: Icons.qr_code,
+      label: 'Kunjungan',
+      page: const VisitScheduleView(),
+    ),
+    NavTab(
+      route: Routes.STUDENT_PROFILE,
+      icon: Icons.person_outline,
+      activeIcon: Icons.person,
+      label: 'Profil',
+      page: const StudentProfileView(),
+    ),
   ];
 
   @override
-  void initState() {
-    super.initState();
-
-    // Update navbar setiap kali ada perubahan route
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.rootDelegate.addListener(_updateNavBar);
-    });
-  }
-
-  @override
-  void dispose() {
-    Get.rootDelegate.removeListener(_updateNavBar);
-    super.dispose();
-  }
-
-  void _updateNavBar() {
-    final currentRoute = Get.rootDelegate.currentConfiguration?.location ?? '';
-
-    for (int i = 0; i < _tabs.length; i++) {
-      if (currentRoute.contains(_tabs[i])) {
-        if (_currentIndex != i) {
-          setState(() {
-            _currentIndex = i;
-          });
-        }
-        break;
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: GetRouterOutlet(
-        initialRoute: Routes.getStudentRoute(Routes.STUDENT_DASHBOARD),
-        anchorRoute: Routes.STUDENT,
-        key: Get.nestedKey(1),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primaryGreen,
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-          Get.rootDelegate.toNamed(_tabs[index], arguments: {});
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: "Dashboard",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.schedule_outlined),
-            activeIcon: Icon(Icons.schedule),
-            label: "Jadwal",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history_outlined),
-            activeIcon: Icon(Icons.history),
-            label: "Absensi",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: "Profil",
-          ),
-        ],
-      ),
-    );
-  }
+  String get dashboardRoute => Routes.STUDENT_DASHBOARD;
 }

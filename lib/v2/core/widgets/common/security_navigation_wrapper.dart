@@ -1,11 +1,17 @@
-// lib/v2/core/widgets/common/security_navigation_wrapper.dart
+// ═══════════════════════════════════════════════════════════════
+// SECURITY NAVIGATION WRAPPER
+// ═══════════════════════════════════════════════════════════════
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import '../../../app/routes/app_routes.dart';
-import '../../theme/app_colors.dart';
+import 'package:nch_mobile/v2/app/routes/app_routes.dart';
+import 'package:nch_mobile/v2/core/widgets/common/base_navigation_wrapper.dart';
 
-class SecurityNavigationWrapper extends StatefulWidget {
+import '../../../app/modules/security/dashboard/views/security_dashboard_view.dart';
+import '../../../app/modules/security/scan/views/scan_view.dart';
+import '../../../app/modules/security/visitor/views/visitor_view.dart';
+import '../../../app/modules/security/profile/views/security_profile_view.dart';
+
+class SecurityNavigationWrapper extends BaseNavigationWrapper {
   const SecurityNavigationWrapper({Key? key}) : super(key: key);
 
   @override
@@ -13,90 +19,40 @@ class SecurityNavigationWrapper extends StatefulWidget {
       _SecurityNavigationWrapperState();
 }
 
-class _SecurityNavigationWrapperState extends State<SecurityNavigationWrapper> {
-  int _currentIndex = 0;
-
-  final List<String> _tabs = [
-    Routes.getSecurityRoute(Routes.SECURITY_DASHBOARD),
-    Routes.getSecurityRoute(Routes.SECURITY_SCAN),
-    Routes.getSecurityRoute(Routes.SECURITY_TODAY_VISITORS),
-    Routes.getSecurityRoute(Routes.SECURITY_PROFILE),
+class _SecurityNavigationWrapperState
+    extends BaseNavigationWrapperState<SecurityNavigationWrapper> {
+  @override
+  List<NavTab> get navTabs => [
+    NavTab(
+      route: Routes.SECURITY_DASHBOARD,
+      icon: Icons.dashboard_outlined,
+      activeIcon: Icons.dashboard,
+      label: 'Dashboard',
+      page: const SecurityDashboardView(),
+    ),
+    NavTab(
+      route: Routes.SECURITY_SCAN,
+      icon: Icons.qr_code_scanner_outlined,
+      activeIcon: Icons.qr_code_scanner,
+      label: 'Scan',
+      page: const SecurityScanView(),
+    ),
+    NavTab(
+      route: Routes.SECURITY_VISITORS,
+      icon: Icons.people_outline,
+      activeIcon: Icons.people,
+      label: 'Pengunjung',
+      page: const TodayVisitorsView(),
+    ),
+    NavTab(
+      route: Routes.SECURITY_PROFILE,
+      icon: Icons.person_outline,
+      activeIcon: Icons.person,
+      label: 'Profil',
+      page: const SecurityProfileView(),
+    ),
   ];
 
   @override
-  void initState() {
-    super.initState();
-
-    // Update navbar setiap kali ada perubahan route
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.rootDelegate.addListener(_updateNavBar);
-    });
-  }
-
-  @override
-  void dispose() {
-    Get.rootDelegate.removeListener(_updateNavBar);
-    super.dispose();
-  }
-
-  void _updateNavBar() {
-    final currentRoute = Get.rootDelegate.currentConfiguration?.location ?? '';
-
-    for (int i = 0; i < _tabs.length; i++) {
-      if (currentRoute.contains(_tabs[i])) {
-        if (_currentIndex != i) {
-          setState(() {
-            _currentIndex = i;
-          });
-        }
-        break;
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: GetRouterOutlet(
-        initialRoute: Routes.getSecurityRoute(Routes.SECURITY_DASHBOARD),
-        anchorRoute: Routes.SECURITY,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-          Get.rootDelegate.toNamed(_tabs[index]);
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: AppColors.primaryGreen,
-        unselectedItemColor: Colors.grey,
-        selectedFontSize: 12,
-        unselectedFontSize: 12,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.qr_code_scanner_outlined),
-            activeIcon: Icon(Icons.qr_code_scanner),
-            label: 'Scan',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_outline),
-            activeIcon: Icon(Icons.people),
-            label: 'Pengunjung',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profil',
-          ),
-        ],
-      ),
-    );
-  }
+  String get dashboardRoute => Routes.SECURITY_DASHBOARD;
 }

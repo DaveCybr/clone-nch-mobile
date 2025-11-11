@@ -1,8 +1,11 @@
-// lib/v2/app/data/services/notification_service.dart - WITH VISIT NOTIFICATION
+// lib/v2/app/data/services/notification_service.dart
+// FIXED VERSION - Using NavigationService
+
 import 'dart:developer' as developer;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
+import 'package:nch_mobile/v2/app/data/services/navigations_services.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'storage_service.dart';
@@ -123,13 +126,11 @@ class NotificationService extends GetxService {
     developer.log('📨 Background message opened');
     developer.log('Data: ${message.data}');
 
-    // ✅ Process dengan delay
     Future.delayed(const Duration(milliseconds: 1500), () {
       _processNotificationData(message.data);
     });
   }
 
-  /// ✅ Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
     developer.log('👆 ===== LOCAL NOTIFICATION TAPPED =====');
     developer.log('📦 Payload: ${response.payload}');
@@ -151,9 +152,6 @@ class NotificationService extends GetxService {
       developer.log('📄 ===== PROCESSING NOTIFICATION DATA =====');
       developer.log('📦 Full Data: $data');
       developer.log('🔑 Data Keys: ${data.keys.toList()}');
-      developer.log('📌 Data has type? ${data.containsKey('type')}');
-      developer.log('📌 Raw type value: "${data['type']}"');
-      developer.log('📌 Type is null? ${data['type'] == null}');
 
       if (!Get.isRegistered<StorageService>()) {
         developer.log('⚠️ StorageService not ready, retrying...');
@@ -174,42 +172,17 @@ class NotificationService extends GetxService {
       final type = (rawType ?? '').toString().toLowerCase().trim();
 
       developer.log('👤 Is Teacher: $isTeacher');
-      developer.log('📋 Raw Type: "$rawType" (${rawType.runtimeType})');
       developer.log('📋 Processed Type: "$type"');
-      developer.log('📏 Type Length: ${type.length}');
-      developer.log('🔤 Type isEmpty: ${type.isEmpty}');
-
-      // ✅ TAMBAHAN: Cek apakah type mengandung kata payment
-      if (type.contains('payment') || type.contains('tagihan')) {
-        developer.log('💡 Type contains payment/tagihan keyword!');
-      }
-
-      // ✅ Handle different notification types
-      developer.log('🔄 Entering switch statement...');
 
       switch (type) {
-        // ✅ NEW: Payment reminder notifications
         case 'payment_reminder':
-          developer.log('✅ Matched: payment_reminder');
-          _handlePaymentNotification(data);
-          break;
-
         case 'payment':
-          developer.log('✅ Matched: payment');
-          _handlePaymentNotification(data);
-          break;
-
         case 'payment_success':
-          developer.log('✅ Matched: payment_success');
-          _handlePaymentNotification(data);
-          break;
-
         case 'tagihan':
-          developer.log('✅ Matched: tagihan');
+          developer.log('✅ Matched: payment type');
           _handlePaymentNotification(data);
           break;
 
-        // Announcement notifications
         case 'berita':
         case 'berita_update':
         case 'announcement':
@@ -218,7 +191,6 @@ class NotificationService extends GetxService {
           _handleAnnouncementNotification(isTeacher, data);
           break;
 
-        // Visit notifications
         case 'visit':
         case 'kunjungan':
         case 'parent':
@@ -229,7 +201,6 @@ class NotificationService extends GetxService {
           _handleVisitNotification(data);
           break;
 
-        // Other notifications
         case 'attendance':
         case 'absensi':
           developer.log('✅ Matched: attendance type');
@@ -245,26 +216,20 @@ class NotificationService extends GetxService {
         default:
           developer.log('⚠️ ===== ENTERED DEFAULT CASE =====');
           developer.log('❌ No match for type: "$type"');
-          developer.log('📊 Type comparison results:');
-          developer.log('  - payment_reminder: ${type == 'payment_reminder'}');
-          developer.log('  - payment: ${type == 'payment'}');
-          developer.log('  - payment_success: ${type == 'payment_success'}');
-          developer.log('  - tagihan: ${type == 'tagihan'}');
 
-          // ✅ Fallback: cek apakah ada keyword payment
           if (type.contains('payment') || type.contains('tagihan')) {
             developer.log('🎯 Forcing payment handler based on keyword match');
             _handlePaymentNotification(data);
           } else {
-            developer.log(
-              '🏠 Navigating to dashboard (no payment keyword found)',
-            );
-            final dashboardRoute = isTeacher ? Routes.MAIN : Routes.STUDENT;
-            Get.rootDelegate.offNamed(dashboardRoute);
+            developer.log('🏠 Navigating to dashboard');
+            // ✅ FIXED: Use NavigationService
+            if (isTeacher) {
+              NavigationService.to.toBottomNavTab(Routes.TEACHER_DASHBOARD);
+            } else {
+              NavigationService.to.toBottomNavTab(Routes.STUDENT_DASHBOARD);
+            }
           }
       }
-
-      developer.log('✅ Switch statement completed');
     } catch (e, stackTrace) {
       developer.log('❌ ===== ERROR IN _processNotificationData =====');
       developer.log('❌ Error: $e');
@@ -272,51 +237,7 @@ class NotificationService extends GetxService {
     }
   }
 
-  /// ✅ TEST METHOD: Untuk test payment notification
-  /// ✅ TEST METHOD: Show test payment notification
-  Future<void> showTestPaymentNotification() async {
-    developer.log('🧪 ===== CREATING TEST PAYMENT NOTIFICATION =====');
-
-    final testPayload = {
-      'type': 'payment_reminder',
-      'payment_id': 'test-payment-123',
-      'student_id': 'test-student-456',
-      'amount': '500000',
-      'month': '11',
-      'year': '2025',
-      'due_date': '2025-11-15',
-    };
-
-    developer.log('📦 Test Payload: $testPayload');
-
-    await showNotification(
-      title: '💰 Pengingat Tagihan',
-      body: 'Anda memiliki tagihan SPP bulan November sebesar Rp 500.000',
-      payload: jsonEncode(testPayload),
-    );
-
-    developer.log('✅ Test payment notification created and shown');
-  }
-
-  /// ✅ TEST METHOD: Test direct payment data processing
-  void testProcessPaymentData() {
-    developer.log('🧪 ===== TESTING DIRECT PAYMENT DATA PROCESSING =====');
-
-    final testData = {
-      'type': 'payment_reminder',
-      'payment_id': 'direct-test-789',
-      'student_id': 'test-student-999',
-      'amount': '750000',
-      'month': '12',
-      'year': '2025',
-      'due_date': '2025-12-10',
-    };
-
-    developer.log('📦 Calling _processNotificationData with: $testData');
-    _processNotificationData(testData);
-  }
-
-  /// ✅ NEW: Handle payment reminder notification
+  /// ✅ Handle payment notification
   void _handlePaymentNotification(Map<String, dynamic> data) {
     try {
       developer.log('💰 ===== HANDLING PAYMENT NOTIFICATION =====');
@@ -332,11 +253,9 @@ class NotificationService extends GetxService {
       developer.log('💳 Payment ID: $paymentId');
       developer.log('👤 Student ID: $studentId');
       developer.log('💵 Amount: $amount');
-      developer.log('📅 Month/Year: $month/$year');
-      developer.log('⏰ Due Date: $dueDate');
 
-      // Navigate to student dashboard first
-      Get.rootDelegate.offNamed(Routes.STUDENT);
+      // ✅ FIXED: Navigate to student dashboard using NavigationService
+      NavigationService.to.toBottomNavTab(Routes.STUDENT_DASHBOARD);
 
       // Then show payment detail dialog
       Future.delayed(const Duration(milliseconds: 800), () {
@@ -489,7 +408,6 @@ class NotificationService extends GetxService {
           developer.log('❌ Error showing payment dialog: $e');
           developer.log('Stack: $stackTrace');
 
-          // Fallback: Show simple snackbar
           Get.snackbar(
             '⏰ Pengingat Tagihan',
             amount != null
@@ -508,7 +426,151 @@ class NotificationService extends GetxService {
     }
   }
 
-  /// ✅ Helper: Format currency
+  /// ✅ FIXED: Handle announcement notification
+  void _handleAnnouncementNotification(
+    bool isTeacher,
+    Map<String, dynamic> data,
+  ) {
+    developer.log('📰 ===== DEBUG ANNOUNCEMENT DATA =====');
+    developer.log('📰 All data keys: ${data.keys.toList()}');
+    developer.log('📰 Full data: $data');
+
+    final identifier =
+        data['berita_id']?.toString() ??
+        data['announcement_id']?.toString() ??
+        data['id']?.toString() ??
+        data['slug']?.toString();
+
+    developer.log('📰 Handling announcement notification');
+    developer.log('🔗 Identifier: $identifier');
+
+    if (identifier != null && identifier.isNotEmpty) {
+      pendingNotification.value = PendingNotificationData(
+        identifier: identifier,
+        shouldOpenDetail: true,
+        timestamp: DateTime.now(),
+      );
+      developer.log('💾 Saved to Rx: $identifier');
+
+      _navigateToAnnouncementDetail(isTeacher, identifier);
+    } else {
+      _navigateToAnnouncementsList(isTeacher);
+    }
+  }
+
+  /// ✅ FIXED: Handle visit notification
+  void _handleVisitNotification(Map<String, dynamic> data) {
+    try {
+      developer.log('🚪 ===== HANDLING VISIT NOTIFICATION =====');
+      developer.log('📦 Data: $data');
+
+      final scheduleId =
+          data['visit_schedule_id']?.toString() ??
+          data['schedule_id']?.toString() ??
+          data['id']?.toString();
+
+      developer.log('🔑 Schedule ID: $scheduleId');
+
+      // ✅ FIXED: Navigate to student visit tab
+      NavigationService.to.toBottomNavTab(Routes.STUDENT_VISIT);
+
+      // If schedule ID exists, controller will handle opening detail
+      if (scheduleId != null && scheduleId.isNotEmpty) {
+        developer.log('📌 Schedule ID to open: $scheduleId');
+        // TODO: Pass schedule ID to visit page via arguments if needed
+      }
+
+      developer.log('✅ Navigation to visit schedule executed');
+    } catch (e, stackTrace) {
+      developer.log('❌ Error handling visit notification: $e');
+      developer.log('Stack: $stackTrace');
+    }
+  }
+
+  /// ✅ FIXED: Handle attendance notification
+  void _handleAttendanceNotification(bool isTeacher) {
+    developer.log('✅ Navigating to attendance');
+
+    if (isTeacher) {
+      // ✅ Teacher attendance = fullscreen
+      NavigationService.to.toFullscreen(Routes.TEACHER_ATTENDANCE);
+    } else {
+      // ✅ Student attendance = tab
+      NavigationService.to.toBottomNavTab(Routes.STUDENT_ATTENDANCE);
+    }
+  }
+
+  /// ✅ FIXED: Handle schedule notification
+  void _handleScheduleNotification(bool isTeacher) {
+    developer.log('📅 Navigating to schedule');
+
+    // ✅ Both teacher and student schedule are tabs
+    if (isTeacher) {
+      NavigationService.to.toBottomNavTab(Routes.TEACHER_SCHEDULE);
+    } else {
+      NavigationService.to.toBottomNavTab(Routes.STUDENT_SCHEDULE);
+    }
+  }
+
+  /// ✅ FIXED: Navigate to announcement detail
+  void _navigateToAnnouncementDetail(bool isTeacher, String identifier) {
+    try {
+      developer.log('🎯 ===== NAVIGATING TO ANNOUNCEMENT DETAIL =====');
+      developer.log('🔗 Identifier: $identifier');
+
+      pendingNotification.value = PendingNotificationData(
+        identifier: identifier,
+        shouldOpenDetail: true,
+        timestamp: DateTime.now(),
+      );
+      developer.log('💾 Saved to Rx: $identifier');
+
+      // ✅ FIXED: Navigate properly based on route type
+      if (isTeacher) {
+        // Teacher announcements = fullscreen
+        NavigationService.to.toFullscreen(
+          Routes.TEACHER_ANNOUNCEMENTS,
+          arguments: {
+            'from_notification': true,
+            'identifier': identifier,
+            'openDetail': true,
+          },
+        );
+      } else {
+        // Student announcements = tab
+        NavigationService.to.toBottomNavTab(Routes.STUDENT_ANNOUNCEMENTS);
+        // Controller will handle opening detail based on pendingNotification
+      }
+
+      developer.log('✅ Navigation executed');
+    } catch (e, stackTrace) {
+      developer.log('❌ Error navigating: $e');
+      developer.log('Stack: $stackTrace');
+
+      _navigateToAnnouncementsList(isTeacher);
+    }
+  }
+
+  /// ✅ FIXED: Navigate to announcements list
+  void _navigateToAnnouncementsList(bool isTeacher) {
+    try {
+      developer.log('📰 Navigating to announcements list');
+
+      // ✅ FIXED: Proper navigation based on route type
+      if (isTeacher) {
+        // Teacher announcements = fullscreen
+        NavigationService.to.toFullscreen(Routes.TEACHER_ANNOUNCEMENTS);
+      } else {
+        // Student announcements = tab
+        NavigationService.to.toBottomNavTab(Routes.STUDENT_ANNOUNCEMENTS);
+      }
+    } catch (e) {
+      developer.log('❌ Error navigating to list: $e');
+    }
+  }
+
+  // ===== HELPER METHODS =====
+
   String _formatCurrency(String amount) {
     try {
       final number = int.tryParse(amount) ?? 0;
@@ -521,7 +583,6 @@ class NotificationService extends GetxService {
     }
   }
 
-  /// ✅ Helper: Get month name
   String _getMonthName(String month) {
     const monthNames = [
       '',
@@ -551,7 +612,6 @@ class NotificationService extends GetxService {
     return month;
   }
 
-  /// ✅ Helper: Format date
   String _formatDate(String dateStr) {
     try {
       final date = DateTime.tryParse(dateStr);
@@ -579,186 +639,7 @@ class NotificationService extends GetxService {
     }
   }
 
-  /// ✅ Handle announcement notification
-  void _handleAnnouncementNotification(
-    bool isTeacher,
-    Map<String, dynamic> data,
-  ) {
-
-    // ⚠️ TAMBAHKAN LOG DEBUG DI SINI
-    developer.log('📰 ===== DEBUG ANNOUNCEMENT DATA =====');
-    developer.log('📰 All data keys: ${data.keys.toList()}');
-    developer.log('📰 Full data: $data');
-    
-    final identifier =
-        data['berita_id']?.toString() ??
-        data['announcement_id']?.toString() ??
-        data['id']?.toString() ??
-        data['slug']?.toString();
-
-    developer.log('📰 Handling announcement notification');
-    developer.log('🔗 Identifier: $identifier');
-
-    if (identifier != null && identifier.isNotEmpty) {
-      pendingNotification.value = PendingNotificationData(
-        identifier: identifier,
-        shouldOpenDetail: true,
-        timestamp: DateTime.now(),
-      );
-      developer.log('💾 Saved to Rx: $identifier');
-
-      _navigateToAnnouncementDetail(isTeacher, identifier);
-    } else {
-      _navigateToAnnouncementsList(isTeacher);
-    }
-  }
-
-  /// ✅ NEW: Handle visit notification
-  void _handleVisitNotification(Map<String, dynamic> data) {
-    try {
-      developer.log('🚪 ===== HANDLING VISIT NOTIFICATION =====');
-      developer.log('📦 Data: $data');
-
-      // Extract visit schedule ID if available
-      final scheduleId =
-          data['visit_schedule_id']?.toString() ??
-          data['schedule_id']?.toString() ??
-          data['id']?.toString();
-
-      developer.log('🔑 Schedule ID: $scheduleId');
-
-      // Navigate to base route first (Student dashboard)
-      Get.rootDelegate.offNamed(Routes.STUDENT);
-
-      // Then navigate to visit schedule page
-      Future.delayed(const Duration(milliseconds: 800), () {
-        try {
-          final visitRoute = Routes.getStudentRoute(
-            Routes.STUDENT_VISIT_SCHEDULE,
-          );
-
-          developer.log('🎯 Navigating to: $visitRoute');
-
-          final arguments = <String, dynamic>{'from_notification': true};
-
-          // Add schedule ID if available
-          if (scheduleId != null && scheduleId.isNotEmpty) {
-            arguments['schedule_id'] = scheduleId;
-            arguments['openDetail'] = true;
-            developer.log('📌 Will open detail for schedule: $scheduleId');
-          }
-
-          // Add all notification data
-          arguments['data'] = data;
-
-          Get.rootDelegate.toNamed(visitRoute, arguments: arguments);
-
-          developer.log('✅ Navigation to visit schedule executed');
-        } catch (e, stackTrace) {
-          developer.log('❌ Error navigating to visit schedule: $e');
-          developer.log('Stack: $stackTrace');
-        }
-      });
-    } catch (e, stackTrace) {
-      developer.log('❌ Error handling visit notification: $e');
-      developer.log('Stack: $stackTrace');
-    }
-  }
-
-  /// ✅ Handle attendance notification
-  void _handleAttendanceNotification(bool isTeacher) {
-    developer.log('✅ Navigating to attendance');
-
-    Get.rootDelegate.offNamed(isTeacher ? Routes.MAIN : Routes.STUDENT);
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (isTeacher) {
-        Get.toNamed(Routes.TEACHER_ATTENDANCE);
-      } else {
-        final route = Routes.getStudentRoute(Routes.STUDENT_ATTENDANCE);
-        Get.rootDelegate.toNamed(route);
-      }
-    });
-  }
-
-  /// ✅ Handle schedule notification
-  void _handleScheduleNotification(bool isTeacher) {
-    developer.log('📅 Navigating to schedule');
-
-    Get.rootDelegate.offNamed(isTeacher ? Routes.MAIN : Routes.STUDENT);
-
-    Future.delayed(const Duration(milliseconds: 500), () {
-      final route =
-          isTeacher
-              ? Routes.getTeacherRoute(Routes.TEACHER_SCHEDULE)
-              : Routes.getStudentRoute(Routes.STUDENT_SCHEDULE);
-      Get.rootDelegate.toNamed(route);
-    });
-  }
-
-  /// ✅ Navigate to announcement detail
-  void _navigateToAnnouncementDetail(bool isTeacher, String identifier) {
-    try {
-      developer.log('🎯 ===== NAVIGATING TO ANNOUNCEMENT DETAIL =====');
-
-      final baseRoute = isTeacher ? Routes.MAIN : Routes.STUDENT;
-      final announcementsRoute =
-          isTeacher
-              ? Routes.TEACHER_ANNOUNCEMENTS
-              : Routes.STUDENT_ANNOUNCEMENTS;
-
-      developer.log('📍 Base: $baseRoute');
-      developer.log('📍 Announcements: $announcementsRoute');
-      developer.log('🔗 Identifier: $identifier');
-
-      pendingNotification.value = PendingNotificationData(
-        identifier: identifier,
-        shouldOpenDetail: true,
-        timestamp: DateTime.now(),
-      );
-      developer.log('💾 Saved to Rx: $identifier');
-
-      // Navigate to base
-      Get.rootDelegate.offNamed(baseRoute);
-
-      // Then to child route
-      Future.delayed(const Duration(milliseconds: 800), () {
-        final fullRoute = '$baseRoute$announcementsRoute';
-
-        developer.log('📍 Full route: $fullRoute');
-        developer.log('🚀 Navigating...');
-
-        Get.rootDelegate.toNamed(fullRoute);
-
-        developer.log('✅ Navigation executed');
-      });
-    } catch (e, stackTrace) {
-      developer.log('❌ Error navigating: $e');
-      developer.log('Stack: $stackTrace');
-
-      _navigateToAnnouncementsList(isTeacher);
-    }
-  }
-
-  /// ✅ Navigate to announcements list
-  void _navigateToAnnouncementsList(bool isTeacher) {
-    try {
-      final baseRoute = isTeacher ? Routes.MAIN : Routes.STUDENT;
-      final announcementsRoute =
-          isTeacher
-              ? Routes.TEACHER_ANNOUNCEMENTS
-              : Routes.STUDENT_ANNOUNCEMENTS;
-
-      Get.rootDelegate.offNamed(baseRoute);
-
-      Future.delayed(const Duration(milliseconds: 500), () {
-        final fullRoute = '$baseRoute$announcementsRoute';
-        Get.rootDelegate.toNamed(fullRoute);
-      });
-    } catch (e) {
-      developer.log('❌ Error navigating to list: $e');
-    }
-  }
+  // ===== PUBLIC METHODS =====
 
   Future<void> showNotification({
     required String title,
@@ -812,7 +693,6 @@ class NotificationService extends GetxService {
     );
   }
 
-  /// ✅ NEW: Test visit notification
   Future<void> showTestVisitNotification() async {
     await showNotification(
       title: '🚪 Jadwal Kunjungan Baru',
@@ -823,6 +703,47 @@ class NotificationService extends GetxService {
         'title': 'Kunjungan Rutin',
       }),
     );
+  }
+
+  Future<void> showTestPaymentNotification() async {
+    developer.log('🧪 ===== CREATING TEST PAYMENT NOTIFICATION =====');
+
+    final testPayload = {
+      'type': 'payment_reminder',
+      'payment_id': 'test-payment-123',
+      'student_id': 'test-student-456',
+      'amount': '500000',
+      'month': '11',
+      'year': '2025',
+      'due_date': '2025-11-15',
+    };
+
+    developer.log('📦 Test Payload: $testPayload');
+
+    await showNotification(
+      title: '💰 Pengingat Tagihan',
+      body: 'Anda memiliki tagihan SPP bulan November sebesar Rp 500.000',
+      payload: jsonEncode(testPayload),
+    );
+
+    developer.log('✅ Test payment notification created and shown');
+  }
+
+  void testProcessPaymentData() {
+    developer.log('🧪 ===== TESTING DIRECT PAYMENT DATA PROCESSING =====');
+
+    final testData = {
+      'type': 'payment_reminder',
+      'payment_id': 'direct-test-789',
+      'student_id': 'test-student-999',
+      'amount': '750000',
+      'month': '12',
+      'year': '2025',
+      'due_date': '2025-12-10',
+    };
+
+    developer.log('📦 Calling _processNotificationData with: $testData');
+    _processNotificationData(testData);
   }
 
   void _addNotification(NotificationModel notification) {
@@ -853,6 +774,8 @@ class NotificationService extends GetxService {
     }
   }
 }
+
+// ===== MODELS =====
 
 class NotificationModel {
   final String id;
@@ -909,7 +832,6 @@ class NotificationModel {
   }
 }
 
-// ✅ PUBLIC class untuk notification data
 class PendingNotificationData {
   final String identifier;
   final bool shouldOpenDetail;
