@@ -46,61 +46,7 @@ class StudentDataView extends GetView<StudentDataController> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      title: const Text('Data Santri'),
-      centerTitle: true,
-      actions: [
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (String value) {
-            switch (value) {
-              case 'export':
-                controller.exportAttendanceReport();
-                break;
-              case 'refresh':
-                controller.loadTeacherClasses();
-                break;
-              case 'filter':
-                _showFilterDialog();
-                break;
-            }
-          },
-          itemBuilder:
-              (BuildContext context) => [
-                const PopupMenuItem<String>(
-                  value: 'export',
-                  child: Row(
-                    children: [
-                      Icon(Icons.file_download, color: Colors.green),
-                      SizedBox(width: 8),
-                      Text('Ekspor Rekap Kelas'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'filter',
-                  child: Row(
-                    children: [
-                      Icon(Icons.filter_list, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text('Filter Data'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'refresh',
-                  child: Row(
-                    children: [
-                      Icon(Icons.refresh, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text('Muat Ulang'),
-                    ],
-                  ),
-                ),
-              ],
-        ),
-      ],
-    );
+    return AppBar(title: const Text('Data Santri'), centerTitle: true);
   }
 
   void _showFilterDialog() {
@@ -156,7 +102,10 @@ class StudentDataView extends GetView<StudentDataController> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(onPressed: () => Get.back(), child: const Text('Batal')),
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: const Text('Batal'),
+                  ),
                   const SizedBox(width: 8),
                   ElevatedButton(
                     onPressed: () {
@@ -178,16 +127,30 @@ class StudentDataView extends GetView<StudentDataController> {
     return Container(
       height: 50.h,
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-      child: Obx(
-        () => ListView.builder(
+      child: Obx(() {
+        // ✅ DEBUG: Print state
+        print('=== RENDERING TABS ===');
+        print('Total classes: ${controller.teacherClasses.length}');
+        print('Selected index: ${controller.selectedClassIndex.value}');
+
+        return ListView.builder(
           scrollDirection: Axis.horizontal,
           itemCount: controller.teacherClasses.length,
           itemBuilder: (context, index) {
             final classData = controller.teacherClasses[index];
             final isSelected = controller.selectedClassIndex.value == index;
-            
+
+            // ✅ DEBUG: Print per item
+            print(
+              'Tab $index: ${classData.className} - ${classData.subjectName}',
+            );
+            print('  isSelected: $isSelected');
+
             return GestureDetector(
-              onTap: () => controller.selectClass(index),
+              onTap: () {
+                print('🔘 Tapped tab index: $index');
+                controller.selectClass(index);
+              },
               child: Container(
                 margin: EdgeInsets.only(right: 8.w),
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
@@ -216,8 +179,8 @@ class StudentDataView extends GetView<StudentDataController> {
               ),
             );
           },
-        ),
-      ),
+        );
+      }),
     );
   }
 

@@ -1,8 +1,9 @@
+// lib/v2/app/modules/teacher/student_data/controllers/student_data_controller.dart
+
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:nch_mobile/v2/app/routes/app_routes.dart';
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/services/api_service.dart';
 import '../../student_history/controllers/student_history_controller.dart';
@@ -17,10 +18,8 @@ class StudentDataController extends GetxController {
   final selectedClassIndex = 0.obs;
   final searchQuery = ''.obs;
 
-  // ✅ Flag untuk prevent multiple navigations
   bool _isNavigating = false;
 
-  // Form controllers
   final searchController = TextEditingController();
 
   @override
@@ -35,7 +34,6 @@ class StudentDataController extends GetxController {
     super.onClose();
   }
 
-  /// Load teacher's classes and students
   Future<void> loadTeacherClasses() async {
     try {
       isLoading.value = true;
@@ -52,11 +50,16 @@ class StudentDataController extends GetxController {
 
       if (classes.isNotEmpty) {
         teacherClasses.value = classes;
+
+        // ✅ FIX: Reset ke index 0 setelah load data baru
+        selectedClassIndex.value = 0;
+
         developer.log('✅ Loaded ${classes.length} classes with students');
+        developer.log('✅ Selected index reset to: ${selectedClassIndex.value}');
       } else {
         await loadFromDashboard();
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       developer.log('❌ Error loading teacher classes: $e');
       _showErrorSnackbar('Error', 'Gagal memuat data kelas');
     } finally {
@@ -64,7 +67,6 @@ class StudentDataController extends GetxController {
     }
   }
 
-  /// ✅ Fallback method: Load dari dashboard API
   Future<void> loadFromDashboard() async {
     try {
       final dashboard = await _apiService.getTeacherDashboard();
@@ -85,6 +87,9 @@ class StudentDataController extends GetxController {
                 )
                 .toList();
 
+        // ✅ FIX: Reset ke index 0
+        selectedClassIndex.value = 0;
+
         await loadStudentsForAllClasses();
       } else {
         teacherClasses.value = [];
@@ -95,7 +100,6 @@ class StudentDataController extends GetxController {
     }
   }
 
-  /// ✅ Load students untuk semua kelas menggunakan API
   Future<void> loadStudentsForAllClasses() async {
     for (int i = 0; i < teacherClasses.length; i++) {
       try {
@@ -157,7 +161,16 @@ class StudentDataController extends GetxController {
         selectedClassIndex.value >= teacherClasses.length) {
       return null;
     }
-    return teacherClasses[selectedClassIndex.value];
+
+    final selected = teacherClasses[selectedClassIndex.value];
+
+    // ✅ DEBUG: Log selected class
+    developer.log('📍 Selected Class:');
+    developer.log('   Index: ${selectedClassIndex.value}');
+    developer.log('   Subject: ${selected.subjectName}');
+    developer.log('   Class: ${selected.className}');
+
+    return selected;
   }
 
   List<StudentSummaryModel> get filteredStudents {
@@ -180,17 +193,32 @@ class StudentDataController extends GetxController {
     searchQuery.value = query;
   }
 
+  // ✅ FIX: Method selectClass dengan logging
   void selectClass(int index) {
+    developer.log('=== SELECT CLASS ===');
+    developer.log('Requested index: $index');
+    developer.log('Total classes: ${teacherClasses.length}');
+
     if (index >= 0 && index < teacherClasses.length) {
       selectedClassIndex.value = index;
       searchController.clear();
       searchQuery.value = '';
+
+      developer.log('✅ Selected index: ${selectedClassIndex.value}');
+      developer.log(
+        '✅ Selected class: ${teacherClasses[index].className} - ${teacherClasses[index].subjectName}',
+      );
+
+      // ✅ Force UI update
+      update();
+    } else {
+      developer.log('❌ Invalid index: $index (out of range)');
     }
+
+    developer.log('===================');
   }
 
-  /// ✅ FIXED: Navigate to student attendance history WITHOUT BINDING
   Future<void> viewStudentHistory(StudentSummaryModel student) async {
-    // ✅ Prevent multiple simultaneous navigations
     if (_isNavigating) {
       developer.log('⚠️ Already navigating, ignoring duplicate call');
       return;
@@ -221,15 +249,12 @@ class StudentDataController extends GetxController {
     try {
       _isNavigating = true;
 
-      // ✅ Wait untuk ensure UI is ready
       await Future.delayed(const Duration(milliseconds: 100));
 
-      // ✅ Delete old controller if exists
       if (Get.isRegistered<StudentHistoryController>()) {
         Get.delete<StudentHistoryController>();
       }
 
-      // ✅ Create controller dengan data langsung (NO BINDING!)
       Get.put(
         StudentHistoryController(
           student: student,
@@ -241,7 +266,6 @@ class StudentDataController extends GetxController {
 
       developer.log('✅ Controller created with data');
 
-      // ✅ Navigate WITHOUT binding
       final result = await Get.to(
         () => const StudentHistoryView(),
         transition: Transition.rightToLeft,
@@ -251,7 +275,6 @@ class StudentDataController extends GetxController {
 
       developer.log('✅ Navigation completed, result: $result');
 
-      // ✅ Cleanup controller after back
       if (Get.isRegistered<StudentHistoryController>()) {
         Get.delete<StudentHistoryController>();
       }
@@ -276,7 +299,6 @@ class StudentDataController extends GetxController {
     return 'Kurang';
   }
 
-  /// ✅ FIXED: Show student options bottom sheet
   void showStudentOptions(StudentSummaryModel student) {
     Get.bottomSheet(
       SafeArea(
@@ -355,32 +377,13 @@ class StudentDataController extends GetxController {
 
               const SizedBox(height: 20),
 
-              // ✅ FIXED: Action buttons
               ListTile(
                 leading: const Icon(Icons.history, color: Colors.blue),
                 title: const Text('Lihat Riwayat Kehadiran'),
                 onTap: () async {
-                  Get.back(); // Close bottomsheet
-
-                  // ✅ Wait 350ms untuk bottomsheet animation selesai
-                  await Future.delayed(const Duration(milliseconds: 350));
-
-                  // ✅ Baru navigate
-                  viewStudentHistory(student);
-                },
-              ),
-
-              ListTile(
-                leading: const Icon(Icons.person, color: Colors.green),
-                title: const Text('Detail Profil Siswa'),
-                onTap: () {
                   Get.back();
-                  Future.delayed(const Duration(milliseconds: 350), () {
-                    _showSnackbar(
-                      'Info',
-                      'Fitur detail profil akan segera tersedia',
-                    );
-                  });
+                  await Future.delayed(const Duration(milliseconds: 350));
+                  viewStudentHistory(student);
                 },
               ),
             ],

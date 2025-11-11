@@ -1,3 +1,5 @@
+// lib/v2/app/modules/teacher/attendance/controllers/attendance_controller.dart
+
 import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
@@ -6,11 +8,13 @@ import 'package:nch_mobile/v2/app/modules/teacher/dashboard/controllers/teacher_
 import '../../../../data/models/attendance_model.dart';
 import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../../data/services/storage_service.dart';
 import '../../../../data/services/export_servic.dart';
 import '../../schedule/controllers/schedule_controller.dart';
 
 class AttendanceController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
+  final StorageService _storageService = Get.find<StorageService>();
 
   // Observables
   final isLoading = false.obs;
@@ -23,7 +27,7 @@ class AttendanceController extends GetxController {
   final searchController = TextEditingController();
   final searchQuery = ''.obs;
 
-  // ✅ Data from navigation
+  // Data from navigation
   String? scheduleId;
   String? scheduleDate;
 
@@ -33,13 +37,13 @@ class AttendanceController extends GetxController {
 
     developer.log('=== ATTENDANCE CONTROLLER INIT ===');
 
-    // ✅ TRY 1: Get from Get.arguments
+    // Get from Get.arguments
     final args = Get.arguments;
 
-    // ✅ TRY 2: Get from Get.parameters
+    // Get from Get.parameters
     final params = Get.parameters;
 
-    // ✅ TRY 3: Get from RouteSettings (Navigator.push)
+    // Get from RouteSettings (Navigator.push)
     final context = Get.context;
     Map<String, dynamic>? routeArgs;
     if (context != null) {
@@ -54,7 +58,7 @@ class AttendanceController extends GetxController {
     developer.log('Get.parameters: ${params.keys}');
     developer.log('RouteSettings: ${routeArgs?.keys}');
 
-    // ✅ Priority: RouteSettings > Get.arguments > Get.parameters
+    // Priority: RouteSettings > Get.arguments > Get.parameters
     if (routeArgs != null && routeArgs.isNotEmpty) {
       scheduleId = routeArgs['schedule_id'] as String?;
       scheduleDate = routeArgs['date'] as String?;
@@ -147,6 +151,10 @@ class AttendanceController extends GetxController {
     try {
       isSaving.value = true;
 
+      developer.log('=== SUBMITTING ATTENDANCE ===');
+      developer.log('Schedule ID: $scheduleId');
+      developer.log('Date: $scheduleDate');
+
       final submission = AttendanceSubmissionModel(
         scheduleId: scheduleId!,
         attendanceDate: selectedDate.value,
@@ -163,24 +171,50 @@ class AttendanceController extends GetxController {
                 .toList(),
       );
 
+      // Submit ke backend
       await _apiService.submitAttendance(submission);
+
+      developer.log('✅ Attendance submitted successfully');
+
+      // ✅ STEP 1: Mark schedule as done di local storage
+      _storageService.markScheduleAsDone(scheduleId!, scheduleDate!);
+      developer.log('✅ Schedule marked as done in storage');
+
+      // ✅ STEP 2: Update isDone di ScheduleController (optimistic update)
+      if (Get.isRegistered<ScheduleController>()) {
+        developer.log('🔄 Updating schedule isDone status...');
+        final scheduleController = Get.find<ScheduleController>();
+
+        // Update specific schedule isDone
+        scheduleController.updateScheduleIsDone(scheduleId!, true);
+        developer.log('✅ Schedule isDone updated in controller');
+
+        // Refresh data dari backend
+        await scheduleController.loadWeeklySchedule();
+        developer.log('✅ Schedule controller refreshed');
+      }
+
+      // ✅ STEP 3: Update isDone di DashboardController
+      if (Get.isRegistered<TeacherDashboardController>()) {
+        developer.log('🔄 Refreshing dashboard...');
+        final dashboardController = Get.find<TeacherDashboardController>();
+        await dashboardController.loadDashboardData();
+        developer.log('✅ Dashboard refreshed');
+      }
 
       _showSuccessSnackbar(
         'بَارَكَ اللهُ فِيكَ',
         'Absensi berhasil disimpan. جزاك الله خيرا',
       );
 
-      // Refresh schedule list
-      if (Get.isRegistered<ScheduleController>()) {
-        final scheduleController = Get.find<ScheduleController>();
-        await scheduleController.loadWeeklySchedule();
-      }
+      // Small delay untuk animasi
+      await Future.delayed(const Duration(milliseconds: 500));
 
-      // Refresh current data
-      await _apiService.getTeacherDashboard();
-      await loadScheduleAttendance();
+      // ✅ STEP 4: Pop dengan result = true
+      developer.log('🔙 Navigating back...');
+      Navigator.of(Get.context!).pop(true);
     } catch (e) {
-      developer.log('Error submitting attendance: $e');
+      developer.log('❌ Error submitting attendance: $e');
       _showErrorSnackbar('Error', 'Gagal menyimpan absensi: $e');
     } finally {
       isSaving.value = false;

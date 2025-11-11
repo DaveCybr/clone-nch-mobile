@@ -1,5 +1,10 @@
+// lib/v2/app/data/models/dashboard_model.dart
+
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'dart:developer' as developer;
 import '../models/user_model.dart';
+import '../services/storage_service.dart';
 
 class TeacherDashboardModel {
   final DashboardStats stats;
@@ -35,6 +40,23 @@ class TeacherDashboardModel {
               .toList() ??
           [],
       teacher: UserModel.fromJson(json['teacher']),
+    );
+  }
+
+  // ✅ NEW: copyWith method
+  TeacherDashboardModel copyWith({
+    DashboardStats? stats,
+    List<TodayScheduleModel>? todaySchedules,
+    List<PrayerTimeModel>? prayerTimes,
+    List<AnnouncementModel>? announcements,
+    UserModel? teacher,
+  }) {
+    return TeacherDashboardModel(
+      stats: stats ?? this.stats,
+      todaySchedules: todaySchedules ?? this.todaySchedules,
+      prayerTimes: prayerTimes ?? this.prayerTimes,
+      announcements: announcements ?? this.announcements,
+      teacher: teacher ?? this.teacher,
     );
   }
 }
@@ -86,21 +108,41 @@ class TodayScheduleModel {
   });
 
   factory TodayScheduleModel.fromJson(Map<String, dynamic> json) {
+    final scheduleId = json['id']?.toString() ?? '';
+
+    // ✅ Check isDone dari JSON dulu
+    bool isDone = _safeBoolConversion(json['is_done']);
+
+    // ✅ Jika belum done, cek dari storage
+    if (!isDone && scheduleId.isNotEmpty) {
+      try {
+        if (Get.isRegistered<StorageService>()) {
+          final storageService = Get.find<StorageService>();
+          final today = DateTime.now().toIso8601String().split('T')[0];
+          isDone = storageService.isScheduleDone(scheduleId, today);
+
+          if (isDone) {
+            developer.log('✅ Schedule $scheduleId marked as done from storage');
+          }
+        }
+      } catch (e) {
+        developer.log('⚠️ Error checking storage for isDone: $e');
+      }
+    }
+
     return TodayScheduleModel(
-      id: json['id']?.toString() ?? '',
+      id: scheduleId,
       subjectName: json['subject_name']?.toString() ?? '',
       className: json['class_name']?.toString() ?? '',
       timeSlot: json['time_slot']?.toString() ?? '',
       startTime: json['start_time']?.toString() ?? '',
       endTime: json['end_time']?.toString() ?? '',
       day: json['day']?.toString() ?? '',
-      // ✅ Fix: Safe boolean conversion
-      isDone: _safeBoolConversion(json['is_done']),
+      isDone: isDone, // ✅ Gunakan isDone yang sudah dicek
       totalStudents: json['total_students'] ?? 0,
     );
   }
 
-  // ✅ Helper method for safe boolean conversion
   static bool _safeBoolConversion(dynamic value) {
     if (value is bool) return value;
     if (value is int) return value == 1;
@@ -108,7 +150,33 @@ class TodayScheduleModel {
     return false;
   }
 
+  // ✅ TAMBAH: CopyWith method
+  TodayScheduleModel copyWith({
+    String? id,
+    String? subjectName,
+    String? className,
+    String? timeSlot,
+    String? startTime,
+    String? endTime,
+    String? day,
+    bool? isDone,
+    int? totalStudents,
+  }) {
+    return TodayScheduleModel(
+      id: id ?? this.id,
+      subjectName: subjectName ?? this.subjectName,
+      className: className ?? this.className,
+      timeSlot: timeSlot ?? this.timeSlot,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      day: day ?? this.day,
+      isDone: isDone ?? this.isDone,
+      totalStudents: totalStudents ?? this.totalStudents,
+    );
+  }
+
   String get timeRange => '$startTime - $endTime';
+
   bool get isOngoing {
     try {
       final now = TimeOfDay.now();
@@ -124,11 +192,12 @@ class TodayScheduleModel {
     try {
       final parts = time.split(':');
       if (parts.length >= 2) {
-        return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+        return TimeOfDay(
+          hour: int.parse(parts[0]),
+          minute: int.parse(parts[1]),
+        );
       }
-    } catch (e) {
-      // Return current time as fallback
-    }
+    } catch (e) {}
     return TimeOfDay.now();
   }
 
@@ -158,12 +227,10 @@ class PrayerTimeModel {
       name: json['name']?.toString() ?? '',
       time: json['time']?.toString() ?? '',
       arabicName: json['arabic_name']?.toString() ?? '',
-      // ✅ Fix: Safe boolean conversion
       isPassed: _safeBoolConversion(json['is_passed']),
     );
   }
 
-  // ✅ Helper method for safe boolean conversion
   static bool _safeBoolConversion(dynamic value) {
     if (value is bool) return value;
     if (value is int) return value == 1;
@@ -176,7 +243,11 @@ class PrayerTimeModel {
       const PrayerTimeModel(name: 'Subuh', time: '04:30', arabicName: 'الفجر'),
       const PrayerTimeModel(name: 'Dzuhur', time: '12:00', arabicName: 'الظهر'),
       const PrayerTimeModel(name: 'Ashar', time: '15:30', arabicName: 'العصر'),
-      const PrayerTimeModel(name: 'Maghrib', time: '18:15', arabicName: 'المغرب'),
+      const PrayerTimeModel(
+        name: 'Maghrib',
+        time: '18:15',
+        arabicName: 'المغرب',
+      ),
       const PrayerTimeModel(name: 'Isya', time: '19:30', arabicName: 'العشاء'),
     ];
   }
@@ -190,8 +261,10 @@ class AnnouncementModel {
   final DateTime publishedAt;
   final String category;
   final bool isPriority;
+  final String? slug;
+  bool isRead; // ✅ Mutable untuk bisa diubah
 
-  const AnnouncementModel({
+  AnnouncementModel({
     required this.id,
     required this.title,
     required this.content,
@@ -199,22 +272,77 @@ class AnnouncementModel {
     required this.publishedAt,
     this.category = 'umum',
     this.isPriority = false,
+    this.slug,
+    this.isRead = false,
   });
 
   factory AnnouncementModel.fromJson(Map<String, dynamic> json) {
+    final announcementId = json['id']?.toString() ?? '';
+
+    // ✅ Check dari JSON dulu
+    bool isRead = _safeBoolConversion(json['is_read']);
+
+    // ✅ Override dengan data dari local storage (PRIORITAS TINGGI)
+    if (!isRead && announcementId.isNotEmpty) {
+      try {
+        if (Get.isRegistered<StorageService>()) {
+          final storageService = Get.find<StorageService>();
+          isRead = storageService.isAnnouncementRead(announcementId);
+
+          if (isRead) {
+            developer.log(
+              '✅ AnnouncementModel: $announcementId marked as read from storage',
+            );
+          }
+        }
+      } catch (e) {
+        developer.log(
+          '⚠️ AnnouncementModel: Error checking storage for isRead: $e',
+        );
+      }
+    }
+
     return AnnouncementModel(
-      id: json['id']?.toString() ?? '',
+      id: announcementId,
       title: json['judul']?.toString() ?? json['title']?.toString() ?? '',
       content: json['isi']?.toString() ?? json['content']?.toString() ?? '',
       image: json['gambar']?.toString() ?? json['image']?.toString(),
       publishedAt: _parseDateTime(json['published_at'] ?? json['created_at']),
-      category: json['kategori']?.toString() ?? json['category']?.toString() ?? 'umum',
-      // ✅ Fix: Safe boolean conversion
+      category:
+          json['kategori']?.toString() ??
+          json['category']?.toString() ??
+          'umum',
       isPriority: _safeBoolConversion(json['is_priority']),
+      slug: json['slug']?.toString(),
+      isRead: isRead,
     );
   }
 
-  // ✅ Helper method for safe boolean conversion
+  // ✅ copyWith untuk immutable pattern
+  AnnouncementModel copyWith({
+    String? id,
+    String? title,
+    String? content,
+    String? image,
+    DateTime? publishedAt,
+    String? category,
+    bool? isPriority,
+    String? slug,
+    bool? isRead,
+  }) {
+    return AnnouncementModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      image: image ?? this.image,
+      publishedAt: publishedAt ?? this.publishedAt,
+      category: category ?? this.category,
+      isPriority: isPriority ?? this.isPriority,
+      slug: slug ?? this.slug,
+      isRead: isRead ?? this.isRead,
+    );
+  }
+
   static bool _safeBoolConversion(dynamic value) {
     if (value is bool) return value;
     if (value is int) return value == 1;
@@ -222,7 +350,6 @@ class AnnouncementModel {
     return false;
   }
 
-  // ✅ Helper method for safe DateTime parsing
   static DateTime _parseDateTime(dynamic value) {
     if (value is String) {
       try {
@@ -247,5 +374,23 @@ class AnnouncementModel {
     } else {
       return 'Baru saja';
     }
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'judul': title,
+      'content': content,
+      'isi': content,
+      'image': image,
+      'gambar': image,
+      'published_at': publishedAt.toIso8601String(),
+      'category': category,
+      'kategori': category,
+      'is_priority': isPriority,
+      'slug': slug,
+      'is_read': isRead,
+    };
   }
 }

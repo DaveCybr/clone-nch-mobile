@@ -1,16 +1,26 @@
 // Fixed TeacherDashboardController.dart
 
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/models/user_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../../data/services/storage_service.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../auth/controllers/auth_controller.dart';
+import '../../announcements/bindings/announcement_binding.dart';
+import '../../announcements/views/announcement_detail_view.dart';
+import '../../announcements/views/announcement_view.dart';
+import '../../attendance/bindings/attendance_binding.dart';
+import '../../attendance/controllers/attendance_controller.dart';
+import '../../attendance/views/attendance_view.dart';
 
 class TeacherDashboardController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
   final AuthController _authController = Get.find<AuthController>();
+  final StorageService _storageService = Get.find<StorageService>();
 
   // Observables
   final isLoading = false.obs;
@@ -18,6 +28,7 @@ class TeacherDashboardController extends GetxController {
   final dashboardData = Rxn<TeacherDashboardModel>();
   final currentTime = DateTime.now().obs;
   final selectedNavIndex = 0.obs;
+  final unreadAnnouncementsCount = 0.obs; // ✅ Observable untuk unread count
 
   // Prayer times
   final prayerTimes = <PrayerTimeModel>[].obs;
@@ -38,6 +49,83 @@ class TeacherDashboardController extends GetxController {
   Future<void> _initializeDashboard() async {
     await loadDashboardData();
     _loadPrayerTimes();
+    _updateUnreadCount(); // ✅ Update unread count on init
+  }
+
+  // ✅ NEW: Method untuk update unread count
+  void _updateUnreadCount() {
+    final announcements = dashboardData.value?.announcements ?? [];
+
+    // Count berdasarkan isRead property (yang sudah sync dengan storage)
+    unreadAnnouncementsCount.value =
+        announcements.where((a) => !a.isRead).length;
+
+    developer.log(
+      '📊 Dashboard unread count updated: ${unreadAnnouncementsCount.value}',
+    );
+  }
+
+  // ✅ NEW: Method untuk mark announcement as read
+  Future<void> markAnnouncementAsRead(String announcementId) async {
+    try {
+      developer.log(
+        '📖 Dashboard: Marking announcement as read: $announcementId',
+      );
+
+      // Update local data
+      final announcements = dashboardData.value?.announcements ?? [];
+      bool hasChanges = false;
+
+      final updatedAnnouncements =
+          announcements.map((announcement) {
+            if (announcement.id == announcementId && !announcement.isRead) {
+              announcement.isRead = true;
+              hasChanges = true;
+              return announcement;
+            }
+            return announcement;
+          }).toList();
+
+      if (hasChanges) {
+        // Update dashboard data
+        if (dashboardData.value != null) {
+          dashboardData.value = dashboardData.value!.copyWith(
+            announcements: updatedAnnouncements,
+          );
+        }
+
+        // Save to storage
+        await _storageService.markAnnouncementAsRead(announcementId);
+
+        // Update unread count
+        _updateUnreadCount();
+
+        developer.log(
+          '✅ Dashboard: Marked announcement $announcementId as read',
+        );
+      }
+    } catch (e) {
+      developer.log('❌ Dashboard: Error marking announcement as read: $e');
+    }
+  }
+
+  // ✅ NEW: Method untuk view announcement detail
+  void viewAnnouncementDetail(AnnouncementModel announcement) {
+    developer.log(
+      '👀 Dashboard: Opening announcement detail: ${announcement.id}',
+    );
+
+    // Mark as read if not already (sync dengan storage)
+    if (!announcement.isRead) {
+      markAnnouncementAsRead(announcement.id);
+    }
+
+    // Navigate to detail view
+    Get.to(
+      () => AnnouncementDetailView(announcement: announcement),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 300),
+    );
   }
 
   /// Load dashboard data from API with better error handling
@@ -46,6 +134,13 @@ class TeacherDashboardController extends GetxController {
       isLoading.value = true;
 
       final response = await _apiService.getTeacherDashboard();
+
+      developer.log('📦 Dashboard API Response:');
+      developer.log('Stats: ${response['stats']}');
+      developer.log(
+        'Announcements count: ${(response['announcements'] as List?)?.length ?? 0}',
+      );
+
       dashboardData.value = TeacherDashboardModel.fromJson(response);
 
       // Update prayer times if available
@@ -55,7 +150,21 @@ class TeacherDashboardController extends GetxController {
                 .map((e) => PrayerTimeModel.fromJson(e))
                 .toList();
       }
-    } catch (e) {
+
+      // ✅ Update unread count after loading data
+      _updateUnreadCount();
+
+      developer.log('✅ Dashboard loaded successfully');
+      developer.log(
+        '📊 Total announcements: ${dashboardData.value?.announcements.length ?? 0}',
+      );
+      developer.log(
+        '📊 Unread announcements: ${unreadAnnouncementsCount.value}',
+      );
+    } catch (e, stackTrace) {
+      developer.log('❌ Error loading dashboard: $e');
+      developer.log('Stack trace: $stackTrace');
+
       // Provide fallback data instead of just showing error
       _loadFallbackData();
       _showErrorSnackbar(
@@ -88,6 +197,7 @@ class TeacherDashboardController extends GetxController {
     try {
       isRefreshing.value = true;
       await loadDashboardData();
+      // ✅ _updateUnreadCount() already called in loadDashboardData()
     } finally {
       isRefreshing.value = false;
     }
@@ -169,37 +279,72 @@ class TeacherDashboardController extends GetxController {
   /// Get current user
   UserModel? get currentUser => _authController.user.value;
 
-  // ===== NAVIGATION METHODS - FIXED =====
-
-  /// Navigate to attendance for specific schedule - FIXED
   void navigateToAttendance(TodayScheduleModel schedule) {
-    print('🔄 Navigating to attendance for schedule: ${schedule.id}');
-
-    // Check if the route and controller exist
-    // if (!Get.isRouteActive(Routes.TEACHER_ATTENDANCE)) {
-    //   print('⚠️ Route ${Routes.TEACHER_ATTENDANCE} is not active');
-    // }
-
-    // Navigate with proper error handling
     try {
-      Get.rootDelegate.offNamed(
-        Routes.getTeacherRoute(Routes.TEACHER_ATTENDANCE),
-        arguments: {'schedule': schedule, 'schedule_id': schedule.id},
+      // ✅ ULTIMATE SOLUTION: Clean up old controller + Manual injection
+      final arguments = {
+        'schedule_id': schedule.id,
+        'subject_name': schedule.subjectName,
+        'class_name': schedule.className,
+        'day': schedule.day,
+        'start_time': schedule.startTime,
+        'end_time': schedule.endTime,
+        'total_students': schedule.totalStudents,
+        'time_slot': schedule.timeSlot,
+        'is_done': schedule.isDone,
+      };
+
+      // ✅ Store in Get.parameters (accessible via Get.parameters)
+      Get.parameters = arguments.map((k, v) => MapEntry(k, v.toString()));
+
+      // ✅ CRITICAL FIX: Delete old controller if exists
+      if (Get.isRegistered<AttendanceController>()) {
+        Get.delete<AttendanceController>(force: true);
+        developer.log('🗑️ Deleted old AttendanceController');
+      }
+
+      // ✅ Put NEW controller without tag (to avoid duplicate key error)
+      Get.put(AttendanceController());
+      developer.log('✅ Put new AttendanceController');
+
+      // ✅ Navigate with RouteSettings containing arguments
+      Navigator.of(Get.context!).push(
+        MaterialPageRoute(
+          builder: (context) {
+            // Initialize binding manually
+            AttendanceBinding().dependencies();
+            return const AttendanceView();
+          },
+          settings: RouteSettings(name: '/attendance', arguments: arguments),
+        ),
       );
-      print('✅ Navigation successful');
-    } catch (e) {
-      print('❌ Navigation error: $e');
-      _showErrorSnackbar('Error', 'Tidak dapat membuka halaman absensi: $e');
+
+      developer.log('✅ Navigation with Navigator.push + manual binding');
+    } catch (e, stackTrace) {
+      developer.log('❌ Navigation error: $e');
+      developer.log('Stack trace: $stackTrace');
+      _showErrorSnackbar(
+        'Error Navigasi',
+        'Tidak dapat membuka halaman absensi: ${e.toString()}',
+      );
     }
   }
 
-  /// Navigate to announcements
-  void navigateToAnnouncements() {
+  void navigateToAnnouncements() async {
     try {
-      Get.rootDelegate.offNamed(
-        Routes.getTeacherRoute(Routes.TEACHER_ANNOUNCEMENTS),
+      // Initialize binding sebelum navigate
+      AnnouncementsBinding().dependencies();
+
+      await Get.to(
+        () => const AnnouncementsView(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 300),
       );
+
+      // Refresh dashboard when returning from announcements
+      await refreshDashboard();
     } catch (e) {
+      developer.log('❌ Error navigating to announcements: $e');
       _showErrorSnackbar('Info', 'Halaman pengumuman belum tersedia');
     }
   }

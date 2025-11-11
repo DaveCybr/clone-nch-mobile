@@ -22,6 +22,9 @@ class _SplashViewState extends State<SplashView>
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
+  // ✅ Add loading state
+  final RxString _statusMessage = 'جَزَاكَ اللهُ خَيْرًا'.obs;
+
   @override
   void initState() {
     super.initState();
@@ -55,7 +58,9 @@ class _SplashViewState extends State<SplashView>
     await Future.delayed(const Duration(milliseconds: 500));
 
     try {
-      // Get auth controller
+      _statusMessage.value = 'Memeriksa autentikasi...';
+
+      // Get auth controller - should be available via InitialBinding
       final authController = Get.find<AuthController>();
       developer.log('SplashView: AuthController found');
 
@@ -69,13 +74,16 @@ class _SplashViewState extends State<SplashView>
 
       if (isAuthenticated) {
         developer.log('SplashView: User is authenticated, redirecting...');
+        _statusMessage.value = 'Mengalihkan...';
         _redirectBasedOnRole(authController);
       } else {
         developer.log('SplashView: User not authenticated, going to login');
+        _statusMessage.value = 'Menuju halaman login...';
         Get.rootDelegate.offNamed(Routes.LOGIN);
       }
     } catch (e) {
       developer.log('SplashView: Error during initialization: $e');
+      _statusMessage.value = 'Error: $e';
       // If any error occurs during auth check, go to login
       await Future.delayed(const Duration(seconds: 1));
       Get.rootDelegate.offNamed(Routes.LOGIN);
@@ -93,8 +101,6 @@ class _SplashViewState extends State<SplashView>
     developer.log('=== SPLASH REDIRECT INFO ===');
     developer.log('User: ${user.name}');
     developer.log('Email: ${user.email}');
-    developer.log('Is Teacher: ${user.isTeacher}');
-    developer.log('Is Parent: ${user.isParent}');
     developer.log('Current Role: ${user.currentRole}');
     developer.log('Roles: ${user.roleNames}');
     developer.log('===========================');
@@ -113,139 +119,118 @@ class _SplashViewState extends State<SplashView>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.primaryGreen,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Logo
-                    Container(
-                      width: 120.w,
-                      height: 120.h,
-                      decoration: BoxDecoration(
-                        color: AppColors.goldAccent,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+      body: SafeArea(
+        child: Center(
+          child: AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.w),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Logo
+                          Container(
+                            width: 120.w,
+                            height: 120.h,
+                            decoration: BoxDecoration(
+                              color: AppColors.goldAccent,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.school,
+                              size: 60.sp,
+                              color: AppColors.primaryGreen,
+                            ),
                           ),
-                        ],
-                      ),
-                      child: Icon(
-                        Icons.school,
-                        size: 60.sp,
-                        color: AppColors.primaryGreen,
-                      ),
-                    ),
 
-                    SizedBox(height: 30.h),
+                          SizedBox(height: 30.h),
 
-                    // Bismillah
-                    Text(
-                      'بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ',
-                      style: AppTextStyles.arabicText.copyWith(
-                        color: Colors.white,
-                        fontSize: 18.sp,
-                      ),
-                    ),
+                          // Bismillah
+                          Text(
+                            'بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ',
+                            style: AppTextStyles.arabicText.copyWith(
+                              color: Colors.white,
+                              fontSize: 18.sp,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
 
-                    SizedBox(height: 20.h),
+                          SizedBox(height: 20.h),
 
-                    // App Name
-                    Text(
-                      'My NCH',
-                      style: AppTextStyles.heading1.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                          // App Name
+                          Text(
+                            'My NCH',
+                            style: AppTextStyles.heading1.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
 
-                    Text(
-                      'Teacher Portal',
-                      style: AppTextStyles.heading3.copyWith(
-                        color: Colors.white.withOpacity(0.9),
-                      ),
-                    ),
+                          Text(
+                            'Teacher Portal',
+                            style: AppTextStyles.heading3.copyWith(
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                          ),
 
-                    SizedBox(height: 10.h),
+                          SizedBox(height: 10.h),
 
-                    Text(
-                      'Portal Ustadz/Ustadzah Pesantren',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white.withOpacity(0.8),
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
+                          Text(
+                            'Portal Ustadz/Ustadzah Pesantren',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: Colors.white.withOpacity(0.8),
+                              fontStyle: FontStyle.italic,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
 
-                    SizedBox(height: 40.h),
+                          SizedBox(height: 40.h),
 
-                    // Loading indicator
-                    SizedBox(
-                      width: 40.w,
-                      height: 40.h,
-                      child: const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColors.goldAccent,
-                        ),
-                        strokeWidth: 3,
-                      ),
-                    ),
+                          // Loading indicator
+                          SizedBox(
+                            width: 40.w,
+                            height: 40.h,
+                            child: const CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.goldAccent,
+                              ),
+                              strokeWidth: 3,
+                            ),
+                          ),
 
-                    SizedBox(height: 20.h),
+                          SizedBox(height: 20.h),
 
-                    // Status message dengan debug info
-                    Obx(() {
-                      try {
-                        final authController = Get.find<AuthController>();
-                        String statusMessage = 'جَزَاكَ اللهُ خَيْرًا';
-
-                        if (authController.isLoading.value) {
-                          statusMessage = 'Memeriksa autentikasi...';
-                        }
-
-                        return Column(
-                          children: [
-                            Text(
-                              statusMessage,
+                          // ✅ FIXED: Status message - Simple Obx without try-catch
+                          Obx(
+                            () => Text(
+                              _statusMessage.value,
                               style: AppTextStyles.arabicSubtitle.copyWith(
                                 color: Colors.white.withOpacity(0.8),
                               ),
+                              textAlign: TextAlign.center,
                             ),
-                            // Enhanced debug info
-                            SizedBox(height: 8.h),
-                            Text(
-                              'Debug: isLoggedIn=${authController.isLoggedIn.value}, '
-                              'hasUser=${authController.user.value != null}, '
-                              'userRole=${authController.user.value?.currentRole}',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.6),
-                                fontSize: 10.sp,
-                              ),
-                            ),
-                          ],
-                        );
-                      } catch (e) {
-                        return Text(
-                          'جَزَاكَ اللهُ خَيْرًا',
-                          style: AppTextStyles.arabicSubtitle.copyWith(
-                            color: Colors.white.withOpacity(0.8),
                           ),
-                        );
-                      }
-                    }),
-                  ],
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

@@ -8,7 +8,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:get/get.dart';
 import '../models/attendance_model.dart';
-import '../models/dashboard_model.dart';
+// import '../models/dashboard_model.dart';
 
 class ExportService extends GetxService {
   /// Export attendance to Excel - FIXED VERSION
@@ -327,7 +327,9 @@ class ExportService extends GetxService {
                 children: [
                   // Table Header
                   pw.TableRow(
-                    decoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                    decoration: const pw.BoxDecoration(
+                      color: PdfColors.grey300,
+                    ),
                     children: [
                       _buildPdfTableCell('No', titleFont, 8),
                       _buildPdfTableCell('Tanggal', titleFont, 8),

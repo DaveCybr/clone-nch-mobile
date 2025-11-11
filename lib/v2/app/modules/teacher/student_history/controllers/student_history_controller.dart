@@ -133,7 +133,6 @@ class StudentHistoryController extends GetxController {
         }
       } else {
         developer.log('⚠️ Still no data');
-        _safeShowInfoSnackbar('Info', 'Belum ada data kehadiran');
       }
     } catch (e) {
       developer.log('❌ Error: $e');

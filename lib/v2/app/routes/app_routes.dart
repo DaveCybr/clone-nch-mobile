@@ -1,5 +1,3 @@
-// lib/v2/app/routes/app_routes.dart - UPDATED
-
 abstract class Routes {
   // ===== COMMON ROUTES =====
   static const SPLASH = '/';
@@ -10,6 +8,7 @@ abstract class Routes {
   static const MAIN = '/main';
   static const STUDENT = '/student';
   static const PARENT = '/parent';
+  static const SECURITY = '/security';
 
   // Child routes (nested under /main)
   static const TEACHER_DASHBOARD = '/dashboard';
@@ -37,8 +36,26 @@ abstract class Routes {
   static const STUDENT_ANNOUNCEMENTS = '/student-announcements';
   static const STUDENT_PROFILE = '/student-profile';
 
+  // ✅ TAMBAHKAN INI - Visit Schedule Routes
+  static const STUDENT_VISIT_SCHEDULE = '/visit-schedule';
+  static const STUDENT_VISIT_QR = '/visit-schedule/qr';
+  // ===== SECURITY ROUTES =====
+  // Security wrapper: /security
+  // Child routes (nested under /security)
+  static const SECURITY_DASHBOARD = '/security-dashboard';
+  static const SECURITY_SCAN = '/security-scan'; // Scan barcode/QR
+  static const SECURITY_VISIT_LOGS = '/security-visit-logs'; // Daftar kunjungan
+  static const SECURITY_CHECK_IN = '/security-check-in'; // Check-in manual
+  static const SECURITY_CHECK_OUT = '/security-check-out'; // Check-out manual
+  static const SECURITY_TODAY_VISITORS =
+      '/security-today-visitors'; // Pengunjung hari ini
+  static const SECURITY_HISTORY = '/security-history'; // Riwayat kunjungan
+  static const SECURITY_PROFILE = '/security-profile';
+
   // Helper methods untuk mendapatkan full path
   static String getTeacherRoute(String route) => '/main$route';
   static String getParentRoute(String route) => '/parent$route';
   static String getStudentRoute(String route) => '/student$route';
+  static String getSecurityRoute(String route) => '/security$route';
 }
+

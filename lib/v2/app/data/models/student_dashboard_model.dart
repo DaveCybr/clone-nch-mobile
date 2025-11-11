@@ -71,7 +71,7 @@ class ClassModel {
   }
 }
 
-/// Student Schedule Model
+/// Student Schedule Model - ✅ FIXED VERSION
 class StudentScheduleModel {
   final String id;
   final String subjectName;
@@ -96,16 +96,93 @@ class StudentScheduleModel {
   });
 
   factory StudentScheduleModel.fromJson(Map<String, dynamic> json) {
+    // ✅ PERBAIKAN: Extract dari nested structure API
+
+    // Get subject info dari nested path: subject_teacher.subject_semester.subject
+    String subjectName = 'Mata Pelajaran';
+    String subjectCode = '';
+
+    if (json['subject_teacher'] != null) {
+      final subjectTeacher = json['subject_teacher'] as Map<String, dynamic>;
+
+      if (subjectTeacher['subject_semester'] != null) {
+        final subjectSemester =
+            subjectTeacher['subject_semester'] as Map<String, dynamic>;
+
+        if (subjectSemester['subject'] != null) {
+          final subject = subjectSemester['subject'] as Map<String, dynamic>;
+          subjectName = subject['name']?.toString() ?? 'Mata Pelajaran';
+          subjectCode = subject['code']?.toString() ?? '';
+        }
+      }
+    }
+
+    // Fallback ke struktur flat jika ada
+    if (subjectName == 'Mata Pelajaran') {
+      subjectName =
+          json['subject_name']?.toString() ??
+          json['subject']?.toString() ??
+          'Mata Pelajaran';
+    }
+    if (subjectCode.isEmpty) {
+      subjectCode = json['subject_code']?.toString() ?? '';
+    }
+
+    // Get teacher name dari nested path: subject_teacher.employee.user
+    String? teacherName;
+    if (json['subject_teacher'] != null) {
+      final subjectTeacher = json['subject_teacher'] as Map<String, dynamic>;
+
+      if (subjectTeacher['employee'] != null) {
+        final employee = subjectTeacher['employee'] as Map<String, dynamic>;
+
+        if (employee['user'] != null) {
+          final user = employee['user'] as Map<String, dynamic>;
+          teacherName = user['name']?.toString();
+        }
+      }
+    }
+
+    // Fallback ke struktur flat jika ada
+    teacherName ??=
+        json['teacher_name']?.toString() ?? json['teacher']?.toString();
+
+    // Get time dari time_slot
+    String startTime = '00:00';
+    String endTime = '00:00';
+
+    if (json['time_slot'] != null) {
+      final timeSlot = json['time_slot'] as Map<String, dynamic>;
+
+      // Format: "07:00:00" -> "07:00"
+      final startFull = timeSlot['start_time']?.toString() ?? '00:00:00';
+      final endFull = timeSlot['end_time']?.toString() ?? '00:00:00';
+
+      // Ambil HH:mm saja (buang detik)
+      startTime = startFull.length >= 5 ? startFull.substring(0, 5) : startFull;
+      endTime = endFull.length >= 5 ? endFull.substring(0, 5) : endFull;
+    }
+
+    // Fallback ke struktur flat jika ada
+    if (startTime == '00:00') {
+      startTime = json['start_time']?.toString() ?? '00:00';
+      if (startTime.length > 5) startTime = startTime.substring(0, 5);
+    }
+    if (endTime == '00:00') {
+      endTime = json['end_time']?.toString() ?? '00:00';
+      if (endTime.length > 5) endTime = endTime.substring(0, 5);
+    }
+
     return StudentScheduleModel(
       id: json['id']?.toString() ?? '',
-      subjectName: json['subject_name'] ?? json['subject'] ?? '',
-      subjectCode: json['subject_code'] ?? '',
-      startTime: json['start_time'] ?? '',
-      endTime: json['end_time'] ?? '',
-      day: json['day'] ?? '',
-      teacherName: json['teacher_name'] ?? json['teacher'],
-      room: json['room'] ?? json['room_name'],
-      notes: json['notes'],
+      subjectName: subjectName,
+      subjectCode: subjectCode,
+      startTime: startTime,
+      endTime: endTime,
+      day: json['day']?.toString() ?? '',
+      teacherName: teacherName,
+      room: json['room']?.toString() ?? json['room_name']?.toString(),
+      notes: json['notes']?.toString(),
     );
   }
 
@@ -123,15 +200,26 @@ class StudentScheduleModel {
   }
 
   DateTime _parseTime(String time) {
-    final parts = time.split(':');
-    final now = DateTime.now();
-    return DateTime(
-      now.year,
-      now.month,
-      now.day,
-      int.parse(parts[0]),
-      int.parse(parts[1]),
-    );
+    try {
+      final parts = time.split(':');
+      if (parts.length < 2) return DateTime.now();
+
+      final now = DateTime.now();
+      return DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+      );
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
+  @override
+  String toString() {
+    return 'StudentScheduleModel(id: $id, subject: $subjectName, time: $startTime-$endTime, teacher: $teacherName)';
   }
 }
 

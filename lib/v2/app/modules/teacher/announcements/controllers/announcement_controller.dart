@@ -4,14 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../../data/services/storage_service.dart';
+import '../views/announcement_detail_view.dart';
 
 class AnnouncementsController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
+  final StorageService _storageService = Get.find<StorageService>();
 
   // Observables
   final isLoading = false.obs;
   final isLoadingMore = false.obs;
-  final announcements = <AnnouncementModel>[].obs;
+  final announcements = <AnnouncementModel>[].obs; // ✅ Observable list
   final selectedCategory = 'all'.obs;
   final searchQuery = ''.obs;
 
@@ -34,7 +37,7 @@ class AnnouncementsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadAnnouncements();
+    _initialize();
   }
 
   @override
@@ -43,7 +46,73 @@ class AnnouncementsController extends GetxController {
     super.onClose();
   }
 
-  /// Load announcements
+  /// Initialize controller
+  Future<void> _initialize() async {
+    developer.log('🔄 Initializing AnnouncementsController...');
+
+    // Load announcements
+    await loadAnnouncements();
+
+    // Check notification arguments
+    _checkNotificationArguments();
+  }
+
+  /// Check if page opened from notification
+  void _checkNotificationArguments() {
+    try {
+      final args = Get.arguments;
+
+      developer.log('📦 Announcements page arguments: $args');
+
+      if (args != null && args is Map<String, dynamic>) {
+        if (args['openDetail'] == true) {
+          final identifier = args['identifier'];
+
+          developer.log('🎯 Should open detail with identifier: $identifier');
+
+          if (identifier != null) {
+            _openAnnouncementByIdentifier(identifier.toString());
+          }
+        }
+      }
+    } catch (e) {
+      developer.log('❌ Error checking notification arguments: $e');
+    }
+  }
+
+  void _openAnnouncementByIdentifier(String identifier) {
+    try {
+      developer.log('🔍 Looking for announcement with identifier: $identifier');
+
+      // Wait for announcements to load
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        final announcement = announcements.firstWhereOrNull(
+          (a) => a.id.toString() == identifier,
+        );
+
+        if (announcement != null) {
+          developer.log('✅ Found announcement, opening detail');
+          viewAnnouncementDetail(announcement);
+        } else {
+          developer.log(
+            '⚠️ Announcement not found with identifier: $identifier',
+          );
+          Get.snackbar(
+            'Info',
+            'Pengumuman tidak ditemukan',
+            snackPosition: SnackPosition.BOTTOM,
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.orange,
+            colorText: Colors.white,
+          );
+        }
+      });
+    } catch (e) {
+      developer.log('❌ Error opening announcement by identifier: $e');
+    }
+  }
+
+  /// Load announcements from API
   Future<void> loadAnnouncements({bool refresh = false}) async {
     try {
       if (refresh) {
@@ -65,18 +134,17 @@ class AnnouncementsController extends GetxController {
       final newAnnouncements =
           response.map((json) => AnnouncementModel.fromJson(json)).toList();
 
+      // ✅ isRead status sudah di-set dari fromJson (otomatis cek storage)
+      developer.log('✅ Loaded ${newAnnouncements.length} announcements');
+
       if (newAnnouncements.isEmpty) {
         hasMoreData = false;
       } else {
         announcements.addAll(newAnnouncements);
         currentPage++;
       }
-
-      developer.log(
-        'Loaded ${newAnnouncements.length} announcements, total: ${announcements.length}',
-      );
     } catch (e) {
-      developer.log('Error loading announcements: $e');
+      developer.log('❌ Error loading announcements: $e');
       _showErrorSnackbar('Error', 'Gagal memuat pengumuman: $e');
     } finally {
       isLoading.value = false;
@@ -86,6 +154,7 @@ class AnnouncementsController extends GetxController {
 
   /// Refresh announcements
   Future<void> refreshAnnouncements() async {
+    developer.log('🔄 Refreshing announcements...');
     await loadAnnouncements(refresh: true);
   }
 
@@ -99,47 +168,35 @@ class AnnouncementsController extends GetxController {
   /// Filter announcements by category
   void filterByCategory(String category) {
     selectedCategory.value = category;
-    // In a real app, you'd filter server-side
-    refreshAnnouncements();
   }
 
   /// Search announcements
   void searchAnnouncements(String query) {
     searchQuery.value = query;
-    // Implement search logic or refresh with search parameter
-    refreshAnnouncements();
   }
-
-  // Ganti getter filteredAnnouncements di announcements_controller.dart
 
   /// Get filtered announcements
   List<AnnouncementModel> get filteredAnnouncements {
-    // ✅ PENTING: Akses .value agar Obx bisa detect perubahan
     final selectedCat = selectedCategory.value;
     final query = searchQuery.value;
-    final allAnnouncements = announcements.value; // ✅ Tambahkan .value
+    var filtered = List<AnnouncementModel>.from(announcements);
 
-    var filtered =
-        allAnnouncements.where((announcement) {
-          // Category filter
-          if (selectedCat != 'all' && announcement.category != selectedCat) {
-            return false;
-          }
+    // Filter by category
+    if (selectedCat != 'all') {
+      filtered = filtered.where((a) => a.category == selectedCat).toList();
+    }
 
-          // Search filter
-          if (query.isNotEmpty) {
-            return announcement.title.toLowerCase().contains(
-                  query.toLowerCase(),
-                ) ||
-                announcement.content.toLowerCase().contains(
-                  query.toLowerCase(),
-                );
-          }
+    // Filter by search query
+    if (query.isNotEmpty) {
+      final lowerQuery = query.toLowerCase();
+      filtered =
+          filtered.where((a) {
+            return a.title.toLowerCase().contains(lowerQuery) ||
+                a.content.toLowerCase().contains(lowerQuery);
+          }).toList();
+    }
 
-          return true;
-        }).toList();
-
-    // Sort by priority and date
+    // Sort: priority first, then by date
     filtered.sort((a, b) {
       if (a.isPriority && !b.isPriority) return -1;
       if (!a.isPriority && b.isPriority) return 1;
@@ -149,114 +206,104 @@ class AnnouncementsController extends GetxController {
     return filtered;
   }
 
-  /// View announcement detail
+  /// ✅ View announcement detail - AUTO MARK AS READ
   void viewAnnouncementDetail(AnnouncementModel announcement) {
-    Get.dialog(
-      Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          constraints: BoxConstraints(maxHeight: Get.height * 0.8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header
-              Row(
-                children: [
-                  if (announcement.isPriority)
-                    Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'PENTING',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  Expanded(
-                    child: Text(
-                      announcement.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Get.back(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
+    developer.log('👀 Opening announcement detail: ${announcement.id}');
 
-              const SizedBox(height: 8),
+    // ✅ Mark as read SEBELUM navigate
+    if (!announcement.isRead) {
+      markAsRead(announcement.id);
+    }
 
-              // Date and category
-              Row(
-                children: [
-                  const Icon(Icons.access_time, size: 16, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    announcement.timeAgo,
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                  ),
-                  const SizedBox(width: 16),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[100],
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      announcement.category.toUpperCase(),
-                      style: TextStyle(
-                        color: Colors.blue[800],
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Image if available
-              if (announcement.image != null && announcement.image!.isNotEmpty)
-                Container(
-                  width: double.infinity,
-                  height: 200,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: DecorationImage(
-                      image: NetworkImage(announcement.image!),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-
-              // Content
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Text(
-                    announcement.content,
-                    style: const TextStyle(fontSize: 14, height: 1.5),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    // Navigate to detail
+    Get.to(
+      () => AnnouncementDetailView(announcement: announcement),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 300),
     );
+  }
+
+  /// ✅ Mark announcement as read - SYNC + TRIGGER REBUILD
+  void markAsRead(String announcementId) {
+    try {
+      developer.log('📖 Marking announcement as read: $announcementId');
+
+      // Find announcement in list
+      final index = announcements.indexWhere((a) => a.id == announcementId);
+
+      if (index != -1) {
+        // Check if already read
+        if (announcements[index].isRead) {
+          developer.log('ℹ️ Announcement already marked as read');
+          return;
+        }
+
+        // Update local state
+        announcements[index].isRead = true;
+
+        // Save to storage (async tapi tidak perlu await)
+        _storageService.markAnnouncementAsRead(announcementId);
+
+        // ✅ CRITICAL: Force UI update by triggering list change
+        announcements.refresh();
+
+        developer.log('✅ Marked announcement $announcementId as read');
+        developer.log('📊 Unread count: $unreadCount');
+      } else {
+        developer.log('⚠️ Announcement not found in list: $announcementId');
+      }
+    } catch (e) {
+      developer.log('❌ Error marking as read: $e');
+    }
+  }
+
+  /// ✅ Get unread count - REACTIVE
+  int get unreadCount {
+    final count = announcements.where((a) => !a.isRead).length;
+    return count;
+  }
+
+  /// ✅ Mark all as read
+  Future<void> markAllAsRead() async {
+    try {
+      developer.log('📚 Marking all announcements as read...');
+
+      final unreadIds =
+          announcements.where((a) => !a.isRead).map((a) => a.id).toList();
+
+      if (unreadIds.isEmpty) {
+        developer.log('ℹ️ No unread announcements to mark');
+        return;
+      }
+
+      // Update all to read
+      for (var announcement in announcements) {
+        if (!announcement.isRead) {
+          announcement.isRead = true;
+        }
+      }
+
+      // Save to storage in batch
+      await _storageService.markMultipleAnnouncementsAsRead(unreadIds);
+
+      // ✅ CRITICAL: Force UI update
+      announcements.refresh();
+
+      developer.log('✅ Marked ${unreadIds.length} announcements as read');
+
+      Get.snackbar(
+        'Berhasil',
+        'Semua pengumuman ditandai sudah dibaca',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+        icon: const Icon(Icons.check_circle, color: Colors.white),
+      );
+    } catch (e) {
+      developer.log('❌ Error marking all as read: $e');
+      _showErrorSnackbar('Error', 'Gagal menandai semua sebagai dibaca');
+    }
   }
 
   void _showErrorSnackbar(String title, String message) {

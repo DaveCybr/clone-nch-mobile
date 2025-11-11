@@ -81,10 +81,10 @@ class UserModel {
     }
 
     // Determine if user is teacher from roles or employee data
-    final hasTeacherRole = roles.any(
-      (role) => role.name.toLowerCase() == 'teacher',
-    );
-    final hasEmployeeData = json['employee'] != null;
+    // final hasTeacherRole = roles.any(
+    //   (role) => role.name.toLowerCase() == 'teacher',
+    // );
+    // final hasEmployeeData = json['employee'] != null;
     final currentRole = json['current_role'] as String?;
 
     return UserModel(
@@ -234,10 +234,39 @@ class UserModel {
     return false;
   }
 
+  // lib/v2/app/data/models/user_model.dart
+  // TAMBAHKAN getter ini di bagian helper methods (setelah isParent)
+
+  // ✅ ADD: Security role detection
+  bool get isSecurity {
+    // 1. Cek dari current_role
+    if (currentRole?.toLowerCase() == 'security') {
+      print('✅ isSecurity: true (from current_role: $currentRole)');
+      return true;
+    }
+
+    // 2. Cek dari roles array
+    if (roles.any((role) => role.name.toLowerCase() == 'security')) {
+      print('✅ isSecurity: true (from roles array)');
+      return true;
+    }
+
+    // 3. Cek dari employee position
+    if (employee != null && employee!.isSecurity) {
+      print('✅ isSecurity: true (from employee position)');
+      return true;
+    }
+
+    print('❌ isSecurity: false');
+    return false;
+  }
+
+  // UPDATE roleDisplay untuk include Security
   String get roleDisplay {
     if (isTeacher) return 'Ustadz/Ustadzah';
     if (isStudent) return 'Santri';
     if (isParent) return 'Wali Santri';
+    if (isSecurity) return 'Petugas Keamanan'; // ✅ ADD THIS
     if (isAdminUser) return 'Administrator';
     return 'User';
   }
@@ -486,6 +515,13 @@ class EmployeeModel {
 
   bool get isTeacher => position.toLowerCase() == 'teacher';
   bool get isAdmin => position.toLowerCase() == 'administrator';
+
+  // ✅ ADD THIS
+  bool get isSecurity => position.toLowerCase() == 'security';
+  bool get isOperator => position.toLowerCase() == 'operator';
+  bool get isKepalaMadrasah => position.toLowerCase() == 'kepala_sekolah';
+  bool get isGuruPiket => position.toLowerCase() == 'guru_piket';
+  bool get isAdminKeuangan => position.toLowerCase() == 'admin_keuangan';
 }
 
 class StudentModel {

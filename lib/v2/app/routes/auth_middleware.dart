@@ -10,7 +10,7 @@ class AuthMiddleware extends GetMiddleware {
       if (!Get.isRegistered<AuthController>()) {
         return const RouteSettings(name: '/login');
       }
-      
+
       final authController = Get.find<AuthController>();
 
       // If user is not logged in, redirect to login

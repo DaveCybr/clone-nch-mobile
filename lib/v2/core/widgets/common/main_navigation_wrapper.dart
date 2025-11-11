@@ -1,3 +1,5 @@
+// lib/v2/core/widgets/common/main_navigation_wrapper.dart
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
@@ -11,15 +13,45 @@ class MainNavigationWrapper extends StatefulWidget {
 }
 
 class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
-  final RxInt _currentIndex = 0.obs;
+  int _currentIndex = 0;
 
-  // Daftar route anak sesuai AppPages
   final List<String> _tabs = [
     Routes.getTeacherRoute(Routes.TEACHER_DASHBOARD),
     Routes.getTeacherRoute(Routes.TEACHER_SCHEDULE),
     Routes.getTeacherRoute(Routes.TEACHER_STUDENTS),
     Routes.getTeacherRoute(Routes.TEACHER_PROFILE),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Update navbar setiap kali ada perubahan route
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.rootDelegate.addListener(_updateNavBar);
+    });
+  }
+
+  @override
+  void dispose() {
+    Get.rootDelegate.removeListener(_updateNavBar);
+    super.dispose();
+  }
+
+  void _updateNavBar() {
+    final currentRoute = Get.rootDelegate.currentConfiguration?.location ?? '';
+
+    for (int i = 0; i < _tabs.length; i++) {
+      if (currentRoute.contains(_tabs[i])) {
+        if (_currentIndex != i) {
+          setState(() {
+            _currentIndex = i;
+          });
+        }
+        break;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,40 +61,41 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
         anchorRoute: Routes.MAIN,
         key: Get.nestedKey(1),
       ),
-      bottomNavigationBar: Obx(
-        () => BottomNavigationBar(
-          currentIndex: _currentIndex.value,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppColors.primaryGreen,
-          unselectedItemColor: Colors.grey,
-          onTap: (index) {
-            _currentIndex.value = index;
-            Get.rootDelegate.toNamed(_tabs[index], arguments: {});
-          },
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.dashboard_outlined),
-              activeIcon: Icon(Icons.dashboard),
-              label: "Dashboard",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.schedule_outlined),
-              activeIcon: Icon(Icons.schedule),
-              label: "Jadwal",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.people_outline),
-              activeIcon: Icon(Icons.people),
-              label: "Siswa",
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: "Profil",
-            ),
-          ],
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: AppColors.primaryGreen,
+        unselectedItemColor: Colors.grey,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+          Get.rootDelegate.toNamed(_tabs[index], arguments: {});
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard_outlined),
+            activeIcon: Icon(Icons.dashboard),
+            label: "Dashboard",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.schedule_outlined),
+            activeIcon: Icon(Icons.schedule),
+            label: "Jadwal",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people_outline),
+            activeIcon: Icon(Icons.people),
+            label: "Siswa",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline),
+            activeIcon: Icon(Icons.person),
+            label: "Profil",
+          ),
+        ],
       ),
     );
   }
 }
+  

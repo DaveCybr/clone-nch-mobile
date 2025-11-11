@@ -161,6 +161,9 @@ class _LoginFormWithEasterEggState extends State<_LoginFormWithEasterEgg> {
   int _tapCount = 0;
   Timer? _resetTimer;
 
+  // Password visibility toggle
+  bool _isPasswordVisible = false;
+
   void _handleEasterEgg() {
     _tapCount++;
 
@@ -286,7 +289,7 @@ class _LoginFormWithEasterEggState extends State<_LoginFormWithEasterEgg> {
           SizedBox(height: 8.h),
           TextFormField(
             controller: widget.controller.passwordController,
-            obscureText: true,
+            obscureText: !_isPasswordVisible,
             validator: (value) {
               if (value?.isEmpty ?? true) {
                 return 'Password tidak boleh kosong';
@@ -296,11 +299,24 @@ class _LoginFormWithEasterEggState extends State<_LoginFormWithEasterEgg> {
               }
               return null;
             },
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               hintText: 'Masukkan password Anda',
-              prefixIcon: Icon(
+              prefixIcon: const Icon(
                 Icons.lock_outlined,
                 color: AppColors.primaryGreen,
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _isPasswordVisible
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: AppColors.primaryGreen,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                },
               ),
             ),
           ),

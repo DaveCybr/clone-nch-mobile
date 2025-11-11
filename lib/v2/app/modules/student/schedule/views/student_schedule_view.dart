@@ -133,7 +133,12 @@ class StudentScheduleView extends GetView<StudentScheduleController> {
     });
   }
 
-  Widget _buildScheduleCard(schedule, int index) {
+  Widget _buildScheduleCard(dynamic schedule, int index) {
+    // ✅ Add null safety check
+    if (schedule == null) {
+      return const SizedBox.shrink();
+    }
+
     return Card(
       margin: EdgeInsets.only(bottom: 12.h),
       elevation: 2,
@@ -157,7 +162,7 @@ class StudentScheduleView extends GetView<StudentScheduleController> {
               child: Column(
                 children: [
                   Text(
-                    schedule.startTime,
+                    schedule.startTime ?? '-',
                     style: AppTextStyles.bodySmall.copyWith(
                       fontWeight: FontWeight.bold,
                       color:
@@ -168,7 +173,7 @@ class StudentScheduleView extends GetView<StudentScheduleController> {
                   ),
                   Divider(height: 4.h),
                   Text(
-                    schedule.endTime,
+                    schedule.endTime ?? '-',
                     style: AppTextStyles.bodySmall.copyWith(
                       fontSize: 10.sp,
                       color: AppColors.textSecondary,
@@ -187,7 +192,7 @@ class StudentScheduleView extends GetView<StudentScheduleController> {
                     children: [
                       Expanded(
                         child: Text(
-                          schedule.subjectName,
+                          schedule.subjectName ?? 'Mata Pelajaran',
                           style: AppTextStyles.cardTitle,
                         ),
                       ),

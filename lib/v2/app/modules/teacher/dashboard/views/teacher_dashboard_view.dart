@@ -1,4 +1,4 @@
-// Fixed TeacherDashboardView.dart - BottomNav DIHAPUS (dihandle oleh parent)
+// lib/v2/app/modules/teacher/dashboard/views/teacher_dashboard_view.dart
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,7 +24,6 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       backgroundColor: AppColors.scaffoldBackground,
       appBar: _buildAppBar(),
       body: _buildBody(refreshController, context),
-      // ✅ DIHAPUS - BottomNav dihandle oleh parent widget
     );
   }
 
@@ -33,62 +32,47 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       title: const Text('Dashboard'),
       centerTitle: true,
       actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications_outlined),
-          onPressed: controller.navigateToAnnouncements,
-        ),
-        PopupMenuButton(
-          icon: const Icon(Icons.more_vert),
-          itemBuilder:
-              (context) => [
-                PopupMenuItem(
-                  value: 'refresh',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.refresh, color: AppColors.primaryGreen),
-                      SizedBox(width: 12.w),
-                      const Text('Refresh'),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'profile',
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.person_outline,
-                        color: AppColors.primaryGreen,
+        // Notification icon with badge
+        Obx(() {
+          final unreadCount = controller.unreadAnnouncementsCount.value;
+          return Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.notifications_outlined),
+                onPressed: controller.navigateToAnnouncements,
+              ),
+              if (unreadCount > 0)
+                Positioned(
+                  right: 8.w,
+                  top: 8.h,
+                  child: Container(
+                    padding: EdgeInsets.all(4.w),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    constraints: BoxConstraints(
+                      minWidth: 18.w,
+                      minHeight: 18.h,
+                    ),
+                    child: Center(
+                      child: Text(
+                        unreadCount > 99 ? '99+' : '$unreadCount',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: unreadCount > 99 ? 8.sp : 10.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      SizedBox(width: 12.w),
-                      const Text('Profil'),
-                    ],
+                    ),
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.logout, color: Colors.red),
-                      SizedBox(width: 12.w),
-                      const Text('Keluar'),
-                    ],
-                  ),
-                ),
-              ],
-          onSelected: (value) {
-            switch (value) {
-              case 'refresh':
-                controller.refreshDashboard();
-                break;
-              case 'profile':
-                controller.navigateToProfile();
-                break;
-              case 'logout':
-                controller.logout();
-                break;
-            }
-          },
-        ),
+            ],
+          );
+        }),
+        SizedBox(width: 8.w),
       ],
     );
   }
@@ -105,6 +89,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
       return SmartRefresher(
         controller: refreshController,
         enablePullDown: true,
+        enablePullUp: false,
         header: const WaterDropMaterialHeader(
           backgroundColor: AppColors.primaryGreen,
         ),
@@ -126,9 +111,7 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
               _buildPrayerTimesSection(),
               SizedBox(height: 20.h),
               _buildAnnouncementsSection(),
-              SizedBox(
-                height: 80.h,
-              ), // Extra space untuk bottom nav dari parent
+              SizedBox(height: 80.h),
             ],
           ),
         ),
@@ -418,11 +401,52 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
             children: [
               Row(
                 children: [
-                  Icon(
-                    Icons.campaign,
-                    color: AppColors.primaryGreen,
-                    size: 20.sp,
-                  ),
+                  // Icon with badge
+                  Obx(() {
+                    final unreadCount =
+                        controller.unreadAnnouncementsCount.value;
+                    return Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(
+                          Icons.campaign,
+                          color: AppColors.primaryGreen,
+                          size: 24.sp,
+                        ),
+                        if (unreadCount > 0)
+                          Positioned(
+                            right: -4.w,
+                            top: -4.h,
+                            child: Container(
+                              padding: EdgeInsets.all(4.w),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white,
+                                  width: 1.5,
+                                ),
+                              ),
+                              constraints: BoxConstraints(
+                                minWidth: 16.w,
+                                minHeight: 16.h,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  unreadCount > 9 ? '9+' : '$unreadCount',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  }),
                   SizedBox(width: 8.w),
                   Text('Pengumuman', style: AppTextStyles.cardTitle),
                 ],
@@ -475,55 +499,113 @@ class TeacherDashboardView extends GetView<TeacherDashboardController> {
   }
 
   Widget _buildAnnouncementItem(AnnouncementModel announcement) {
-    return Container(
-      padding: EdgeInsets.all(12.w),
-      margin: EdgeInsets.only(bottom: 8.h),
-      decoration: BoxDecoration(
-        color: AppColors.lightGreenBg,
-        borderRadius: BorderRadius.circular(8.r),
-        border:
-            announcement.isPriority
-                ? Border.all(color: Colors.orange, width: 1)
-                : null,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (announcement.isPriority)
-            Container(
-              margin: EdgeInsets.only(bottom: 8.h),
-              padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-              decoration: BoxDecoration(
-                color: Colors.orange,
-                borderRadius: BorderRadius.circular(4.r),
+    return InkWell(
+      onTap: () => controller.viewAnnouncementDetail(announcement),
+      borderRadius: BorderRadius.circular(8.r),
+      child: Container(
+        padding: EdgeInsets.all(12.w),
+        margin: EdgeInsets.only(bottom: 8.h),
+        decoration: BoxDecoration(
+          color: AppColors.lightGreenBg,
+          borderRadius: BorderRadius.circular(8.r),
+          border:
+              announcement.isPriority
+                  ? Border.all(color: Colors.orange, width: 1)
+                  : null,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      if (announcement.isPriority)
+                        Container(
+                          margin: EdgeInsets.only(right: 8.w),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                          child: Text(
+                            'PENTING',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: Colors.white,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      // NEW badge indicator
+                      if (!announcement.isRead)
+                        Container(
+                          margin: EdgeInsets.only(right: 8.w),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 6.w,
+                            vertical: 2.h,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(4.r),
+                          ),
+                          child: Text(
+                            'BARU',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: Colors.white,
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  SizedBox(
+                    height:
+                        announcement.isPriority || !announcement.isRead
+                            ? 8.h
+                            : 0,
+                  ),
+                  Text(
+                    announcement.title,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontWeight:
+                          announcement.isRead
+                              ? FontWeight.w600
+                              : FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (announcement.content.isNotEmpty)
+                    Text(
+                      announcement.content.replaceAll(RegExp(r'<[^>]*>'), ''),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
               ),
-              child: Text(
-                'PENTING',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: Colors.white,
-                  fontSize: 10.sp,
-                  fontWeight: FontWeight.bold,
+            ),
+            // Unread indicator dot
+            if (!announcement.isRead)
+              Container(
+                margin: EdgeInsets.only(left: 8.w),
+                width: 8.w,
+                height: 8.w,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
                 ),
               ),
-            ),
-          Text(
-            announcement.title,
-            style: AppTextStyles.bodyMedium.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (announcement.content.isNotEmpty)
-            Text(
-              announcement.content,
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

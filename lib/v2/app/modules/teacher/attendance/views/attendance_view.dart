@@ -52,20 +52,10 @@ class AttendanceView extends GetView<AttendanceController> {
       title: const Text('Absensi Siswa'),
       centerTitle: true,
       actions: [
-        IconButton(
-          icon: const Icon(Icons.calendar_today),
-          onPressed: _showDatePicker,
-        ),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert),
           onSelected: (String value) {
             switch (value) {
-              case 'export':
-                controller.showExportOptions();
-                break;
-              case 'print':
-                controller.exportToExcel();
-                break;
               case 'summary':
                 _showAttendanceSummaryDialog();
                 break;
@@ -73,26 +63,6 @@ class AttendanceView extends GetView<AttendanceController> {
           },
           itemBuilder:
               (BuildContext context) => [
-                const PopupMenuItem<String>(
-                  value: 'export',
-                  child: Row(
-                    children: [
-                      Icon(Icons.file_download, color: Colors.green),
-                      SizedBox(width: 8),
-                      Text('Ekspor Laporan'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'print',
-                  child: Row(
-                    children: [
-                      Icon(Icons.print, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text('Cetak'),
-                    ],
-                  ),
-                ),
                 const PopupMenuItem<String>(
                   value: 'summary',
                   child: Row(

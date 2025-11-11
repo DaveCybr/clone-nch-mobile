@@ -1,3 +1,4 @@
+// lib/v2/app/modules/auth/controllers/auth_controller.dart
 import 'dart:developer' as developer show log;
 
 import 'package:flutter/material.dart';
@@ -6,11 +7,13 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/services/api_service.dart';
 import '../../../data/services/storage_service.dart';
+import '../../../data/services/firebase_service.dart';
 import '../../../routes/app_routes.dart';
 
 class AuthController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
   final StorageService _storageService = Get.find<StorageService>();
+  FirebaseService get _firebaseService => Get.find<FirebaseService>();
 
   // Observables
   final isLoading = false.obs;
@@ -29,7 +32,6 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     _loadRememberMe();
-    // Don't auto-check auth here, let SplashView handle it
   }
 
   @override
@@ -39,7 +41,7 @@ class AuthController extends GetxController {
     super.dispose();
   }
 
-  /// Check if user is already logged in (called from SplashView)
+  /// Check if user is already logged in
   Future<bool> checkAuthStatus() async {
     try {
       isLoading.value = true;
@@ -50,17 +52,19 @@ class AuthController extends GetxController {
           user.value = savedUser;
           isLoggedIn.value = true;
 
-          // Try to get fresh user data to validate token
           try {
             final freshUser = await _apiService.getCurrentUser();
             user.value = freshUser;
             await _storageService.saveUser(freshUser);
 
             developer.log('Auto-login successful for user: ${freshUser.name}');
+
+            // Setup notifications in background
+            _setupNotificationsInBackground(freshUser);
+
             return true;
           } catch (e) {
             developer.log('Token validation failed: $e');
-            // Token might be expired, clear storage
             await _clearAuthData();
             return false;
           }
@@ -83,26 +87,33 @@ class AuthController extends GetxController {
     rememberMe.value = _storageService.getRememberMe();
   }
 
-  /// Login function
+  /// ✅ LOGIN FUNCTION - SIMPLIFIED VERSION
   Future<void> login() async {
     if (!formKey.currentState!.validate()) return;
 
     try {
       isLoading.value = true;
+      developer.log('');
+      developer.log('╔═══════════════════════════════════════════╗');
+      developer.log('║        🚀 LOGIN PROCESS STARTED          ║');
+      developer.log('╚═══════════════════════════════════════════╝');
 
       final response = await _apiService.login(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      print("Raw response body: $response");
-
-      developer.log('Login response success: ${response.success}');
-      developer.log('Login response message: ${response.message}');
-      developer.log('Login response has token: ${response.token != null}');
-      developer.log('Login response has user: ${response.user != null}');
+      developer.log('📥 Login response received');
+      developer.log('  ✓ Success: ${response.success}');
+      developer.log('  ✓ Has token: ${response.token != null}');
+      developer.log('  ✓ Has user: ${response.user != null}');
 
       if (response.success && response.token != null && response.user != null) {
+        developer.log('');
+        developer.log('╔═══════════════════════════════════════════╗');
+        developer.log('║     💾 SAVING AUTHENTICATION DATA        ║');
+        developer.log('╚═══════════════════════════════════════════╝');
+
         // Save authentication data
         await _storageService.saveToken(response.token!);
         await _storageService.saveUser(response.user!);
@@ -112,34 +123,154 @@ class AuthController extends GetxController {
           await _storageService.setRememberMe(true);
         }
 
+        developer.log('✅ Auth data saved successfully');
+
         // Update observables
         user.value = response.user;
         isLoggedIn.value = true;
 
-        // Show success message with Islamic greeting
+        // ✅ CRITICAL: Send FCM token (sync, must complete)
+        developer.log('');
+        developer.log('╔═══════════════════════════════════════════╗');
+        developer.log('║       📱 SENDING FCM TOKEN               ║');
+        developer.log('╚═══════════════════════════════════════════╝');
+
+        try {
+          await _sendFCMToken();
+          developer.log('✅ FCM token sent');
+        } catch (e) {
+          developer.log('⚠️ FCM token send failed (will retry): $e');
+        }
+
+        developer.log('');
+        developer.log('╔═══════════════════════════════════════════╗');
+        developer.log('║     ✅ LOGIN COMPLETED SUCCESSFULLY      ║');
+        developer.log('╚═══════════════════════════════════════════╝');
+        developer.log('');
+
+        // Clear form
+        _clearForm();
+
+        // Show success message
         _showIslamicWelcomeMessage();
 
         // Redirect based on role
         redirectBasedOnRole();
 
-        // Clear form
-        _clearForm();
+        // ✅ CRITICAL FIX: Setup notifications AFTER navigation
+        // This ensures the async operation doesn't get interrupted
+        developer.log('');
+        developer.log('╔═══════════════════════════════════════════╗');
+        developer.log('║  🔔 SETTING UP NOTIFICATIONS (ASYNC)     ║');
+        developer.log('╚═══════════════════════════════════════════╝');
+
+        // Run in background without blocking
+        _setupNotificationsInBackground(response.user!);
       } else {
         final errorMessage =
             response.message.isNotEmpty ? response.message : 'Login gagal';
-        developer.log('Login failed: $errorMessage');
+        developer.log('❌ Login failed: $errorMessage');
         _showErrorSnackbar('Login Gagal', errorMessage);
       }
-    } catch (e, response) {
-      print("Raw response body: $response");
-      developer.log('Login error: $e');
+    } catch (e, stackTrace) {
+      developer.log('');
+      developer.log('╔═══════════════════════════════════════════╗');
+      developer.log('║          ❌ LOGIN ERROR                   ║');
+      developer.log('╚═══════════════════════════════════════════╝');
+      developer.log('Error: $e');
+      developer.log('Stack: $stackTrace');
+
       final errorMessage =
           e.toString().isNotEmpty
               ? e.toString()
               : 'Terjadi kesalahan tidak terduga';
       _showErrorSnackbar('خطأ في تسجيل الدخول', errorMessage);
     } finally {
+      developer.log('🔚 Finally block - setting isLoading to false');
       isLoading.value = false;
+      developer.log('✅ isLoading = false');
+    }
+  }
+
+  /// ✅ NEW: Setup notifications in background (won't block UI)
+  void _setupNotificationsInBackground(UserModel currentUser) {
+    // Use Future.microtask to ensure this runs AFTER current frame
+    Future.microtask(() async {
+      developer.log('');
+      developer.log('╔═══════════════════════════════════════════╗');
+      developer.log('║  🔔 BACKGROUND NOTIFICATION SETUP START  ║');
+      developer.log('╠═══════════════════════════════════════════╣');
+      developer.log('║ User: ${currentUser.name}');
+      developer.log('║ Role: ${currentUser.currentRole}');
+
+      try {
+        // Delay to ensure navigation is complete
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        developer.log('║ 🚀 Starting subscription...');
+
+        // Determine role
+        String role = 'student';
+        if (currentUser.isTeacher) {
+          role = 'teacher';
+        } else if (currentUser.isStudent || currentUser.student != null) {
+          role = 'student';
+        } else if (currentUser.isParent) {
+          role = 'parent';
+        }
+
+        developer.log('║ 🎯 Subscribing as: $role');
+
+        // Subscribe to topics
+        await _firebaseService.subscribeToDefaultTopics(role);
+
+        developer.log('║ ✅ Subscription completed successfully');
+        developer.log('╚═══════════════════════════════════════════╝');
+        developer.log('');
+      } catch (e, stack) {
+        developer.log('║ ❌ Background subscription failed: $e');
+        developer.log('║ Stack: $stack');
+        developer.log('╚═══════════════════════════════════════════╝');
+        developer.log('');
+
+        // Retry once after 2 seconds
+        developer.log('🔄 Retrying subscription in 2 seconds...');
+        await Future.delayed(const Duration(seconds: 2));
+
+        try {
+          String role = currentUser.isTeacher ? 'teacher' : 'student';
+          await _firebaseService.subscribeToDefaultTopics(role);
+          developer.log('✅ Retry successful!');
+        } catch (retryError) {
+          developer.log('❌ Retry failed: $retryError');
+        }
+      }
+    });
+  }
+
+  /// ✅ Send FCM token to server
+  Future<void> _sendFCMToken() async {
+    try {
+      developer.log('🔔 _sendFCMToken() called');
+
+      final token = await _firebaseService.getToken();
+      developer.log('🔑 Got token: ${token?.substring(0, 20)}...');
+
+      if (token != null) {
+        final success = await _firebaseService.sendTokenToServer(token);
+
+        if (success) {
+          developer.log('✅ FCM token sent to server');
+        } else {
+          developer.log('⚠️ Failed to send FCM token');
+        }
+      } else {
+        developer.log('⚠️ FCM token is null');
+      }
+    } catch (e, stack) {
+      developer.log('❌ Error in _sendFCMToken: $e');
+      developer.log('Stack: $stack');
+      rethrow; // Re-throw to let caller handle
     }
   }
 
@@ -147,6 +278,15 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     try {
       isLoading.value = true;
+
+      // Unsubscribe from topics
+      if (user.value != null) {
+        await _unsubscribeFromTopics(user.value!);
+      }
+
+      // Delete FCM token
+      await _firebaseService.deleteToken();
+      developer.log('✅ FCM token deleted on logout');
 
       // Call logout API
       await _apiService.logout();
@@ -162,11 +302,32 @@ class AuthController extends GetxController {
       Get.rootDelegate.offNamed(Routes.LOGIN);
     } catch (e) {
       developer.log('Logout error: $e');
-      // Even if API fails, clear local data
       await _clearAuthData();
       Get.rootDelegate.offNamed(Routes.LOGIN);
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Unsubscribe from topics
+  Future<void> _unsubscribeFromTopics(UserModel currentUser) async {
+    try {
+      developer.log('🔕 Unsubscribing from notification topics...');
+
+      String role = 'student';
+      if (currentUser.isTeacher) {
+        role = 'teacher';
+      } else if (currentUser.isStudent || currentUser.student != null) {
+        role = 'student';
+      } else if (currentUser.isParent) {
+        role = 'parent';
+      }
+
+      await _firebaseService.unsubscribeFromAllTopics(role);
+
+      developer.log('✅ Successfully unsubscribed from all topics');
+    } catch (e) {
+      developer.log('❌ Error unsubscribing from topics: $e');
     }
   }
 
@@ -183,7 +344,7 @@ class AuthController extends GetxController {
     _storageService.setRememberMe(rememberMe.value);
   }
 
-  /// Redirect user based on role (made public for SplashView)
+  /// Redirect user based on role
   void redirectBasedOnRole() {
     final currentUser = user.value;
     if (currentUser == null) {
@@ -195,32 +356,39 @@ class AuthController extends GetxController {
     developer.log('User: ${currentUser.name}');
     developer.log('Email: ${currentUser.email}');
     developer.log('Is Teacher: ${currentUser.isTeacher}');
-    developer.log('Is Parent: ${currentUser.isParent}');
+    developer.log('Is Security: ${currentUser.isSecurity}');
     developer.log('Is Student: ${currentUser.isStudent}');
+    developer.log('Is Parent: ${currentUser.isParent}');
     developer.log('Current Role: ${currentUser.currentRole}');
     developer.log('Roles: ${currentUser.roleNames}');
     developer.log('Has Employee: ${currentUser.employee != null}');
+    developer.log('Employee Position: ${currentUser.employee?.position}');
     developer.log('Has Student Data: ${currentUser.student != null}');
     developer.log('=====================');
 
-    // Priority: Teacher > Student > Parent
+    // Priority: Teacher > Security > Student > Parent
 
     // 1. Jika user punya role teacher, arahkan ke teacher dashboard
     if (currentUser.isTeacher) {
-      developer.log('✅ Redirecting to TEACHER dashboard');
+      developer.log('  → TEACHER dashboard');
       Get.rootDelegate.offNamed(Routes.MAIN);
     }
-    // 2. Jika user punya student data (santri yang login sendiri)
+    // 2. Jika user punya role security, arahkan ke security dashboard
+    else if (currentUser.isSecurity) {
+      developer.log('✅ Redirecting to SECURITY dashboard');
+      Get.rootDelegate.offNamed(Routes.SECURITY);
+    }
+    // 3. Jika user punya student data (santri yang login sendiri)
     else if (currentUser.student != null || currentUser.isStudent) {
       developer.log('✅ Redirecting to STUDENT dashboard');
       Get.rootDelegate.offNamed(Routes.STUDENT);
     }
-    // 3. Jika user adalah parent
+    // 4. Jika user adalah parent
     else if (currentUser.isParent) {
       developer.log('✅ Redirecting to PARENT dashboard');
       Get.rootDelegate.offNamed(Routes.PARENT);
     }
-    // 4. Jika tidak ada role yang dikenali
+    // 5. Jika tidak ada role yang dikenali
     else {
       developer.log('❌ Unknown role, redirecting to login');
       _showErrorSnackbar(
@@ -237,15 +405,15 @@ class AuthController extends GetxController {
     String greeting = '';
 
     if (hour < 5) {
-      greeting = 'لَيْلَة سَعِيدَة'; // Good night
+      greeting = 'لَيْلَة سَعِيدَة';
     } else if (hour < 11) {
-      greeting = 'صَبَاح الْخَيْر'; // Good morning
+      greeting = 'صَبَاح الْخَيْر';
     } else if (hour < 15) {
-      greeting = 'ظُهْر سَعِيد'; // Good afternoon
+      greeting = 'ظُهْر سَعِيد';
     } else if (hour < 19) {
-      greeting = 'عَصْر سَعِيد'; // Good evening
+      greeting = 'عَصْر سَعِيد';
     } else {
-      greeting = 'مَسَاء الْخَيْر'; // Good evening
+      greeting = 'مَسَاء الْخَيْر';
     }
 
     final userName = user.value?.name ?? 'User';
@@ -263,13 +431,9 @@ class AuthController extends GetxController {
 
   /// Show success snackbar
   void _showSuccessSnackbar(String title, String message) {
-    final validTitle = title.isEmpty ? 'Success' : title;
-    final validMessage =
-        message.isEmpty ? 'Operation completed successfully' : message;
-
     Get.snackbar(
-      validTitle,
-      validMessage,
+      title,
+      message,
       backgroundColor: AppColors.primaryGreen,
       colorText: Colors.white,
       icon: const Icon(Icons.check_circle, color: Colors.white),
@@ -282,12 +446,9 @@ class AuthController extends GetxController {
 
   /// Show error snackbar
   void _showErrorSnackbar(String title, String message) {
-    final validTitle = title.isEmpty ? 'Error' : title;
-    final validMessage = message.isEmpty ? 'An error occurred' : message;
-
     Get.snackbar(
-      validTitle,
-      validMessage,
+      title,
+      message,
       backgroundColor: Colors.red,
       colorText: Colors.white,
       icon: const Icon(Icons.error, color: Colors.white),
@@ -307,7 +468,7 @@ class AuthController extends GetxController {
       isLoggedIn.value = true;
     } catch (e) {
       developer.log('Failed to get current user: $e');
-      rethrow; // Rethrow to let caller handle it
+      rethrow;
     }
   }
 
@@ -315,8 +476,6 @@ class AuthController extends GetxController {
   Future<bool> isSessionValid() async {
     try {
       if (!_storageService.hasValidToken) return false;
-
-      // Try to get current user to validate token
       await getCurrentUser();
       return true;
     } catch (e) {
@@ -324,16 +483,63 @@ class AuthController extends GetxController {
     }
   }
 
-  /// Auto-login with saved credentials (optional feature)
+  /// Auto-login with saved credentials
   Future<bool> tryAutoLogin() async {
     try {
       if (!rememberMe.value) return false;
-
-      // Check if we have valid token and user data
       return await checkAuthStatus();
     } catch (e) {
       developer.log('Auto-login failed: $e');
       return false;
+    }
+  }
+
+  /// Refresh FCM token
+  Future<void> refreshFCMToken() async {
+    try {
+      developer.log('🔄 Refreshing FCM token...');
+      await _firebaseService.refreshAndSendToken();
+      developer.log('✅ FCM token refreshed successfully');
+    } catch (e) {
+      developer.log('❌ Error refreshing FCM token: $e');
+    }
+  }
+
+  /// ✅ NEW: Manual subscribe (untuk button test atau retry)
+  Future<void> manualSubscribe() async {
+    try {
+      final currentUser = user.value;
+      if (currentUser == null) {
+        throw Exception('No user logged in');
+      }
+
+      developer.log('🔔 Manual subscribe triggered');
+
+      String role = 'student';
+      if (currentUser.isTeacher) {
+        role = 'teacher';
+      } else if (currentUser.isStudent || currentUser.student != null) {
+        role = 'student';
+      } else if (currentUser.isParent) {
+        role = 'parent';
+      }
+
+      await _firebaseService.subscribeToDefaultTopics(role);
+
+      Get.snackbar(
+        'Success',
+        'Berhasil subscribe ke notifikasi $role',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      developer.log('❌ Manual subscribe failed: $e');
+      Get.snackbar(
+        'Error',
+        'Gagal subscribe: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
 }

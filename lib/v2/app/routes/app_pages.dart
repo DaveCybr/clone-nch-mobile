@@ -1,14 +1,20 @@
-// lib/v2/app/routes/app_pages.dart - FIXED VERSION
-
+// lib/v2/app/routes/app_pages.dart - UPDATED VERSION dengan Student Profile
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/widgets/common/main_navigation_wrapper.dart';
 import '../../core/widgets/common/parent_navigation_wrapper.dart';
 import '../../core/widgets/common/student_navigation_wrapper.dart';
+import '../../core/widgets/common/security_navigation_wrapper.dart';
 import '../modules/auth/views/login_view.dart';
 import '../modules/onboarding/views/splash_view.dart';
 
 // Teacher imports
+import '../modules/security/scan/bindings/scan_binding.dart';
+import '../modules/security/scan/views/scan_view.dart';
+import '../modules/security/visit-logs/bindings/visit_log_binding.dart';
+import '../modules/security/visit-logs/views/visit_logs_view.dart';
+import '../modules/security/visitor/bindings/visitor_binding.dart';
+import '../modules/security/visitor/views/visitor_view.dart';
 import '../modules/teacher/announcements/bindings/announcement_binding.dart';
 import '../modules/teacher/announcements/views/announcement_view.dart';
 import '../modules/teacher/attendance/bindings/attendance_binding.dart';
@@ -31,6 +37,23 @@ import '../modules/student/schedule/bindings/student_schedule_binding.dart';
 import '../modules/student/schedule/views/student_schedule_view.dart';
 import '../modules/student/attendance/bindings/student_attendance_binding.dart';
 import '../modules/student/attendance/views/student_attendance_view.dart';
+import '../modules/student/announcements/bindings/student_announcements_binding.dart';
+import '../modules/student/announcements/views/student_announcements_view.dart';
+
+// ✅ TAMBAHKAN IMPORT Student Profile
+import '../modules/student/profile/bindings/profile_binding.dart';
+import '../modules/student/profile/views/profile_view.dart';
+
+// Visit Schedule imports
+import '../modules/student/visit_schedule/bindings/visit_schedule_binding.dart';
+import '../modules/student/visit_schedule/views/visit_schedule_view.dart';
+// import '../modules/student/visit_schedule/views/visit_qr_view.dart';
+
+// Security imports
+import '../modules/security/dashboard/bindings/security_dashboard_binding.dart';
+import '../modules/security/dashboard/views/security_dashboard_view.dart';
+import '../modules/security/profile/bindings/security_profile_binding.dart';
+import '../modules/security/profile/views/security_profile_view.dart';
 
 import 'app_routes.dart';
 
@@ -76,7 +99,7 @@ class AppPages {
       ],
     ),
 
-    // ===== ✅ FULL SCREEN ROUTES (Outside Wrapper) =====
+    // ===== FULL SCREEN ROUTES (Outside Wrapper) =====
     GetPage(
       name: Routes.TEACHER_ATTENDANCE,
       page: () => const AttendanceView(),
@@ -85,7 +108,6 @@ class AppPages {
       transitionDuration: const Duration(milliseconds: 300),
     ),
 
-    // ✅ CRITICAL FIX: Student History harus di LUAR wrapper
     GetPage(
       name: Routes.STUDENT_ATTENDANCE_HISTORY,
       page: () => const StudentHistoryView(),
@@ -153,17 +175,86 @@ class AppPages {
         ),
         GetPage(
           name: Routes.STUDENT_ANNOUNCEMENTS,
-          page:
-              () => _buildPlaceholderPage(
-                'Pengumuman',
-                'Pengumuman untuk santri',
-              ),
+          page: () => const StudentAnnouncementsView(),
+          binding: StudentAnnouncementsBinding(),
         ),
         GetPage(
+          name: Routes.STUDENT_VISIT_SCHEDULE,
+          page: () => const VisitScheduleView(),
+          binding: VisitScheduleBinding(),
+        ),
+        // ✅ TAMBAHKAN ROUTE Student Profile
+        GetPage(
           name: Routes.STUDENT_PROFILE,
-          page: () => _buildPlaceholderPage('Profil', 'Profil santri'),
+          page: () => const StudentProfileView(),
+          binding: StudentProfileBinding(),
         ),
       ],
+    ),
+
+    // ===== SECURITY NAVIGATION WRAPPER =====
+    GetPage(
+      name: Routes.SECURITY,
+      page: () => const SecurityNavigationWrapper(),
+      participatesInRootNavigator: true,
+      children: [
+        GetPage(
+          name: Routes.SECURITY_DASHBOARD,
+          page: () => const SecurityDashboardView(),
+          binding: SecurityDashboardBinding(),
+        ),
+        GetPage(
+          name: Routes.SECURITY_SCAN,
+          page: () => const SecurityScanView(),
+          binding: SecurityScanBinding(),
+        ),
+        GetPage(
+          name: Routes.SECURITY_TODAY_VISITORS,
+          page: () => const TodayVisitorsView(),
+          binding: TodayVisitorsBinding(),
+        ),
+        GetPage(
+          name: Routes.SECURITY_PROFILE,
+          page: () => const SecurityProfileView(),
+          binding: SecurityProfileBinding(),
+        ),
+      ],
+    ),
+
+    // ===== SECURITY FULL SCREEN ROUTES =====
+    GetPage(
+      name: Routes.SECURITY_VISIT_LOGS,
+      page: () => const VisitLogsView(),
+      binding: VisitLogsBinding(),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
+    GetPage(
+      name: Routes.SECURITY_CHECK_IN,
+      page: () => _buildPlaceholderPage(
+            'Check In Manual',
+            'Form check-in manual pengunjung',
+          ),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
+    GetPage(
+      name: Routes.SECURITY_CHECK_OUT,
+      page: () => _buildPlaceholderPage(
+            'Check Out Manual',
+            'Form check-out manual pengunjung',
+          ),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
+    ),
+    GetPage(
+      name: Routes.SECURITY_HISTORY,
+      page: () => _buildPlaceholderPage(
+            'Riwayat Kunjungan',
+            'Riwayat kunjungan yang sudah selesai',
+          ),
+      transition: Transition.rightToLeft,
+      transitionDuration: const Duration(milliseconds: 300),
     ),
   ];
 

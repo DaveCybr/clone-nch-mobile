@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:nch_mobile/v2/app/data/models/student_dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../../data/services/firebase_service.dart'; // ✅ TAMBAHKAN
 import '../../../auth/controllers/auth_controller.dart';
+import 'dart:developer' as developer; // ✅ TAMBAHKAN
 
 class StudentDashboardController extends GetxController {
   final ApiService _apiService = Get.find();
@@ -23,6 +25,30 @@ class StudentDashboardController extends GetxController {
   void onInit() {
     super.onInit();
     loadDashboard();
+
+    // ✅ TAMBAHKAN: Subscribe to notification topics
+    _subscribeToNotificationTopics();
+  }
+
+  /// ✅ NEW: Subscribe to FCM topics for student notifications
+  Future<void> _subscribeToNotificationTopics() async {
+    try {
+      developer.log('🔔 Student: Subscribing to notification topics...');
+
+      final firebaseService = Get.find<FirebaseService>();
+
+      // Subscribe ke topics yang relevan untuk student
+      await firebaseService.subscribeToTopic('Berita');
+      await firebaseService.subscribeToTopic('Siswa');
+      await firebaseService.subscribeToTopic('Pengumuman-Siswa');
+
+      developer.log('✅ Student successfully subscribed to topics:');
+      developer.log('   - Berita');
+      developer.log('   - Siswa');
+      developer.log('   - Pengumuman-Siswa');
+    } catch (e) {
+      developer.log('❌ Error subscribing to notification topics: $e');
+    }
   }
 
   void logout() {

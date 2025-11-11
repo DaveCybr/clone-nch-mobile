@@ -1,5 +1,4 @@
-// File: lib/v2/app/modules/teacher/schedule/controllers/schedule_controller.dart
-// ✅ ULTIMATE FIX: Use Navigator.push for nested routing
+// lib/v2/app/modules/teacher/schedule/controllers/schedule_controller.dart
 
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
@@ -7,12 +6,14 @@ import 'package:get/get.dart';
 import 'package:nch_mobile/v2/app/routes/app_routes.dart';
 import '../../../../data/models/dashboard_model.dart';
 import '../../../../data/services/api_service.dart';
+import '../../../../data/services/storage_service.dart';
 import '../../attendance/bindings/attendance_binding.dart';
 import '../../attendance/controllers/attendance_controller.dart';
 import '../../attendance/views/attendance_view.dart';
 
 class ScheduleController extends GetxController {
   final ApiService _apiService = Get.find<ApiService>();
+  final StorageService _storageService = Get.find<StorageService>();
 
   // Observables
   final isLoading = false.obs;
@@ -57,7 +58,7 @@ class ScheduleController extends GetxController {
   Future<void> loadWeeklySchedule() async {
     try {
       isLoading.value = true;
-      developer.log('Loading weekly schedule from API');
+      developer.log('📅 Loading weekly schedule from API');
 
       try {
         final data = await _apiService.getTeacherScheduleList();
@@ -78,19 +79,22 @@ class ScheduleController extends GetxController {
         }
 
         developer.log(
-          'Loaded schedules for ${schedulesByDay.keys.length} days from API',
+          '✅ Loaded schedules for ${schedulesByDay.keys.length} days from API',
         );
 
+        // ✅ Check isDone status dari storage untuk semua schedules
+        _updateSchedulesFromStorage();
+
         if (schedulesByDay.isEmpty) {
-          developer.log('No schedules found, loading sample data');
+          developer.log('⚠️ No schedules found, loading sample data');
           _loadSampleWeeklyData();
         }
       } catch (apiError) {
-        developer.log('API request failed: $apiError, using sample data');
+        developer.log('❌ API request failed: $apiError, using sample data');
         _loadSampleWeeklyData();
       }
     } catch (e) {
-      developer.log('Error loading schedule: $e');
+      developer.log('❌ Error loading schedule: $e');
       _showErrorSnackbar('Error', 'Gagal memuat jadwal: $e');
       _loadSampleWeeklyData();
     } finally {
@@ -98,8 +102,44 @@ class ScheduleController extends GetxController {
     }
   }
 
+  // ✅ NEW: Update schedules isDone status dari storage
+  void _updateSchedulesFromStorage() {
+    developer.log('🔄 Updating schedules isDone from storage...');
+
+    int updatedCount = 0;
+    for (var entry in schedulesByDay.entries) {
+      final day = entry.key;
+      final schedules = entry.value;
+
+      for (int i = 0; i < schedules.length; i++) {
+        final schedule = schedules[i];
+        final scheduleDate = getDateForDay(schedule.day);
+        final formattedDate =
+            '${scheduleDate.year}-${scheduleDate.month.toString().padLeft(2, '0')}-${scheduleDate.day.toString().padLeft(2, '0')}';
+
+        final isDoneInStorage = _storageService.isScheduleDone(
+          schedule.id,
+          formattedDate,
+        );
+
+        if (isDoneInStorage && !schedule.isDone) {
+          schedulesByDay[day]![i] = schedule.copyWith(isDone: true);
+          updatedCount++;
+          developer.log(
+            '✅ Updated ${schedule.subjectName} isDone from storage',
+          );
+        }
+      }
+    }
+
+    if (updatedCount > 0) {
+      developer.log('✅ Updated $updatedCount schedules from storage');
+      schedulesByDay.refresh();
+    }
+  }
+
   void _loadSampleWeeklyData() {
-    developer.log('Loading sample weekly schedule data');
+    developer.log('📝 Loading sample weekly schedule data');
     schedulesByDay.clear();
 
     final sampleSchedules = {
@@ -133,7 +173,7 @@ class ScheduleController extends GetxController {
 
     schedulesByDay.value = sampleSchedules;
     developer.log(
-      'Sample weekly data loaded for ${schedulesByDay.keys.length} days',
+      '✅ Sample weekly data loaded for ${schedulesByDay.keys.length} days',
     );
   }
 
@@ -148,25 +188,79 @@ class ScheduleController extends GetxController {
   void selectDay(String day) {
     if (daysOfWeek.contains(day)) {
       selectedDay.value = day;
-      developer.log('Selected day: $day');
+      developer.log('📅 Selected day: $day');
     }
   }
 
   void changeWeek(int weekOffset) {
     final newWeek = currentWeek.value.add(Duration(days: weekOffset * 7));
     currentWeek.value = _getWeekStart(newWeek);
-    developer.log('Changed to week: ${_getWeekStart(newWeek)}');
+    developer.log('📅 Changed to week: ${_getWeekStart(newWeek)}');
+
+    // Reload schedules for new week
+    loadWeeklySchedule();
   }
 
-  /// ✅ ULTIMATE FIX: Use Get.parameters to pass data
-  void navigateToAttendance(TodayScheduleModel schedule) {
+  // ✅ NEW: Update isDone status for specific schedule (optimistic update)
+  void updateScheduleIsDone(String scheduleId, bool isDone) {
+    developer.log('=== UPDATING SCHEDULE ISDONE ===');
+    developer.log('Schedule ID: $scheduleId');
+    developer.log('isDone: $isDone');
+
+    bool found = false;
+
+    // Update di semua hari
+    for (var entry in schedulesByDay.entries) {
+      final day = entry.key;
+      final schedules = entry.value;
+
+      // Cari schedule dengan ID yang sesuai
+      final index = schedules.indexWhere((s) => s.id == scheduleId);
+
+      if (index != -1) {
+        // Update schedule dengan isDone baru
+        final oldSchedule = schedules[index];
+        final updatedSchedule = oldSchedule.copyWith(isDone: isDone);
+
+        schedulesByDay[day]![index] = updatedSchedule;
+
+        developer.log('✅ Updated schedule in day: $day');
+        developer.log('   Subject: ${oldSchedule.subjectName}');
+        developer.log('   Old isDone: ${oldSchedule.isDone}');
+        developer.log('   New isDone: ${updatedSchedule.isDone}');
+
+        found = true;
+
+        // Trigger UI update
+        schedulesByDay.refresh();
+        break;
+      }
+    }
+
+    if (!found) {
+      developer.log('⚠️ Schedule not found in schedulesByDay');
+      developer.log('   Searching schedule ID: $scheduleId');
+      developer.log('   Available schedule IDs:');
+      for (var entry in schedulesByDay.entries) {
+        for (var schedule in entry.value) {
+          developer.log(
+            '     - ${schedule.id} (${schedule.subjectName} - ${schedule.day})',
+          );
+        }
+      }
+    }
+
+    developer.log('================================');
+  }
+
+  /// Navigate to attendance and handle result
+  void navigateToAttendance(TodayScheduleModel schedule) async {
     developer.log('=== NAVIGATING TO ATTENDANCE ===');
     developer.log('Schedule ID: ${schedule.id}');
     developer.log('Subject: ${schedule.subjectName}');
     developer.log('Class: ${schedule.className}');
     developer.log('Day: ${schedule.day}');
 
-    // Calculate correct date
     final scheduleDate = getDateForDay(schedule.day);
     final formattedDate =
         '${scheduleDate.year}-${scheduleDate.month.toString().padLeft(2, '0')}-${scheduleDate.day.toString().padLeft(2, '0')}';
@@ -175,7 +269,6 @@ class ScheduleController extends GetxController {
     developer.log('================================');
 
     try {
-      // ✅ ULTIMATE SOLUTION: Clean up old controller + Manual injection
       final arguments = {
         'schedule_id': schedule.id,
         'date': formattedDate,
@@ -189,24 +282,20 @@ class ScheduleController extends GetxController {
         'is_done': schedule.isDone,
       };
 
-      // ✅ Store in Get.parameters (accessible via Get.parameters)
       Get.parameters = arguments.map((k, v) => MapEntry(k, v.toString()));
 
-      // ✅ CRITICAL FIX: Delete old controller if exists
       if (Get.isRegistered<AttendanceController>()) {
         Get.delete<AttendanceController>(force: true);
         developer.log('🗑️ Deleted old AttendanceController');
       }
 
-      // ✅ Put NEW controller without tag (to avoid duplicate key error)
       Get.put(AttendanceController());
       developer.log('✅ Put new AttendanceController');
 
-      // ✅ Navigate with RouteSettings containing arguments
-      Navigator.of(Get.context!).push(
+      // ✅ Navigate dan tunggu result
+      final result = await Navigator.of(Get.context!).push(
         MaterialPageRoute(
           builder: (context) {
-            // Initialize binding manually
             AttendanceBinding().dependencies();
             return const AttendanceView();
           },
@@ -214,7 +303,14 @@ class ScheduleController extends GetxController {
         ),
       );
 
-      developer.log('✅ Navigation with Navigator.push + manual binding');
+      // ✅ Handle result: jika true, refresh schedule
+      if (result == true) {
+        developer.log('🔄 Attendance submitted, refreshing schedule...');
+        await loadWeeklySchedule();
+        developer.log('✅ Schedule refreshed after attendance');
+      }
+
+      developer.log('✅ Navigation completed');
     } catch (e, stackTrace) {
       developer.log('❌ Navigation error: $e');
       developer.log('Stack trace: $stackTrace');

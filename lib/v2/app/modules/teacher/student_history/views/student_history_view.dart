@@ -34,20 +34,22 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
         }
 
         // ✅ SUCCESS: Show data
-        return SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStudentInfoCard(history),
-                SizedBox(height: 16.h),
-                _buildDateRangeSelector(),
-                SizedBox(height: 16.h),
-                _buildAttendanceSummaryCard(history.summary),
-                SizedBox(height: 16.h),
-                _buildHistorySection(history.history),
-              ],
+        return SafeArea(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildStudentInfoCard(history),
+                  SizedBox(height: 16.h),
+                  _buildDateRangeSelector(),
+                  SizedBox(height: 16.h),
+                  _buildAttendanceSummaryCard(history.summary),
+                  SizedBox(height: 16.h),
+                  _buildHistorySection(history.history),
+                ],
+              ),
             ),
           ),
         );
@@ -56,61 +58,7 @@ class StudentHistoryView extends GetView<StudentHistoryController> {
   }
 
   PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      title: const Text('Riwayat Kehadiran'),
-      centerTitle: true,
-      actions: [
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (String value) {
-            switch (value) {
-              case 'export':
-                controller.exportReport();
-                break;
-              case 'refresh':
-                controller.loadStudentHistory();
-                break;
-              case 'filter':
-                _showFilterDialog();
-                break;
-            }
-          },
-          itemBuilder:
-              (BuildContext context) => [
-                const PopupMenuItem<String>(
-                  value: 'export',
-                  child: Row(
-                    children: [
-                      Icon(Icons.file_download, color: Colors.green),
-                      SizedBox(width: 8),
-                      Text('Ekspor Laporan'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'filter',
-                  child: Row(
-                    children: [
-                      Icon(Icons.filter_list, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text('Filter Periode'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'refresh',
-                  child: Row(
-                    children: [
-                      Icon(Icons.refresh, color: Colors.orange),
-                      SizedBox(width: 8),
-                      Text('Muat Ulang'),
-                    ],
-                  ),
-                ),
-              ],
-        ),
-      ],
-    );
+    return AppBar(title: const Text('Riwayat Kehadiran'), centerTitle: true);
   }
 
   Widget _buildMissingDataState() {

@@ -13,252 +13,338 @@ class ProfileView extends GetView<ProfileController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
-      appBar: _buildAppBar(),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return _buildLoadingState();
+          return Center(
+            child: CircularProgressIndicator(color: AppColors.primaryGreen),
+          );
         }
 
-        return SingleChildScrollView(
-          padding: EdgeInsets.all(16.w),
-          child: Column(
-            children: [
-              // Profile Header
-              _buildProfileHeader(),
+        if (controller.errorMessage.value.isNotEmpty &&
+            controller.currentUser.value == null) {
+          return Center(
+            child: Padding(
+              padding: EdgeInsets.all(32.w),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 64.sp,
+                    color: AppColors.attendanceAbsent,
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    controller.errorMessage.value,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.attendanceAbsent,
+                    ),
+                  ),
+                  SizedBox(height: 24.h),
+                  ElevatedButton.icon(
+                    onPressed: controller.loadProfile,
+                    icon: const Icon(Icons.refresh),
+                    label: Text('Coba Lagi', style: AppTextStyles.buttonText),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryGreen,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 24.w,
+                        vertical: 12.h,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
 
-              SizedBox(height: 20.h),
-
-              // Profile Form
-              _buildProfileForm(),
-
-              SizedBox(height: 20.h),
-
-              // Action Buttons
-              _buildActionButtons(),
-
-              SizedBox(height: 20.h),
-
-              // Statistics Card
-              _buildStatisticsCard(),
-            ],
+        return RefreshIndicator(
+          onRefresh: controller.refreshProfile,
+          color: AppColors.primaryGreen,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              children: [
+                _buildProfileHeader(),
+                SizedBox(height: 20.h),
+                _buildProfileInfo(),
+                SizedBox(height: 20.h),
+                _buildMenuSection(),
+                SizedBox(height: 20.h),
+                _buildLogoutButton(),
+                SizedBox(height: 40.h),
+              ],
+            ),
           ),
         );
       }),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      title: const Text('Profil Saya'),
-      centerTitle: true,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () {
-            // Toggle edit mode or show edit dialog
-          },
-        ),
-      ],
-    );
-  }
-
   Widget _buildProfileHeader() {
     return Container(
-      padding: EdgeInsets.all(20.w),
+      width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
           colors: [AppColors.primaryGreen, AppColors.primaryGreenDark],
         ),
-        borderRadius: BorderRadius.circular(16.r),
       ),
-      child: Column(
-        children: [
-          // Profile Picture
-          Stack(
+      child: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(24.w),
+          child: Column(
             children: [
-              CircleAvatar(
-                radius: 50.r,
-                backgroundColor: AppColors.goldAccent,
-                backgroundImage:
-                    controller.user.value?.avatarUrl.isNotEmpty == true
-                        ? NetworkImage(controller.user.value!.avatarUrl)
-                        : null,
-                child:
-                    controller.user.value?.avatarUrl.isEmpty != false
-                        ? Icon(
-                          Icons.person,
-                          size: 50.sp,
-                          color: AppColors.primaryGreen,
-                        )
-                        : null,
+              // Avatar
+              Stack(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(4.w),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      radius: 50.w,
+                      backgroundColor: AppColors.primaryGreenLight.withOpacity(
+                        0.3,
+                      ),
+                      backgroundImage:
+                          controller.currentUser.value?.avatarUrl?.isNotEmpty ==
+                                  true
+                              ? NetworkImage(
+                                controller.currentUser.value!.avatarUrl!,
+                              )
+                              : null,
+                      child:
+                          controller.currentUser.value?.avatarUrl?.isEmpty ??
+                                  true
+                              ? Icon(
+                                Icons.person,
+                                size: 48.sp,
+                                color: Colors.white,
+                              )
+                              : null,
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      padding: EdgeInsets.all(6.w),
+                      decoration: BoxDecoration(
+                        color: AppColors.goldAccent,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Icon(
+                        Icons.school,
+                        color: Colors.white,
+                        size: 16.sp,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: EdgeInsets.all(6.w),
-                  decoration: const BoxDecoration(
-                    color: AppColors.goldAccent,
-                    shape: BoxShape.circle,
+
+              SizedBox(height: 16.h),
+
+              // Name
+              Obx(
+                () => Text(
+                  controller.displayName,
+                  style: AppTextStyles.heading2.copyWith(
+                    color: Colors.white,
+                    fontSize: 22.sp,
                   ),
-                  child: Icon(
-                    Icons.camera_alt,
-                    size: 16.sp,
-                    color: AppColors.primaryGreen,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+
+              SizedBox(height: 8.h),
+
+              // Role Badge
+              Obx(
+                () => Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 6.h,
                   ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20.r),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.school_outlined,
+                        color: Colors.white,
+                        size: 16.sp,
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        controller.displayRole,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13.sp,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 12.h),
+
+              // NIP Badge
+              Obx(
+                () => Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 6.h,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(16.r),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.badge_outlined,
+                        color: Colors.white.withOpacity(0.9),
+                        size: 14.sp,
+                      ),
+                      SizedBox(width: 6.w),
+                      Text(
+                        'NIP: ${controller.displayNIP}',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 12.sp,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 8.h),
+
+              // Email
+              Obx(
+                () => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.email_outlined,
+                      color: Colors.white.withOpacity(0.8),
+                      size: 14.sp,
+                    ),
+                    SizedBox(width: 6.w),
+                    Flexible(
+                      child: Text(
+                        controller.displayEmail,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 12.sp,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-
-          SizedBox(height: 16.h),
-
-          // Name and Role
-          Text(
-            controller.user.value?.displayName ?? 'Nama Pengguna',
-            style: AppTextStyles.heading2.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          Text(
-            controller.user.value?.roleDisplay ?? 'Role',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: Colors.white.withOpacity(0.8),
-            ),
-          ),
-
-          SizedBox(height: 8.h),
-
-          // NIP if available
-          if (controller.user.value?.nip != null)
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(20.r),
-              ),
-              child: Text(
-                'NIP: ${controller.user.value!.nip}',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildProfileForm() {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Form(
-        key: controller.formKey,
+  Widget _buildProfileInfo() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppColors.dividerColor, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        padding: EdgeInsets.all(16.w),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Informasi Personal', style: AppTextStyles.cardTitle),
-            SizedBox(height: 16.h),
-
-            // Name Field
-            TextFormField(
-              controller: controller.nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nama Lengkap',
-                prefixIcon: Icon(Icons.person, color: AppColors.primaryGreen),
-              ),
-              validator:
-                  (value) =>
-                      value?.isEmpty == true ? 'Nama tidak boleh kosong' : null,
+            Text(
+              'Informasi Personal',
+              style: AppTextStyles.heading3.copyWith(fontSize: 16.sp),
             ),
-
             SizedBox(height: 16.h),
-
-            // Email Field (Read-only)
-            TextFormField(
-              controller: controller.emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                prefixIcon: Icon(Icons.email, color: AppColors.primaryGreen),
+            Obx(
+              () => _buildInfoRow(
+                Icons.person_outline,
+                'Nama Lengkap',
+                controller.displayName,
               ),
-              readOnly: true,
-              style: const TextStyle(color: AppColors.textSecondary),
             ),
-
-            SizedBox(height: 16.h),
-
-            // Phone Field
-            TextFormField(
-              controller: controller.phoneController,
-              decoration: const InputDecoration(
-                labelText: 'Nomor Telepon',
-                prefixIcon: Icon(Icons.phone, color: AppColors.primaryGreen),
+            Divider(height: 24.h, color: AppColors.dividerColor),
+            Obx(
+              () => _buildInfoRow(
+                Icons.email_outlined,
+                'Email',
+                controller.displayEmail,
               ),
-              keyboardType: TextInputType.phone,
             ),
-
-            SizedBox(height: 16.h),
-
-            // Address Field
-            TextFormField(
-              controller: controller.addressController,
-              decoration: const InputDecoration(
-                labelText: 'Alamat',
-                prefixIcon: Icon(
-                  Icons.location_on,
-                  color: AppColors.primaryGreen,
-                ),
+            Divider(height: 24.h, color: AppColors.dividerColor),
+            Obx(
+              () => _buildInfoRow(
+                Icons.phone_outlined,
+                'No. Telepon',
+                controller.displayPhone,
               ),
-              maxLines: 2,
-              readOnly: true,
-              style: const TextStyle(color: AppColors.textSecondary),
             ),
-
-            SizedBox(height: 20.h),
-
-            // Save Button
-            SizedBox(
-              width: double.infinity,
-              child: Obx(
-                () => ElevatedButton(
-                  onPressed:
-                      controller.isSaving.value
-                          ? null
-                          : controller.updateProfile,
-                  child:
-                      controller.isSaving.value
-                          ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 20.w,
-                                height: 20.h,
-                                child: const CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              const Text('Menyimpan...'),
-                            ],
-                          )
-                          : const Text('Simpan Perubahan'),
-                ),
+            Divider(height: 24.h, color: AppColors.dividerColor),
+            Obx(
+              () => _buildInfoRow(
+                Icons.badge_outlined,
+                'NIP',
+                controller.displayNIP,
+              ),
+            ),
+            Divider(height: 24.h, color: AppColors.dividerColor),
+            Obx(
+              () => _buildInfoRow(
+                Icons.location_on_outlined,
+                'Alamat',
+                controller.displayAddress,
               ),
             ),
           ],
@@ -267,214 +353,92 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildActionButtons() {
-    return Column(
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
       children: [
-        // Change Password
-        _buildActionTile(
-          icon: Icons.lock,
-          title: 'Ubah Password',
-          subtitle: 'Ganti password akun Anda',
-          onTap: controller.showChangePasswordDialog,
+        Container(
+          width: 40.w,
+          height: 40.w,
+          decoration: BoxDecoration(
+            color: AppColors.primaryGreen.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8.r),
+          ),
+          child: Icon(icon, size: 20.sp, color: AppColors.primaryGreen),
         ),
-
-        SizedBox(height: 8.h),
-
-        // About App
-        _buildActionTile(
-          icon: Icons.info,
-          title: 'Tentang Aplikasi',
-          subtitle: 'Versi 1.0.0 - My NCH',
-          onTap: () => _showAboutDialog(),
-        ),
-
-        SizedBox(height: 8.h),
-
-        // Logout
-        _buildActionTile(
-          icon: Icons.logout,
-          title: 'Keluar',
-          subtitle: 'Logout dari aplikasi',
-          color: Colors.red,
-          onTap: controller.logout,
+        SizedBox(width: 16.w),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 11.sp,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                value,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14.sp,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildActionTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    Color? color,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 5,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        leading: Container(
-          padding: EdgeInsets.all(8.w),
-          decoration: BoxDecoration(
-            color: (color ?? AppColors.primaryGreen).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8.r),
-          ),
-          child: Icon(
-            icon,
-            color: color ?? AppColors.primaryGreen,
-            size: 20.sp,
-          ),
-        ),
-        title: Text(
-          title,
-          style: AppTextStyles.bodyMedium.copyWith(
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-        trailing: const Icon(Icons.chevron_right, color: AppColors.textHint),
-        onTap: onTap,
-      ),
-    );
-  }
-
-  Widget _buildStatisticsCard() {
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+  Widget _buildMenuSection() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Statistik Mengajar', style: AppTextStyles.cardTitle),
-          SizedBox(height: 16.h),
-
-          // Stats would come from API
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  'Total Kelas',
-                  '4',
-                  Icons.class_,
-                  AppColors.primaryGreen,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: _buildStatItem(
-                  'Total Siswa',
-                  '120',
-                  Icons.people,
-                  Colors.blue,
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 12.h),
-
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  'Absensi Bulan Ini',
-                  '28',
-                  Icons.check_circle,
-                  Colors.green,
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: _buildStatItem(
-                  'Rata-rata Kehadiran',
-                  '94%',
-                  Icons.trending_up,
-                  Colors.orange,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(12.w),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8.r),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 20.sp),
-          SizedBox(height: 8.h),
-          Text(
-            value,
-            style: AppTextStyles.heading3.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
+          Padding(
+            padding: EdgeInsets.only(left: 8.w, bottom: 12.h),
+            child: Text(
+              'Menu',
+              style: AppTextStyles.heading3.copyWith(fontSize: 16.sp),
             ),
           ),
-          SizedBox(height: 4.h),
-          Text(
-            label,
-            style: AppTextStyles.bodySmall.copyWith(
-              color: color,
-              fontWeight: FontWeight.w600,
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.cardBackground,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: AppColors.dividerColor, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryGreen),
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'Memuat profil...',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+            child: Column(
+              children: [
+                // _buildMenuItem(
+                //   icon: Icons.lock_outline,
+                //   title: 'Ubah Password',
+                //   subtitle: 'Ganti password akun Anda',
+                //   color: AppColors.attendanceSick,
+                //   onTap: controller.showChangePasswordDialog,
+                // ),
+                Divider(height: 1, color: AppColors.dividerColor),
+                _buildMenuItem(
+                  icon: Icons.info_outline,
+                  title: 'Tentang Aplikasi',
+                  subtitle: 'Versi dan informasi aplikasi',
+                  color: AppColors.goldAccent,
+                  onTap: controller.goToAbout,
+                ),
+              ],
             ),
           ),
         ],
@@ -482,41 +446,87 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  void _showAboutDialog() {
-    Get.dialog(
-      AlertDialog(
-        title: Row(
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12.r),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        child: Row(
           children: [
-            const Icon(Icons.school, color: AppColors.primaryGreen),
+            Container(
+              width: 44.w,
+              height: 44.w,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(icon, color: color, size: 22.sp),
+            ),
+            SizedBox(width: 16.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14.sp,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 2.h),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 12.sp,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
             SizedBox(width: 8.w),
-            Text('My NCH'),
+            Icon(Icons.chevron_right, color: AppColors.textHint, size: 20.sp),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'بِسْمِ اللهِ الرَّحْمٰنِ الرَّحِيْمِ',
-              style: AppTextStyles.arabicText.copyWith(fontSize: 16.sp),
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: controller.logout,
+          icon: Icon(Icons.logout, size: 20.sp),
+          label: Text(
+            'Keluar',
+            style: AppTextStyles.buttonText.copyWith(fontSize: 15.sp),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.attendanceAbsent,
+            foregroundColor: Colors.white,
+            padding: EdgeInsets.symmetric(vertical: 14.h),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
             ),
-            SizedBox(height: 12.h),
-            const Text('Aplikasi Absensi Guru'),
-            const Text('Versi: 1.0.0'),
-            const Text('Build: 2025.01.01'),
-            SizedBox(height: 8.h),
-            Text('جزاك الله خيرا', style: AppTextStyles.arabicSubtitle),
-            Text(
-              'Semoga aplikasi ini bermanfaat',
-              style: AppTextStyles.bodySmall.copyWith(
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ],
+            elevation: 2,
+          ),
         ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('Tutup')),
-        ],
       ),
     );
   }

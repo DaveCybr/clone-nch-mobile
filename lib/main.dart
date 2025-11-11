@@ -3,96 +3,77 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_storage/get_storage.dart';
-
-import 'v2/app/data/services/api_service.dart';
-import 'v2/app/data/services/storage_service.dart';
-import 'v2/app/data/services/version_service.dart';
-import 'v2/app/data/widgets/update_dialog.dart'; // ✅ TAMBAHKAN INI
-import 'v2/app/modules/auth/controllers/auth_controller.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:nch_mobile/v2/app/data/services/init.dart';
+import 'v2/app/data/services/firebase_service.dart';
 import 'v2/app/routes/app_pages.dart';
 import 'v2/app/routes/app_routes.dart';
 import 'v2/core/theme/app_theme.dart';
 
+// ✅ Background message handler (HARUS di top level)
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  Map<String, dynamic>? initialNotificationData;
+  // ✅ CONFIGURE STATUS BAR GLOBALLY
+  // 7. Set System UI - versi paling sederhana
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  // ✅ Jangan gunakan edgeToEdge sama sekali
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.white, // Atau warna yang Anda mau
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+
   try {
-    // Initialize Get Storage
+    // 1. Initialize GetStorage
+    print('📦 Initializing GetStorage...');
     await GetStorage.init();
+    print('✅ GetStorage initialized');
 
-    // Initialize core services first
-    await _initializeServices();
+    // 2. Initialize Firebase
+    print('🔥 Initializing Firebase...');
+    await Firebase.initializeApp();
+    print('✅ Firebase initialized successfully');
 
-    // Set preferred orientations
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-
-    // Set system UI overlay style
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.white,
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
+    // 3. Set background message handler
+    FirebaseMessaging.onBackgroundMessage(
+      FirebaseService().firebaseMessagingBackgroundHandler,
     );
+    print('✅ Background message handler set');
+
+    // 4. ✅ Check initial notification - SIMPAN data-nya
+    initialNotificationData =
+        await FirebaseService().checkInitialNotification();
+    if (initialNotificationData != null) {
+      print('💾 Initial notification data saved for later processing');
+    }
+
+    // 5. Initialize Services
+    await InitService().initializeServices();
+
+    // 6. ✅ Process initial notification SETELAH services ready
+    if (initialNotificationData != null) {
+      print('🚀 Processing initial notification after services ready...');
+      FirebaseService().processInitialNotification(initialNotificationData);
+    }
 
     runApp(const MyApp());
   } catch (e, stackTrace) {
-    print('Error during app initialization: $e');
-    print('StackTrace: $stackTrace');
-    // Run app anyway with basic setup
+    print('❌ Error during app initialization: $e');
+    print('📋 StackTrace: $stackTrace');
+
+    // Tetap jalankan app meski ada error
     runApp(const MyApp());
-  }
-}
-
-Future<void> _initializeServices() async {
-  try {
-    // Initialize storage service first
-    Get.put(StorageService(), permanent: true);
-
-    // Wait for storage service to be fully initialized
-    final storageService = Get.find<StorageService>();
-    await storageService.onInit();
-
-    // Initialize API service
-    Get.put(ApiService(), permanent: true);
-
-    // Wait for API service to be initialized
-    Get.find<ApiService>().onInit();
-
-    // TAMBAHKAN: Initialize VersionService
-    Get.put(VersionService(), permanent: true);
-    Get.find<VersionService>().onInit();
-
-    // Initialize auth controller last
-    Get.put(AuthController(), permanent: true);
-
-    print('All services initialized successfully');
-
-    // ✅ CEK UPDATE SETELAH SEMUA SERVICE SIAP
-    Future.delayed(Duration(seconds: 3), () {
-      try {
-        print('🔍 Starting automatic update check...');
-        final updateService = UpdateDialogService();
-        updateService.checkAndShowUpdateDialog();
-      } catch (e) {
-        print('❌ Error in automatic update check: $e');
-      }
-    });
-  } catch (e) {
-    print('Error initializing services: $e');
-    // Still try to initialize basic services
-    try {
-      Get.put(StorageService(), permanent: true);
-      Get.put(ApiService(), permanent: true);
-      Get.put(VersionService(), permanent: true); // TAMBAHKAN INI
-      Get.put(AuthController(), permanent: true);
-    } catch (fallbackError) {
-      print('Fallback initialization also failed: $fallbackError');
-    }
   }
 }
 

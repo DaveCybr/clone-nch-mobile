@@ -1,5 +1,3 @@
-// lib/v2/app/data/models/attendance_model.dart
-
 class ScheduleDetailModel {
   final String scheduleId;
   final String subjectName;
@@ -10,6 +8,7 @@ class ScheduleDetailModel {
   final DateTime attendanceDate;
   final int totalStudents;
   final List<StudentAttendanceModel> students;
+  final bool hasAttendance; // ✅ TAMBAH INI
 
   const ScheduleDetailModel({
     required this.scheduleId,
@@ -21,9 +20,23 @@ class ScheduleDetailModel {
     required this.attendanceDate,
     required this.totalStudents,
     required this.students,
+    this.hasAttendance = false, // ✅ TAMBAH INI
   });
 
   factory ScheduleDetailModel.fromJson(Map<String, dynamic> json) {
+    // ✅ Cek apakah ada attendance yang sudah tercatat
+    final students =
+        (json['students'] as List?)
+            ?.map((e) => StudentAttendanceModel.fromJson(e))
+            .toList() ??
+        [];
+
+    // ✅ Logic: hasAttendance = true jika ada minimal 1 student dengan attendanceId
+    final hasAttendance = students.any(
+      (student) =>
+          student.attendanceId != null && student.attendanceId!.isNotEmpty,
+    );
+
     return ScheduleDetailModel(
       scheduleId: json['schedule_id'] ?? '',
       subjectName: json['subject_name'] ?? '',
@@ -33,11 +46,8 @@ class ScheduleDetailModel {
       endTime: json['end_time'] ?? '',
       attendanceDate: _parseDate(json['attendance_date']),
       totalStudents: json['total_students'] ?? 0,
-      students:
-          (json['students'] as List?)
-              ?.map((e) => StudentAttendanceModel.fromJson(e))
-              .toList() ??
-          [],
+      students: students,
+      hasAttendance: hasAttendance, // ✅ TAMBAH INI
     );
   }
 
@@ -53,6 +63,9 @@ class ScheduleDetailModel {
   }
 
   String get timeRange => '$startTime - $endTime';
+
+  // ✅ Helper getter
+  bool get isDone => hasAttendance;
 }
 
 class StudentAttendanceModel {

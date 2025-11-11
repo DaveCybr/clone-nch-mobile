@@ -31,48 +31,6 @@ class ScheduleView extends GetView<ScheduleController> {
       backgroundColor: AppColors.primaryGreen,
       foregroundColor: Colors.white,
       elevation: 0,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.refresh),
-          onPressed: controller.loadWeeklySchedule,
-        ),
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (value) {
-            switch (value) {
-              case 'refresh':
-                controller.loadWeeklySchedule();
-                break;
-              case 'today':
-                controller.selectDay(controller.getTodayDayName());
-                break;
-            }
-          },
-          itemBuilder:
-              (context) => [
-                const PopupMenuItem<String>(
-                  value: 'today',
-                  child: Row(
-                    children: [
-                      Icon(Icons.today, color: AppColors.primaryGreen),
-                      SizedBox(width: 8),
-                      Text('Hari Ini'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'refresh',
-                  child: Row(
-                    children: [
-                      Icon(Icons.refresh, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text('Muat Ulang'),
-                    ],
-                  ),
-                ),
-              ],
-        ),
-      ],
     );
   }
 

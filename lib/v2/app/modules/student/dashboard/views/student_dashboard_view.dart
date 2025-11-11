@@ -51,7 +51,11 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
       actions: [
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
-          onPressed: () {},
+          onPressed: () {
+            Get.rootDelegate.toNamed(
+              Routes.getStudentRoute(Routes.STUDENT_ANNOUNCEMENTS),
+            );
+          },
         ),
         PopupMenuButton(
           icon: const Icon(Icons.more_vert),
@@ -95,6 +99,14 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
             switch (value) {
               case 'logout':
                 controller.logout();
+                break;
+              case 'refresh':
+                controller.refreshDashboard();
+                break;
+              case 'profile':
+                Get.rootDelegate.toNamed(
+                  Routes.getStudentRoute(Routes.STUDENT_PROFILE),
+                );
                 break;
             }
           },
@@ -146,7 +158,7 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'السَّلاَمُ عَلَيْكُمْ',
+            'السَّلَامُ عَلَيْكُمْ',
             style: AppTextStyles.arabicText.copyWith(
               color: Colors.white,
               fontSize: 16.sp,
@@ -253,9 +265,8 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
               Text('Jadwal Hari Ini', style: AppTextStyles.heading3),
               TextButton(
                 onPressed: () {
-                  // Navigate to full schedule page
-                  Get.rootDelegate.offNamed(
-                    Routes.getStudentRoute('/student/schedule'),
+                  Get.rootDelegate.toNamed(
+                    Routes.getStudentRoute(Routes.STUDENT_SCHEDULE),
                   );
                 },
                 child: Text(
@@ -397,9 +408,8 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
               Text('Kehadiran Hari Ini', style: AppTextStyles.heading3),
               TextButton(
                 onPressed: () {
-                  // Navigate to attendance page
-                  Get.rootDelegate.offNamed(
-                    Routes.getStudentRoute('/student/attendance'),
+                  Get.rootDelegate.toNamed(
+                    Routes.getStudentRoute(Routes.STUDENT_ATTENDANCE),
                   );
                 },
                 child: Text(
@@ -519,8 +529,8 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Jadwal Lengkap',
                   Icons.calendar_today,
                   AppColors.primaryGreen,
-                  () => Get.rootDelegate.offNamed(
-                    Routes.getStudentRoute('/student/schedule'),
+                  () => Get.rootDelegate.toNamed(
+                    Routes.getStudentRoute(Routes.STUDENT_SCHEDULE),
                   ),
                 ),
               ),
@@ -530,8 +540,8 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Riwayat Absensi',
                   Icons.history,
                   Colors.blue,
-                  () => Get.rootDelegate.offNamed(
-                    Routes.getStudentRoute('/student/attendance'),
+                  () => Get.rootDelegate.toNamed(
+                    Routes.getStudentRoute(Routes.STUDENT_ATTENDANCE),
                   ),
                 ),
               ),
@@ -545,8 +555,8 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Pengumuman',
                   Icons.campaign,
                   Colors.orange,
-                  () => Get.rootDelegate.offNamed(
-                    Routes.getStudentRoute('/student/announcements'),
+                  () => Get.rootDelegate.toNamed(
+                    Routes.getStudentRoute(Routes.STUDENT_ANNOUNCEMENTS),
                   ),
                 ),
               ),
@@ -556,11 +566,32 @@ class StudentDashboardView extends GetView<StudentDashboardController> {
                   'Raport',
                   Icons.assessment,
                   Colors.purple,
-                  () => Get.rootDelegate.offNamed(
-                    Routes.getStudentRoute('/student/report'),
+                  () {
+                    Get.snackbar(
+                      'Info',
+                      'Fitur raport akan segera hadir',
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionCard(
+                  'Jadwal Kunjungan',
+                  Icons.family_restroom,
+                  Colors.teal,
+                  () => Get.rootDelegate.toNamed(
+                    Routes.getStudentRoute(Routes.STUDENT_VISIT_SCHEDULE),
                   ),
                 ),
               ),
+              SizedBox(width: 12.w),
+              Expanded(child: SizedBox()),
             ],
           ),
         ],
